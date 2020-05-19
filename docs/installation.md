@@ -11,8 +11,8 @@ Table of Contents
 
 In order to use GoCD's Amazon ECS Elastic Agent Plugin, the following pre-requisites must be met.
 
-* The GoCD server version **19.3.0** or higher.
-* The plugin mandates a few Amazon ECS pre-requisities like an empty ECS cluster and IAM user and role to be configured with appropriate permisssions.
+* The GoCD server version should be **19.3.0** or higher.
+* The plugin mandates a few Amazon ECS pre-requisities like an empty ECS cluster and IAM user and role to be configured with appropriate permissions.
 
 ### Configure ECS using the *AWS CloudFormation* template:
 
@@ -23,75 +23,74 @@ To configure ECS using the AWS CloudFormation templates, follow these steps,
 * `$ pip install awscli` - To install aws cli (refer - [https://aws.amazon.com/cli/](https://aws.amazon.com/cli/))
 * `$ aws configure` - Configure the aws cli with appropriate credentials
 * Configure using ruby based template,
-  * Save [Ruby Based Template](ecs_cloud_formation_template.rb.txt) to a file.
+  * Save [Ruby Based Cloudformation Template](ecs_cloud_formation_template.rb.txt) to a file.
   * `$ gem install cloudformation-ruby-dsl`
   * `$ ruby <cloud_formation_ruby_template_file>.rb create --stack-name <stack_name> --parameters "ClusterName=<cluster_name>"`
 * Alternatively, configure using the JSON based template
-  * Save [JSON Based Template](ecs_cloud_formation_template.json) to a file.
+  * Save [JSON Based Cloudformation Template](ecs_cloud_formation_template.json) to a file.
   * ```$ aws cloudformation create-stack --stack-name <stack_name> --region <region_name> --capabilities CAPABILITY_IAM --template-body file:///<path_to_json_template_file>```
 
 ---
 ### Alternatively configure ECS manually (if you prefer to manually configure ECS instead of using the above CloudFormation template).
 
   * An ECS cluster. This cluster MUST be empty, as the plugin will manage instances and scaling in this cluster.
-  * An IAM user with permissions to manage the ECS cluster. The credentials for this IAM user may be provided to the this plugin or applied via an IamInstanceProfile to the EC2 instance running the GoCD server. The following IAM permissions are needed
+  * An IAM user with permissions to manage the ECS cluster. The credentials for this IAM user may be provided to the this plugin or applied via an IAM instance profile to the EC2 instance running the GoCD server. The following IAM permissions are needed
 
     ```
-      ec2:createTags
-      ec2:runInstances
-      ec2:describeSubnets
-      ec2:describeInstances
-      ec2:terminateInstances
-      ec2:createVolume
-      ec2:attachVolume
-      iam:PassRole
-      iam:GetRole
-      ecs:describeClusters
-      ecs:startTask
-      ecs:stopTask
-      ecs:listTasks
-      ecs:describeTasks
-      ecs:describeTaskDefinition
-      ecs:registerTaskDefinition
-      ecs:listContainerInstances
-      ecs:deregisterTaskDefinition
-      ecs:describeContainerInstances
-      ecs:deregisterContainerInstance
-      ec2:stopInstances
-      ec2:startInstances
-      ec2:deleteTags
+    ec2:createTags
+    ec2:runInstances
+    ec2:describeSubnets
+    ec2:describeInstances
+    ec2:terminateInstances
+    ec2:createVolume
+    ec2:attachVolume
+    iam:PassRole
+    iam:GetRole
+    ecs:describeClusters
+    ecs:startTask
+    ecs:stopTask
+    ecs:listTasks
+    ecs:describeTasks
+    ecs:describeTaskDefinition
+    ecs:registerTaskDefinition
+    ecs:listContainerInstances
+    ecs:deregisterTaskDefinition
+    ecs:describeContainerInstances
+    ecs:deregisterContainerInstance
+    ec2:stopInstances
+    ec2:startInstances
+    ec2:deleteTags
     ```
     
     Additionally, if Spot Instances are used, the additional permissions are needed:
     
     ```
-      ec2:requestSpotInstances
-      ec2:describeSpotInstanceRequests
+    ec2:requestSpotInstances
+    ec2:describeSpotInstanceRequests
     ```
 
 
-  * An IAM Role that allows the ECS agent running on the EC2 instance to register container instances with ECS cluster. The IamInstanceProfile must have following permissions:
+  * An IAM Role that allows the ECS agent running on the EC2 instance to register container instances with ECS cluster. The IAM instance profile must have following permissions:
 
     ```
-      ecs:poll
-      ecs:describeClusters
-      ecs:discoverPollEndpoint
-      ecs:startTelemetrySession
-      ecs:submitTaskStateChange
-      ecs:registerContainerInstance
-      ecs:submitContainerStateChange
-      ecs:deregisterContainerInstance
-      logs:PutLogEvents
-      logs:CreateLogStream
+    ecs:poll
+    ecs:describeClusters
+    ecs:discoverPollEndpoint
+    ecs:startTelemetrySession
+    ecs:submitTaskStateChange
+    ecs:registerContainerInstance
+    ecs:submitContainerStateChange
+    ecs:deregisterContainerInstance
+    logs:PutLogEvents
+    logs:CreateLogStream
     ```
 
 ### Related help topics
 
-1. [Getting Started with Amazon ECS](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ECS_GetStarted.html)
-2. [Amazon ECS Container Instance IAM Role](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/instance_IAM_role.html)
-3. [Amazon ECS IAM Policy Examples](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/IAMPolicyExamples.html#first-run-permissions)
-3. [Amazon ECS Task Role](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html#create_task_iam_policy_and_role)
-3. [Amazon ECS Task Role Example Template](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_IAM_role.html)
+1. [Getting Started with Amazon ECS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/Welcome.html)
+2. [Amazon ECS Container Instance IAM Role](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/instance_IAM_role.html)
+3. [Amazon ECS IAM Policy Examples](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/security_iam_id-based-policy-examples.html)
+4. [Amazon ECS Task Role](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html)
 
 ## Installation
 
@@ -103,8 +102,8 @@ and restart the server.
 
 In order to use this plugin, users have to configure the following in the GoCD server.
 
-- [Configure cluster profile(s)](cluster_profile_configuration.md) - The cluster profile settings are used to provide the cluster level configurations for the plugin. Each cluster profile specifies Configurations such as AWS credentials, EC2 Instance settings, Docker Container settings, ECS Cluster configurations. Users are encouraged to define one cluster per environment. 
+1. [Configure cluster profile(s)](cluster_profile_configuration.md) - The cluster profile settings are used to provide the cluster level configurations for the plugin. Each cluster profile specifies Configurations such as AWS credentials, EC2 Instance settings, Docker Container settings, ECS Cluster configurations. Users are encouraged to define one cluster per environment. 
 
-- [Create elastic agent profile(s)](elastic_profile_configuration.md) - The Elastic Agent Profile is used to define the configuration of a docker container. The profile is used to configure the docker image, set memory limits, provide docker command and environment variables. 
+2. [Create elastic agent profile(s)](elastic_profile_configuration.md) - The Elastic Agent Profile is used to define the configuration of a docker container. The profile is used to configure the docker image, set memory limits, provide docker command and environment variables. 
 
-- [Configure job to use an elastic agent profile](job_configuration.md) - This is a job level configuration to specify the elastic profile to be used for a job. When a job is scheduled the plugin would spin up a docker container using the configuration provided in the associated elastic profile.
+3. [Configure job to use an elastic agent profile](job_configuration.md) - This is a job level configuration to specify the elastic profile to be used for a job. When a job is scheduled the plugin would spin up a docker container using the configuration provided in the associated elastic profile.

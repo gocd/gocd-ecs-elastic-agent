@@ -1,10 +1,10 @@
-# Configure job to use an elastic agent profile
+# Associate the job with an elastic agent profile
 
-The Elastic Agent Profile is used to define the configuration of a docker container, it is used to configure the docker image, set memory limits, provide docker command and environment variables.
+The Elastic Agent Profile is used to define the configuration of a docker container. It is used to configure the docker image, set memory limits, provide docker command and environment variables.
 
-Following configuration ties your job with an Elastic Agent Profile, it effectively means that the plugin will run your job on newly created docker container using configuration defined in that elastic agent profile.  
+The following configuration associates a GoCD job with an Elastic Agent Profile. It effectively means that the plugin will run your job on a newly created docker container using configuration defined in that elastic agent profile.
 
-### Steps to configure job to use ECS Elastic Agent: 
+### Steps to configure job to use ECS Elastic Agent:
 
 * Click the gear icon on **_Pipeline_**
 

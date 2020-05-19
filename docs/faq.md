@@ -1,16 +1,14 @@
 # FAQ
 
-# FAQ
+## Q: What is the GoCD ECS Elastic Agent Plugin?
 
-## Q: What is GoCD ECS Elastic Agent Plugin?
-
-This Elastic Agent Plugin for Amazon EC2 Container Service allows for flexible use of EC2 instances (with support for ECS Docker containers) thereby optimizing utilization and reducing the cost of your agent infrastructure. It will also take care of scaling up and scaling down of your container instances in best possible way.
+This Elastic Agent Plugin for Amazon's EC2 Container Service allows for flexible use of EC2 instances (with support for ECS Docker containers) thereby optimizing utilization and reducing the cost of your GoCD agent infrastructure. It will also take care of scaling up and scaling down of EC2 instances in the most efficient way.
 
 ## Q: Why should I use it?
 
-This elastic agent plugin will help optimize the cost of running your builds on AWS by managing the cluster resources. It will create a container instance as and when required and will terminate the idle container instances based on termination policy that you provide. This will eliminate the need of constantly running AWS EC2 instances as GoCD agents.
+This elastic agent plugin will help optimize the cost of running your builds on AWS by managing the cluster resources. It will create a container instance as and when required and will terminate the idle container instances based on the termination policy that you choose. This will eliminate the need of constantly running AWS EC2 instances as GoCD agents.
 
-## Q: How to install this plugin?
+## Q: How do I install this plugin?
  
 Refer to the installation section available [here](installation.md).
 
@@ -20,7 +18,7 @@ Refer to the [pre-requisites](installation.md#prerequisites) and [configuration]
 
 ## Q: Why does this plugin need AWS credentials?
 
-In order to manage AWS ECS cluster, the plugin makes multiple API calls to AWS ECS on your behalf. Using the credentials, the plugin will authorize itself to AWS.
+In order to manage the AWS ECS cluster, the plugin makes multiple API calls to AWS ECS on your behalf. Using the credentials, the plugin will authorize itself to AWS.
 
 ## Q: How should I configure the AWS credentials for the plugin?
 
@@ -38,18 +36,18 @@ We recommend that you provide AWS credentials using one of the above methods, bu
 
 Running windows containers is supported from the plugin version `5.0.0` onwards.
 
-## Q: Why memory reservation is not available for windows on elastic profile?
+## Q: Why is memory reservation not available for Windows on elastic profile?
 
-Currently, option is not supported by ECS API.
+Currently, that option is not supported by ECS API.
 
-## Q: Is privileged mode supported on windows?
+## Q: Is privileged mode supported on Windows?
 
-No, privileged mode is not supported for windows.
+No, privileged mode is not supported for Windows.
 
 ## Q: Is configuring multiple environments supported by this plugin?
 
-Yes, configuring plugin for different environments is supported using cluster profiles from the plugin version `6.0.0` and onwards.
+Yes, configuring plugin for different environments is supported using cluster profiles from plugin version `6.0.0` and onwards.
 
-## Q. I am using Spot Instances, how do I check for my savings?
+## Q. I am using Spot Instances, how do I check my savings?
 
-The plugin currently does not capture any data to calculate the savings. AWS provides with Spot Instance [Savings Summary](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-savings.html) page to get this information. Alternatively, you can also subscribe the [Spot Instance Data Feed](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-data-feeds.html) to get this information from AWS.
+The plugin currently does not capture any data to calculate the savings. AWS provides a Spot Instance [Savings Summary](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-savings.html) page to get this information. Alternatively, you can also subscribe to the [Spot Instance Data Feed](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-data-feeds.html) to get this information from AWS.

@@ -17,3 +17,5 @@ classes/
 
 .bundle/
 contrib/cloudformation-template/bin/
+
+.DS_Store

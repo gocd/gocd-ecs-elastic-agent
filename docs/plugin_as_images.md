@@ -8,12 +8,10 @@
 
 ![Alt text](images/image4.png "Starts ECS containers")
 
-![Alt text](images/image5.png "Stage finishes. ECS containers 
-destroyed")
+![Alt text](images/image5.png "Stage finishes. ECS containers destroyed")
 
 ![Alt text](images/image6.png "Next stage starts")
 
-![Alt text](images/image7.png "Stage finishes. ECS containers 
-destroyed")
+![Alt text](images/image7.png "Stage finishes. ECS containers destroyed")
 
 ![Alt text](images/image8.png "EC2 nodes terminated")

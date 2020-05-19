@@ -2,8 +2,8 @@
 
 GoCD elastic agents run inside Docker containers on an ECS cluster. You can either use the Docker images provided by the GoCD team or build your own images with the right software already provisioned on it.
 
-  * [Docker images provided by the GoCD team](https://hub.docker.com/u/gocd/) on Docker Hub
-  * Corresponding `Dockerfile` and init scripts of these docker images can be found [here](https://github.com/gocd?utf8=%E2%9C%93&q=docker-gocd-agent)
+  * [Docker images provided by the GoCD team](https://hub.docker.com/u/gocd/) on Docker Hub.
+  * Corresponding `Dockerfile` and init scripts of these docker images can be found [here](https://github.com/gocd?q=docker-gocd-agent).
 
 ## Using your own docker image with elastic agents
 
@@ -47,6 +47,6 @@ $properties = @("agent.auto.register.key=$env:GO_EA_AUTO_REGISTER_KEY",
 $properties | Out-File "c:\gocd-agent\config\autoregister.properties" -Encoding "default" -append
 ```
 
-**Note:** GoCD agent supports only `Little-endian` encoding. Please make sure that generated file has valid encoding.
+**Note:** GoCD agent supports only little-endian encoding. Please make sure that generated file has valid encoding.
 
-Refer to the bootstrap script template [here](https://github.com/gocd/gocd/blob/master/buildSrc/src/main/resources/gocd-docker-agent/docker-entrypoint.sh) to understand what is necessary for the image to be a GoCD agent docker image. To look for the bootstrap script for a particular container image of your choice, check one of the docker agent image repositories [here](https://github.com/gocd?utf8=%E2%9C%93&q=docker-gocd-agent).
+Refer to the bootstrap script template [here](https://github.com/gocd/gocd/blob/master/buildSrc/src/main/resources/gocd-docker-agent/docker-entrypoint.sh) to understand what is necessary for the image to be a GoCD agent docker image. To look for the bootstrap script for a particular container image of your choice, check one of the docker agent image repositories [here](https://github.com/gocd?q=docker-gocd-agent).

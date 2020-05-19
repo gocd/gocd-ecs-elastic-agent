@@ -1,5 +1,0 @@
-<%-
-  template = %x[bundle exec ruby #{File.dirname(__FILE__)}/ecs_cloud_formation_template.rb.txt expand]
-  raise 'Could not evaluate cloudformation template' unless $?.success?
--%>
-<%= template %>

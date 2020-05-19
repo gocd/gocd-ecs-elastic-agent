@@ -8,7 +8,7 @@ The settings allow you to choose the AMI to be used for the EC2 instance, the in
 
 Once the builds finish and the EC2 instances are idle for a while, they will be automatically scaled down and destroyed, removing the cost of running idle EC2 instances. Along with saving cost, this enables a flexible and dynamic build grid in which you don’t need to worry about configuration drift.
 
-The set of images [here](docs/plugin_as_images.md) explain this concept as well
+The set of images [here](docs/plugin_as_images.md) explain this concept as well.
 
 Table of Contents
 =================
