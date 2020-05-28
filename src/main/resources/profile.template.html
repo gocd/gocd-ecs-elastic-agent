@@ -1,0 +1,494 @@
+<div data-plugin-style-id="ea-plugin">
+  <div class="ea-panel">
+    <div class="ea-panel_header">Container Profile</div>
+    <div class="ea-panel_body">
+      <div class="col-2">
+        <div class="col" ng-init="Platform = (Platform || 'linux')">
+          <label>Select operating system of container image</label>
+          <input type="radio" ng-model="Platform" value="linux" id="linux-os"/>
+          <label for="linux-os">Linux</label>
+          <input type="radio" ng-model="Platform" value="windows" id="windows-os"
+                 ng-click="ReservedMemory='';  MountDockerSocket = 'false';  Privileged = 'false'; "/>
+          <label for="windows-os">Windows</label>
+        </div>
+      </div>
+
+      <div class="col-2">
+        <div class="col">
+          <label ng-class="{'is-invalid-label': GOINPUTNAME[Image].$error.server}" class="required">Docker image</label>
+          <input ng-class="{'is-invalid-input': GOINPUTNAME[Image].$error.server}" type="text" ng-model="Image"
+                 ng-required="true" placeholder="e.g. gocd/gocd-agent-alpine-3.7:v19.5.0"/>
+          <span class="form_error form-error" ng-class="{'is-visible': GOINPUTNAME[Image].$error.server}"
+                ng-show="GOINPUTNAME[Image].$error.server">{{GOINPUTNAME[Image].$error.server}}</span>
+          <div class="form-help-content-one-line">
+            Docker image name for GoCD agent. Pre build docker images are available
+            <a href="https://www.gocd.org/download/#docker" target="_blank"
+               rel="nofollow noreferrer">here</a>.
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="col-2">
+          <div class="col">
+            <label ng-class="{'is-invalid-label': GOINPUTNAME[MaxMemory].$error.server}" class="required">
+              Hard memory limit for container
+            </label>
+            <input ng-class="{'is-invalid-input': GOINPUTNAME[MaxMemory].$error.server}" type="text"
+                   ng-model="MaxMemory"
+                   ng-required="true" placeholder="e.g. 200M"/>
+            <span class="form_error form-error" ng-class="{'is-visible': GOINPUTNAME[MaxMemory].$error.server}"
+                  ng-show="GOINPUTNAME[MaxMemory].$error.server">{{GOINPUTNAME[MaxMemory].$error.server}}</span>
+          </div>
+
+          <div class="col" ng-show="Platform == 'linux'">
+            <label ng-class="{'is-invalid-label': GOINPUTNAME[ReservedMemory].$error.server}" class="required">
+              Reserved memory for container
+            </label>
+            <input ng-class="{'is-invalid-input': GOINPUTNAME[ReservedMemory].$error.server}" type="text"
+                   ng-model="ReservedMemory" ng-required="Platform == 'linux'" placeholder="e.g. 150M"/>
+            <span class="form_error form-error" ng-class="{'is-visible': GOINPUTNAME[ReservedMemory].$error.server}"
+                  ng-show="GOINPUTNAME[ReservedMemory].$error.server">{{GOINPUTNAME[ReservedMemory].$error.server}}</span>
+          </div>
+        </div>
+        <div class="form-help-content">
+          These fields take a positive integer, followed by a suffix of B, K, M, G and T to indicate bytes, kilobytes,
+          megabytes, gigabytes or terabytes respectively.
+          <a href="https://docs.docker.com/engine/admin/resource_constraints/#memory" target="_blank"
+             rel="nofollow noreferrer">Read more about memory</a>
+          <ol>
+            <li><strong>MaxMemory: </strong> The maximum amount of memory the container is allowed to use.</li>
+            <li><strong>ReservedMemory: </strong> The docker container will start with this amount of memory.</li>
+          </ol>
+        </div>
+      </div>
+
+      <div>
+        <label ng-class="{'is-invalid-label': GOINPUTNAME[CPU].$error.server}" class="required">CPU</label>
+        <input ng-class="{'is-invalid-input': GOINPUTNAME[CPU].$error.server}" type="text" ng-model="CPU"
+               ng-required="true"/>
+        <span class="form_error form-error" ng-class="{'is-visible': GOINPUTNAME[CPU].$error.server}"
+              ng-show="GOINPUTNAME[CPU].$error.server">{{GOINPUTNAME[CPU].$error.server}}</span>
+        <div class="form-help-content-one-line">
+          The number of cpu units to reserve for the container.
+          <span ng-show="Platform == 'linux'">
+            If set to 0, container will only use unallocated CPU units. Unallocated CPU units are split equally
+            between all containers.
+          </span>
+          <span ng-show="Platform == 'windows'">
+            We recommend using at least <strong>1024 CPU units (1 core)</strong> for Windows.
+            <span class="warn">
+              Allocating lesser CPU units(including 0) will result in very slow running container.</span>
+          </span>
+          <a href="https://docs.docker.com/engine/admin/resource_constraints/#cpu" target="_blank"
+             rel="nofollow noreferrer">Read more about cpu</a>
+        </div>
+      </div>
+
+      <div>
+        <label ng-class="{'is-invalid-label': GOINPUTNAME[TaskRoleArn].$error.server}">Task role arn</label>
+        <input ng-class="{'is-invalid-input': GOINPUTNAME[TaskRoleArn].$error.server}" type="text"
+               ng-model="TaskRoleArn"
+               ng-required="true" placeholder="e.g. arn:aws:iam::369170619674:role/AccessToS3"/>
+        <span class="form_error form-error"
+              ng-class="{'is-visible': GOINPUTNAME[TaskRoleArn].$error.server}"
+              ng-show="GOINPUTNAME[TaskRoleArn].$error.server">{{GOINPUTNAME[TaskRoleArn].$error.server}}</span>
+
+        <div class="help" ng-init="HelpToggleForTaskRole = false">
+          <div class="help_header" ng-class="{'expanded': HelpToggleForTaskRole}"
+               ng-click="HelpToggleForTaskRole = !HelpToggleForTaskRole">Help
+          </div>
+          <div class="help_body" ng-show="HelpToggleForTaskRole">
+            Name of the IAM role to associate with the agent container. This can have any permission that is
+            required by the given job. At the bare minimum your role must permit action <strong>sts:AssumeRole</strong>
+            and allow access to <strong>ecs-tasks.amazonaws.com</strong> service.
+            <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_IAM_role.html" target="_blank"
+               rel="nofollow noreferrer">Read more about ECS Task Role</a>
+            <div class="code"
+                 ng-init='template={"Version": "2012-10-17","Statement": [{"Sid": "","Effect": "Allow","Principal": {"Service": "ecs-tasks.amazonaws.com"},"Action": "sts:AssumeRole"}]}'>
+              <pre>{{ template | json}}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-2" ng-show="Platform == 'linux'">
+        <div class="col">
+          <input ng-class="{'is-invalid-input': GOINPUTNAME[MountDockerSocket].$error.server}" type="checkbox"
+                 ng-model="MountDockerSocket" ng-required="true" ng-true-value="true" ng-false-value="false"
+                 id="MountDockerSocket"/>
+          <label ng-class="{'is-invalid-label': GOINPUTNAME[MountDockerSocket].$error.server}" for="MountDockerSocket">
+            Mount Docker Socket
+          </label>
+          <span class="form_error form-error" ng-class="{'is-visible': GOINPUTNAME[MountDockerSocket].$error.server}"
+                ng-show="GOINPUTNAME[MountDockerSocket].$error.server">{{GOINPUTNAME[MountDockerSocket].$error.server}}
+          </span>
+          <div class="form-help-content-one-line">
+            Mounts the host <code>/var/run/docker.sock</code> to docker container.
+          </div>
+        </div>
+
+        <div class="col">
+          <input ng-class="{'is-invalid-input': GOINPUTNAME[Privileged].$error.server}" type="checkbox"
+                 ng-model="Privileged"
+                 ng-required="true" ng-true-value="true" ng-false-value="false" id="Privileged"/>
+          <label ng-class="{'is-invalid-label': GOINPUTNAME[Privileged].$error.server}"
+                 for="Privileged">Privileged</label>
+          <span class="form_error form-error" ng-class="{'is-visible': GOINPUTNAME[Privileged].$error.server}"
+                ng-show="GOINPUTNAME[Privileged].$error.server">{{GOINPUTNAME[Privileged].$error.server}}</span>
+          <div class="form-help-content-one-line">
+            When selected, the container is given elevated privileges on the host container instance.
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label ng-class="{'is-invalid-label': GOINPUTNAME[Command].$error.server}">
+          Docker Command
+          <small>(Enter one parameter per line)</small>
+        </label>
+        <textarea ng-class="{'is-invalid-input': GOINPUTNAME[Command].$error.server}" ng-model="Command"
+                  ng-required="true" rows="5"></textarea>
+        <span class="form_error form-error" ng-class="{'is-visible': GOINPUTNAME[Command].$error.server}"
+              ng-show="GOINPUTNAME[Command].$error.server">{{GOINPUTNAME[Command].$error.server}}</span>
+        <div class="form-help-content-one-line">
+          This allows you to override the <code>CMD</code> that is specified in the <code>Dockerfile</code>, or provide
+          one in case the <code>Dockerfile</code> does not contain a <code>CMD</code>.
+          <a href="https://docs.docker.com/engine/reference/builder/#cmd" target="_blank" rel="nofollow noreferrer">
+            Read more about CMD</a>
+          <label>For example:</label>
+          <div class="code">yum install -y some-package<br/>./docker-entrypoint.sh</div>
+        </div>
+      </div>
+
+      <div>
+        <label ng-class="{'is-invalid-label': GOINPUTNAME[Environment].$error.server}">
+          Environment Variables
+          <small>(Enter one variable per line)</small>
+        </label>
+        <textarea ng-class="{'is-invalid-input': GOINPUTNAME[Environment].$error.server}"
+                  ng-model="Environment" ng-required="true" rows="5"></textarea>
+        <span class="form_error form-error" ng-class="{'is-visible': GOINPUTNAME[Environment].$error.server}"
+              ng-show="GOINPUTNAME[Environment].$error.server">{{GOINPUTNAME[Environment].$error.server}}</span>
+        <div class="form-help-content-one-line">
+          This allows you to override the <code>ENV</code> that is specified in the <code>Dockerfile</code>, or provide
+          new environment variables in case the <code>Dockerfile</code> does not contain any <code>ENV</code>.
+          <a href="https://docs.docker.com/engine/reference/builder/#env" target="_blank" rel="nofollow noreferrer">
+            Read more about ENV</a>
+          <label>For example:</label>
+          <div class="code">JAVA_HOME=/opt/java<br/>MAVEN_HOME=/opt/maven</div>
+        </div>
+      </div>
+
+      <div>
+        <label ng-class="{'is-invalid-label': GOINPUTNAME[BindMount].$error.server}">Bind Mount</label>
+        <textarea ng-class="{'is-invalid-input': GOINPUTNAME[BindMount].$error.server}" type="text"
+               ng-model="BindMount" ng-required="true" rows="7"/>
+        <span class="form_error form-error"
+              ng-class="{'is-visible': GOINPUTNAME[BindMount].$error.server}"
+              ng-show="GOINPUTNAME[BindMount].$error.server">{{GOINPUTNAME[BindMount].$error.server}}</span>
+
+        <div class="help" ng-init="HelpToggleForBindMount = false">
+          <div class="help_header" ng-class="{'expanded': HelpToggleForBindMount}"
+               ng-click="HelpToggleForBindMount = !HelpToggleForBindMount">Help
+          </div>
+          <div class="help_body" ng-show="HelpToggleForBindMount">
+            <p>
+              Use bind mounts to mount one or more file or directory from the host machine on to the container. The BindMount
+              configuration requires the following configuration,
+            </p>
+            <strong>Name: </strong>Name of the volume.<br/>
+            <strong>SourcePath: </strong>The path from the host machine that needs to be mounted on the container.<br/>
+            <strong>ContainerPath: </strong>The path on the container to mount the volume at.<br/>
+            <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/bind-mounts.html" target="_blank"
+               rel="nofollow noreferrer">Read more about Bind Mounts</a>
+            <div class="code"
+                 ng-init='bindMountTemplate=[{"Name": "data","SourcePath": "/ecs/data", "ContainerPath": "/var/data"}]'>
+              <pre>{{ bindMountTemplate | json }}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <div class="ea-panel expanded">
+    <div class="ea-panel_header ea-panel_header_details">EC2 Instance Configuration</div>
+    <div class="ea-panel_body">
+      <p class="form-help-content-one-line">
+        The configurations specified here will override platform specific defaults from cluster profile.
+      </p>
+      <div class="col-2">
+        <div class="col">
+          <label ng-class="{'is-invalid-label': GOINPUTNAME[AMI].$error.server}">AMI ID</label>
+          <input ng-class="{'is-invalid-input': GOINPUTNAME[AMI].$error.server}" type="text" ng-model="AMI"
+                 ng-required="true"
+                 placeholder="e.g. ami-40286957"/>
+          <span class="form_error form-error" ng-class="{'is-visible': GOINPUTNAME[AMI].$error.server}"
+                ng-show="GOINPUTNAME[AMI].$error.server">{{GOINPUTNAME[AMI].$error.server}}</span>
+          <div class="form-help-content-one-line">
+            If left unspecified, the default <code>AMI ID</code> configured in the cluster profile will be used. ECS
+            optimised AMI are available <a target="_blank" rel="nofollow noreferrer"
+                                           href="http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html">here</a>.
+          </div>
+        </div>
+
+        <div class="col">
+          <label ng-class="{'is-invalid-label': GOINPUTNAME[InstanceType].$error.server}">Instance type</label>
+          <input ng-class="{'is-invalid-input': GOINPUTNAME[InstanceType].$error.server}" type="text"
+                 ng-model="InstanceType"
+                 ng-required="true" placeholder="e.g. t2.small"/>
+          <span class="form_error form-error" ng-class="{'is-visible': GOINPUTNAME[InstanceType].$error.server}"
+                ng-show="GOINPUTNAME[InstanceType].$error.server">{{GOINPUTNAME[InstanceType].$error.server}}</span>
+          <div class="form-help-content-one-line">
+            The specified <code>InstanceType</code> will be used to spin up new instances. If left unspecified, the
+            default <code>InstanceType</code> configured in the cluster profile will be used.
+            <a href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html" rel="nofollow noreferrer"
+               target="_blank">Read more about Instance Type</a>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label ng-class="{'is-invalid-label': GOINPUTNAME[IAMInstanceProfile].$error.server}">
+          IAM Instance Profile
+        </label>
+        <input ng-class="{'is-invalid-input': GOINPUTNAME[IAMInstanceProfile].$error.server}" type="text"
+               ng-model="IAMInstanceProfile" ng-required="true" placeholder="e.g. ecsInstanceRole"/>
+        <span class="form_error form-error" ng-class="{'is-visible': GOINPUTNAME[IAMInstanceProfile].$error.server}"
+              ng-show="GOINPUTNAME[IAMInstanceProfile].$error.server">{{GOINPUTNAME[IAMInstanceProfile].$error.server}}</span>
+
+        <div class="help" ng-init="HelpToggle = false">
+          <div class="help_header" ng-class="{'expanded': HelpToggle}" ng-click="HelpToggle = !HelpToggle">Help</div>
+          <div class="help_body" ng-show="HelpToggle">
+            The name of the IAM Instance Profile that will allow the ECS agent to make calls to AWS on your behalf.
+            If left unspecified, the IAM Instance Profile configured in the cluster profile will be used.<br/>
+            At the bare minimum your profile must permit the following API calls:
+            <div class="code pre">ecs:discoverPollEndpoint
+              ecs:registerContainerInstance
+              ecs:deregisterContainerInstance
+              ecs:poll
+              ecs:startTelemetrySession
+              ecs:submitContainerStateChange
+              ecs:submitTaskStateChange
+            </div>
+            <a href="http://docs.aws.amazon.com/AmazonECS/latest/developerguide/instance_IAM_role.html"
+               target="_blank" rel="nofollow noreferrer">Read more about IAMInstanceProfile</a>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label ng-class="{'is-invalid-label': GOINPUTNAME[SecurityGroupIds].$error.server}">
+          Security Group Id(s)
+          <small>(Enter comma-separated)</small>
+        </label>
+        <input ng-class="{'is-invalid-input': GOINPUTNAME[SecurityGroupIds].$error.server}" type="text"
+               ng-model="SecurityGroupIds" ng-required="true" placeholder="e.g. sg-45b00b38, sg-30d2694d, ..."/>
+        <span class="form_error form-error" ng-class="{'is-visible': GOINPUTNAME[SecurityGroupIds].$error.server}"
+              ng-show="GOINPUTNAME[SecurityGroupIds].$error.server">{{GOINPUTNAME[SecurityGroupIds].$error.server}}</span>
+        <div class="form-help-content-one-line">
+          EC2 instances will be assigned the security groups(s) specified here.
+          If left unspecified, the security group(s) configured in the cluster profile will be used.
+          <a href="http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_SecurityGroups.html"
+             target="_blank" rel="nofollow noreferrer">Read more about SecurityGroup</a>
+        </div>
+      </div>
+
+      <div>
+        <label ng-class="{'is-invalid-label': GOINPUTNAME[SubnetIds].$error.server}">
+          Subnet id(s)
+          <small>(Enter comma-separated)</small>
+        </label>
+        <input ng-class="{'is-invalid-input': GOINPUTNAME[SubnetIds].$error.server}" type="text" ng-model="SubnetIds"
+               ng-required="true" placeholder="e.g. subnet-xyz, subnet-abc"/>
+        <span class="form_error form-error" ng-class="{'is-visible': GOINPUTNAME[SubnetIds].$error.server}"
+              ng-show="GOINPUTNAME[SubnetIds].$error.server">{{GOINPUTNAME[SubnetIds].$error.server}}</span>
+        <div class="form-help-content-one-line">
+          If multiple subnet ids are specified, the subnet having the least number of EC2 instances will be used to
+          spin up a new EC2 instance that will run docker containers with this profile. If left unspecified, the
+          subnet id(s) configured in the cluster profile will be used.
+          <a href="http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Subnets.html#vpc-subnet-basics"
+             target="_blank" rel="nofollow noreferrer">Read more about subnet ID</a>
+        </div>
+      </div>
+
+      <div class="form_item_block">
+        <input type="checkbox" ng-model="RunAsSpotInstance" ng-required="false" ng-true-value="true"
+               ng-false-value="false"/>
+        <label>Run As Spot Instance</label>
+        <span class="form_error"
+              ng-show="GOINPUTNAME[RunAsSpotInstance].$error.server">{{GOINPUTNAME[RunAsSpotInstance].$error.server}}</span>
+      </div>
+
+      <div ng-show="RunAsSpotInstance == 'true'">
+        <fieldset>
+          <legend>Spot Instance Configuration</legend>
+          <div>
+            <label ng-class="{'is-invalid-label': GOINPUTNAME[SpotPrice].$error.server}">
+              Spot Price
+            </label>
+            <input ng-class="{'is-invalid-input': GOINPUTNAME[SpotPrice].$error.server}" type="text" ng-model="SpotPrice"
+                   ng-required="false"/>
+            <span class="form_error form-error" ng-class="{'is-visible': GOINPUTNAME[SpotPrice].$error.server}"
+                  ng-show="GOINPUTNAME[SpotPrice].$error.server">{{GOINPUTNAME[SpotPrice].$error.server}}</span>
+            <div class="form-help-content-one-line">
+              The maximum price per hour that you are willing to pay for a Spot Instance. If not provided defaults to On-Demand Price.
+            </div>
+          </div>
+          <div>
+            <label ng-class="{'is-invalid-label': GOINPUTNAME[SpotRequestExpiresAfter].$error.server}">
+              Spot Request Expires After(in minutes)
+            </label>
+            <input ng-class="{'is-invalid-input': GOINPUTNAME[SpotRequestExpiresAfter].$error.server}" type="text" ng-model="SpotRequestExpiresAfter"
+                   ng-required="false"/>
+            <span class="form_error form-error" ng-class="{'is-visible': GOINPUTNAME[SpotRequestExpiresAfter].$error.server}"
+                  ng-show="GOINPUTNAME[SpotRequestExpiresAfter].$error.server">{{GOINPUTNAME[SpotRequestExpiresAfter].$error.server}}</span>
+            <div class="form-help-content-one-line">
+              The plugin supports Spot Instance of type <b>one-time</b>.</br>
+              <b>SpotRequestExpiresAfter(in minutes)</b>
+              property is used to set the validity of the Spot Instance
+              request from the time the request is created. Defaults to 5 mins.
+            </div>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+  </div>
+</div>
+<style>
+
+  [data-test-id="modal-body"] {
+    background: #f4f8f9;
+  }
+
+  [data-plugin-style-id="ea-plugin"] .col-2 {
+    display: flex;
+    margin:  0 -15px;
+  }
+
+  [data-plugin-style-id="ea-plugin"] .col-2 .col {
+    width:   50%;
+    padding: 0 15px;
+  }
+
+  [data-plugin-style-id="ea-plugin"] .ea-panel {
+    margin-bottom: 15px;
+  }
+
+  [data-plugin-style-id="ea-plugin"] .ea-panel_header {
+    padding:       0px 30px;
+    background:    #e7eef0;
+    border-radius: 3px 3px 0 0;
+    font-weight:   600;
+    font-size:     14px;
+    line-height:   30px;
+  }
+
+  [data-plugin-style-id="ea-plugin"] .ea-panel_body {
+    padding:    20px 30px;
+    background: #fff;
+    border:     1px solid #e9edef;
+  }
+
+  [data-plugin-style-id="ea-plugin"] .form-help-content-one-line {
+    color:         #666;
+    font-style:    italic;
+    clear:         both;
+    font-size:     12px;
+    margin-bottom: 1rem;
+  }
+
+  [data-plugin-style-id="ea-plugin"] .form-help-content ol {
+    padding-left: 25px;
+  }
+
+  [data-plugin-style-id="ea-plugin"] .form-help-content {
+    background:    #f5f5f5;
+    clear:         both;
+    font-size:     12px;
+    padding:       10px;
+    margin-bottom: 1rem;
+  }
+
+  [data-plugin-style-id="ea-plugin"] .form-help-content label {
+    font-style: italic;
+  }
+
+  [data-plugin-style-id="ea-plugin"] .pre {
+    white-space: pre-line;
+  }
+
+  [data-plugin-style-id="ea-plugin"] .form-help-content-one-line .code,
+  [data-plugin-style-id="ea-plugin"] .form-help-content .code,
+  [data-plugin-style-id="ea-plugin"] .help_body .code {
+    padding:          10px;
+    overflow:         auto;
+    font-size:        95%;
+    line-height:      1.45;
+    background-color: #e8e8e8;
+    border-radius:    3px;
+    margin-bottom:    1rem;
+  }
+
+  [data-plugin-style-id="ea-plugin"] .form-help-content .warn {
+    color: #ebb561;
+  }
+
+  [data-plugin-style-id="ea-plugin"] label.required::after {
+    content: "*";
+    color:   #fa2d2d;
+  }
+
+  [data-plugin-style-id="ea-plugin"] input[type] {
+    margin-bottom: 5px;
+  }
+
+  [data-plugin-style-id="ea-plugin"] textarea {
+    margin-bottom: 5px !important;
+  }
+
+  [data-plugin-style-id="ea-plugin"] .help {
+    font-size: 13px;
+  }
+
+  [data-plugin-style-id="ea-plugin"] .help_header {
+    font-size: 13px;
+    margin:    10px 0;
+    cursor:    pointer;
+    color:     #666;
+  }
+
+  [data-plugin-style-id="ea-plugin"] .help_header:before {
+    content:      "\f105";
+    font-family:  'FontAwesome';
+    font-style:   normal;
+    font-weight:  normal;
+    font-size:    15px;
+    color:        #333;
+    margin-right: 5px;
+  }
+
+  [data-plugin-style-id="ea-plugin"] .help_header.expanded:before {
+    content: "\f107";
+  }
+
+  [data-plugin-style-id="ea-plugin"] .help_body {
+    padding:    20px;
+    background: #f5f5f5;
+    font-size:  12px;
+  }
+
+  [data-plugin-style-id="ea-plugin"] fieldset {
+    padding: 20px;
+    background-color: transparent;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+  }
+
+  [data-plugin-style-id="ea-plugin"] fieldset legend {
+    font-size: 0.875rem;
+    background-color: #fff;
+    padding: 5px;
+  }
+</style>

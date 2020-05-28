@@ -1,0 +1,19 @@
+# Intellij files
+.idea/
+
+# gradle's output dir
+build/
+out/
+src/main/resources-generated
+
+# the gradle temp dir
+.gradle
+
+# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
+!gradle-wrapper.jar
+
+#Classes
+classes/
+
+.bundle/
+contrib/cloudformation-template/bin/

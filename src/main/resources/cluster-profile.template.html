@@ -1,0 +1,1131 @@
+<div data-plugin-style-id="ea-plugin" style="margin: 20px">
+  <style>
+
+    [data-test-id="modal-body"] {
+      background: #f4f8f9;
+    }
+
+    [data-plugin-style-id="ea-plugin"] fieldset {
+      padding: 20px;
+      background-color: transparent;
+      margin-bottom: 20px;
+      border: 1px solid #ddd;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .form-help-content {
+      color:       #666;
+      font-style:  italic;
+      clear:       both;
+      font-size:   12px;
+      line-height: 16px;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .form-help-content ul {
+      list-style-type: circle;
+      margin-bottom:   10px;
+      margin-left:     20px;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .form-help-content li {
+      list-style-type: circle;
+      padding-top:     5px;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .code {
+      padding:          10px;
+      overflow:         auto;
+      font-size:        85%;
+      line-height:      1.45;
+      background-color: #e8e8e8;
+      border-radius:    3px;
+      margin-bottom:    1rem;
+    }
+
+    [data-plugin-style-id="ea-plugin"] code {
+      font-size:     95%;
+      white-space:   nowrap;
+      border-radius: 3px;
+    }
+
+    [data-plugin-style-id="ea-plugin"] strong {
+      font-weight: bold;
+    }
+
+    [data-plugin-style-id="ea-plugin"] textarea {
+      resize: vertical;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .form_item_block {
+      margin-bottom: 12px;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .form_error {
+      margin: 0;
+    }
+
+    [data-plugin-style-id="ea-plugin"] input,
+    [data-plugin-style-id="ea-plugin"] select,
+    [data-plugin-style-id="ea-plugin"] textarea {
+      margin: 0;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .ea-h-tab {
+      display:         flex;
+      flex-direction:  column;
+      justify-content: flex-start;
+      margin-bottom:   15px;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .ea-h-tab_tab-head {
+      display:        flex;
+      flex-direction: row;
+      margin:         0;
+      list-style:     none;
+      width:          100%;
+      padding:        0 20px;
+      float:          left;
+      border:         1px solid #e9edef;
+      background:     #e7eef0;
+      border-radius:  3px 3px 0 0;
+      box-sizing:     border-box;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .ea-h-tab_tab-head li {
+      font-size:     16px;
+      cursor:        pointer;
+      padding:       0px 20px;
+      height:        32px;
+      line-height:   31px;
+      color:         #333;
+      border-bottom: 0px;
+      overflow:      hidden;
+      position:      relative;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .ea-h-tab_tab-head li.active {
+      border-bottom: 3px solid #94399e;
+      color:         #94399e;
+      display:       block;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .ea-h-tab_container {
+      padding:    20px;
+      background: #fff;
+      border:     1px solid #e9edef;
+      border-top: none;
+      clear:      both;
+      box-sizing: border-box;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .ea-panel {
+      margin-bottom: 15px;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .ea-panel_header {
+      padding:       0px 30px;
+      background:    #e7eef0;
+      border-radius: 3px 3px 0 0;
+      font-weight:   600;
+      font-size:     14px;
+      line-height:   30px;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .ea-panel_body {
+      padding:    20px 30px;
+      background: #fff;
+      border:     1px solid #e9edef;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .ea-c-collapse {
+      background:    #fff;
+      position:      relative;
+      border:        1px solid #ececec;
+      border-radius: 3px;
+      margin-bottom: 10px;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .ea-c-collapse_header {
+      cursor:        pointer;
+      padding:       5px 50px 5px 30px;
+      border-bottom: 1px solid #ececec;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .ea-c-collapse_header:after {
+      font-family: 'FontAwesome';
+      font-style:  normal;
+      font-weight: normal;
+      position:    absolute;
+      right:       15px;
+      font-size:   30px;
+      top:         -6px;
+      color:       #ddd;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .ea-c-collapse_header.collapsed {
+      border-bottom: none;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .ea-c-collapse_header.collapsed:after {
+      content: "\f105";
+    }
+
+    [data-plugin-style-id="ea-plugin"] .ea-c-collapse_header.expanded:after {
+      content: "\f107";
+    }
+
+    [data-plugin-style-id="ea-plugin"] .ea-c-collapse_body {
+      padding: 20px 30px;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .col-2 {
+      display: flex;
+      margin:  0 -15px;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .col-2 .col {
+      width:   50%;
+      padding: 0 15px;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .col-3 {
+      display: flex;
+      margin:  0 -15px;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .col-3 .col {
+      width:   33%;
+      padding: 0 15px;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .help {
+      font-size: 13px;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .help_header {
+      font-size: 13px;
+      margin:    10px 0;
+      cursor:    pointer;
+      color:     #666;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .help_header:before {
+      content:      "\f105";
+      font-family:  'FontAwesome';
+      font-style:   normal;
+      font-weight:  normal;
+      font-size:    15px;
+      color:        #333;
+      margin-right: 5px;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .help_header.expanded:before {
+      content: "\f107";
+    }
+
+    [data-plugin-style-id="ea-plugin"] .help_body {
+      padding:    20px;
+      background: #f5f5f5;
+      font-size:  12px;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .help_body *:last-child {
+      margin-bottom: 0;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .help_body dl {
+      overflow: hidden;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .help_body dt {
+      float:         left;
+      clear:         left;
+      margin-bottom: 10px;
+      font-weight:   600;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .help_body dd {
+      margin-bottom: 10px;
+    }
+
+    [data-plugin-style-id="ea-plugin"] .help_body dt:after {
+      content:      ":";
+      font-weight:  600;
+      margin-left:  3px;
+      margin-right: 10px;
+    }
+
+    [data-plugin-style-id="ea-plugin"] label.required::after {
+      content: "*";
+      color:   #fa2d2d;
+    }
+
+    [data-plugin-style-id="ea-plugin"] input[type] {
+      margin-bottom: 2px;
+    }
+  </style>
+
+  <div class="ea-panel">
+    <div class="ea-panel_header">Elastic container configuration</div>
+    <div class="ea-panel_body">
+      <div class="form_item_block">
+        <label class="required">Go Server URL</label>
+        <input type="text" ng-model="GoServerUrl" ng-required="true" placeholder="e.g. http://host.name:8153/go"/>
+        <span class="form_error"
+              ng-show="GOINPUTNAME[GoServerUrl].$error.server">{{GOINPUTNAME[GoServerUrl].$error.server}}</span>
+        <div class="form-help-content">
+          <p>This is used by container to register with GoCD server. Server hostname must resolve in your container.
+            Don't use <code>localhost</code> or <code>127.0.0.1</code>.
+          </p>
+        </div>
+      </div>
+
+      <div class="form_item_block">
+        <label class="required">Container auto-register timeout (in minutes)</label>
+        <input type="text" ng-model="ContainerAutoregisterTimeout" ng-required="true" placeholder="e.g. 2"/>
+        <span class="form_error" ng-show="GOINPUTNAME[ContainerAutoregisterTimeout].$error.server">{{GOINPUTNAME[ContainerAutoregisterTimeout].$error.server}}</span>
+        <p class="form-help-content">
+          If an elastic agent created by the plugin does not register with the server within the
+          specified timeout period, the plugin will assume that the elastic agent failed to start and will be
+          terminated.
+        </p>
+      </div>
+
+      <div class="ea-c-collapse" ng-init="CollapseToggle=(CollapseToggle || false)">
+        <div class="ea-c-collapse_header"
+             ng-class="{'expanded' : CollapseToggle, 'collapsed' : !CollapseToggle}"
+             ng-click="CollapseToggle=!CollapseToggle">Advanced container configuration
+        </div>
+        <div class="ea-c-collapse_body" ng-show="CollapseToggle">
+          <div class="form_item_block">
+            <label>Environment Variables
+              <small>(Enter one variable per line)</small>
+            </label>
+            <textarea type="text" ng-model="EnvironmentVariables" ng-required="true" rows="5"></textarea>
+            <span class="form_error" ng-show="GOINPUTNAME[EnvironmentVariables].$error.server">{{GOINPUTNAME[EnvironmentVariables].$error.server}}</span>
+            <div class="form-help-content">
+              <p>These variables will be passed to the container as environment variables. Read more about
+                <a href="https://docs.docker.com/engine/reference/builder/#env" target="_blank"
+                   rel="nofollow noreferrer">ENV</a>.<br/>
+              </p>
+              <label>For example:</label>
+              <div class="code">TZ=PST<br/>JAVA_HOME=/opt/java</div>
+
+            </div>
+          </div>
+
+          <div class="form_item_block">
+            <label>Container data volume size</label>
+            <input type="text" ng-model="MaxContainerDataVolumeSize" ng-required="true" placeholder="default: 10"/>
+            <span class="form_error" ng-show="GOINPUTNAME[MaxContainerDataVolumeSize].$error.server">{{GOINPUTNAME[MaxContainerDataVolumeSize].$error.server}}</span>
+            <div class="form-help-content">Maximum volume size in GB that container can use to store container data.
+              Defaults to <code>10G</code>.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ea-panel">
+    <div class="ea-panel_header">AWS Credentials</div>
+    <div class="ea-panel_body form_item_block">
+      <div class="col-2">
+        <div class="col">
+          <label>AWS Access Key ID</label>
+          <input type="password" ng-model="AWSAccessKeyId" ng-required="true"/>
+          <span class="form_error" ng-show="GOINPUTNAME[AWSAccessKeyId].$error.server">{{GOINPUTNAME[AWSAccessKeyId].$error.server}}</span>
+        </div>
+        <div class="col">
+          <label>AWS Secret Access Key</label>
+          <input type="password" ng-model="AWSSecretAccessKey" ng-required="true"/>
+          <span class="form_error" ng-show="GOINPUTNAME[AWSSecretAccessKey].$error.server">{{GOINPUTNAME[AWSSecretAccessKey].$error.server}}</span>
+        </div>
+      </div>
+      <div class="help" ng-init="HelpToggle = false">
+        <div class="help_header" ng-class="{'expanded': HelpToggle}" ng-click="HelpToggle = !HelpToggle">Help</div>
+        <div class="help_body" ng-show="HelpToggle">
+          <p>AWS credentials provider chain that looks for credentials in this order:</p>
+          <ol>
+            <li><strong>Environment Variables -</strong>
+              <code>AWS_ACCESS_KEY_ID</code> and <code>AWS_SECRET_ACCESS_KEY</code> (RECOMMENDED since they are
+              recognized
+              by all the AWS SDKs and CLI except for .NET), or <code>AWS_ACCESS_KEY</code> and
+              <code>AWS_SECRET_KEY</code>
+              (only recognized by Java SDK)
+            </li>
+            <li><strong>Java System Properties -</strong> aws.accessKeyId and aws.secretKey</li>
+            <li>
+              <strong>Instance profile -</strong> Instance profile credentials delivered through the Amazon EC2 metadata
+              service
+            </li>
+          </ol>
+          <p>
+            However, the auto-detection of credentials can be disabled by providing the <code>AccessKey</code> and
+            <code>SecretAccessKey</code> of AWS user in above fields. Read more about
+            <a href="http://docs.aws.amazon.com/general/latest/gr/aws-security-credentials.html"
+               target="_blank" rel="nofollow noreferrer">AWS credentials</a>
+          </p>
+          <p><strong>Required permissions:</strong> Credentials must have permissions to make following api calls. </p>
+          <div class="code">
+            <pre>
+ec2:runInstances
+ec2:startInstances
+ec2:stopInstances
+ec2:createTags
+ec2:deleteTags
+ec2:terminateInstances
+ec2:describeInstances
+ec2:describeSubnets
+ec2:createVolume
+ec2:attachVolume
+iam:PassRole
+ecs:deregisterContainerInstance
+ecs:describeContainerInstances
+ecs:listContainerInstances
+ecs:registerTaskDefinition
+ecs:deregisterTaskDefinition
+ecs:startTask
+ecs:stopTask
+ecs:listTasks
+ecs:describeTasks
+ecs:describeTaskDefinition
+            </pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ea-panel">
+    <div class="ea-panel_header">EC2 instance settings</div>
+    <div class="ea-panel_body">
+      <p class="form-help-content">
+        These settings are common to both windows and linux instances.
+      </p>
+      <div class="form_item_block">
+        <label>AWS keypair name</label>
+        <input type="text" ng-model="KeyPairName" ng-required="true"/>
+        <span class="form_error"
+              ng-show="GOINPUTNAME[KeyPairName].$error.server">{{GOINPUTNAME[KeyPairName].$error.server}}</span>
+        <div class="form-help-content">
+          <p>The name of the keypair that you may use to SSH or RDP into the EC2 instance. Read more about
+            <a href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html" target="_blank"
+               rel="nofollow noreferrer">Key Pairs</a></p>
+        </div>
+      </div>
+
+      <div class="form_item_block">
+        <label>Subnet id(s)
+          <small>(Enter comma-separated)</small>
+        </label>
+        <input type="text" ng-model="SubnetIds" ng-required="true" placeholder="e.g. subnet-xyz, subnet-abc"/>
+        <span class="form_error"
+              ng-show="GOINPUTNAME[SubnetIds].$error.server">{{GOINPUTNAME[SubnetIds].$error.server}}</span>
+        <div class="form-help-content">
+          <p>If multiple subnet ids are specified, the subnet having the least number of EC2 instances will be used to
+            spin up a new EC2 instance. If left unspecified or the specified subnet(s) are not available at the time of
+            launching the EC2 instance, AWS will choose a default subnet from your default VPC for you. User can
+            override this from elastic profile. Read more about
+            <a href="http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Subnets.html" target="_blank"
+               rel="nofollow noreferrer">VPCs & Subnets</a>
+          </p>
+        </div>
+      </div>
+
+      <div class="form_item_block">
+        <label>Security Group Id(s)
+          <small>(Enter comma-separated)</small>
+        </label>
+        <input type="text" ng-model="SecurityGroupIds" ng-required="true"
+               placeholder="e.g. sg-45b00b38, sg-30d2694d, ..."/>
+        <span class="form_error" ng-show="GOINPUTNAME[SecurityGroupIds].$error.server">{{GOINPUTNAME[SecurityGroupIds].$error.server}}</span>
+        <div class="form-help-content">
+          <p> EC2 instances will be assigned the security groups(s) specified here. User can override this from elastic
+            profile. Read more about
+            <a href="http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_SecurityGroups.html" target="_blank"
+               rel="nofollow noreferrer">SecurityGroup</a>
+          </p>
+        </div>
+      </div>
+
+      <div class="form_item_block">
+        <label class="required">IAM Instance Profile</label>
+        <input type="text" ng-model="IamInstanceProfile" ng-required="true" placeholder="e.g. ecsInstanceRole"/>
+        <span class="form_error" ng-show="GOINPUTNAME[IamInstanceProfile].$error.server">{{GOINPUTNAME[IamInstanceProfile].$error.server}}</span>
+
+        <div class="help" ng-init="HelpToggleIAM = false">
+          <div class="help_header" ng-class="{'expanded': HelpToggleIAM}" ng-click="HelpToggleIAM = !HelpToggleIAM">
+            Help
+          </div>
+          <div class="help_body" ng-show="HelpToggleIAM">
+            <p>The name of the IAM Instance Profile that will allow the ECS agent to make calls to AWS on your behalf.
+              User can override this from elastic profile. At the bare minimum your profile must permit the following
+              API calls:</p>
+
+            <div class="code">
+              <pre>
+ ecs:discoverPollEndpoint
+ ecs:registerContainerInstance
+ ecs:deregisterContainerInstance
+ ecs:poll
+ ecs:startTelemetrySession
+ ecs:submitContainerStateChange
+ ecs:submitTaskStateChange
+              </pre>
+            </div>
+
+            <p>Read more about
+              <a href="http://docs.aws.amazon.com/AmazonECS/latest/developerguide/IAM_policies.html" target="_blank"
+                 rel="nofollow noreferrer">Amazon ECS IAM Policies, Roles and Permissions </a>
+              and
+              <a href="http://docs.aws.amazon.com/AmazonECS/latest/developerguide/instance_IAM_role.html"
+                 target="_blank" rel="nofollow noreferrer">ECS Container Instance IAM Role</a>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ea-h-tab">
+    <ul class="ea-h-tab_tab-head" ng-init="SelectedTab = (SelectedTab || 'linux')">
+      <li ng-click="SelectedTab='linux'" ng-class="{'active' : SelectedTab == 'linux' }">Linux</li>
+      <li ng-click="SelectedTab='windows'" ng-class="{'active' : SelectedTab == 'windows' }">Windows</li>
+    </ul>
+    <div class="ea-h-tab_container">
+      <p class="form-help-content">
+        This is to configure platform specific defaults for the instance. It will be used to launch new
+        {{SelectedTab | uppercase}} instance. However, user can override these defaults from elastic profile.
+      </p>
+      <div class="ea-h-tab_content" ng-show="SelectedTab == 'linux'">
+        <div class="form_item_block">
+          <label>AMI ID</label>
+          <input type="text" ng-model="LinuxAmi" placeholder="e.g. ami-40286957"/>
+          <span class="form_error"
+                ng-show="GOINPUTNAME[LinuxAmi].$error.server">{{GOINPUTNAME[LinuxAmi].$error.server}}</span>
+          <div class="form-help-content">
+            <p>The <code>AMI ID</code> will be used to launch a new instance. User can override this from elastic
+              profile. We recommend using an
+              <a href="http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html"
+                 target="_blank">Amazon ECS-Optimized AMI</a>.
+            </p>
+          </div>
+        </div>
+        <div class="form_item_block">
+          <label>Instance type</label>
+          <input type="text" ng-model="LinuxInstanceType" placeholder="e.g. t2.small"/>
+          <span class="form_error" ng-show="GOINPUTNAME[LinuxInstanceType].$error.server">{{GOINPUTNAME[LinuxInstanceType].$error.server}}</span>
+          <div class="form-help-content">
+            <p>The specified <code>InstanceType</code> will be used to spin up new instances. User can override this
+              from elastic profile.Read more about
+              <a href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html" target="_blank"
+                 rel="nofollow noreferrer">Instance
+                Type</a>
+            </p>
+          </div>
+        </div>
+
+        <div class="form_item_block">
+          <div class="col-3">
+            <div class="col">
+              <label>Operating system volume type</label>
+              <select ng-model="LinuxOSVolumeType" ng-init="LinuxOSVolumeType = (LinuxOSVolumeType || 'none')">
+                <option value="none">None</option>
+                <option value="gp2">General Purpose SSD (GP2)</option>
+                <option value="io1">Provisioned IOPS SSD (IO1)</option>
+                <option value="sc1">Cold HDD (SC1)</option>
+                <option value="st1">Throughput Optimized HDD (ST1)</option>
+                <option value="standard">Magnetic</option>
+              </select>
+              <span class="form_error" ng-show="GOINPUTNAME[LinuxOSVolumeType].$error.server">{{GOINPUTNAME[LinuxOSVolumeType].$error.server}}</span>
+            </div>
+
+            <div class="col" ng-show="LinuxOSVolumeType != 'none'">
+              <label>Volume size
+                <small>(in GB)</small>
+              </label>
+              <input type="text" ng-model="LinuxOSVolumeSize" ng-required="true"/>
+              <span class="form_error"
+                    ng-show="GOINPUTNAME[LinuxOSVolumeSize].$error.server">{{GOINPUTNAME[LinuxOSVolumeSize].$error.server}}</span>
+            </div>
+
+            <div class="col" ng-show="LinuxOSVolumeType == 'io1'">
+              <label>Provisioned IOPS</label>
+              <input type="text" ng-model="LinuxOSVolumeProvisionedIOPS" ng-required="LinuxOSVolumeType == 'io1'"/>
+              <span class="form_error"
+                    ng-show="GOINPUTNAME[LinuxOSVolumeProvisionedIOPS].$error.server">{{GOINPUTNAME[LinuxOSVolumeProvisionedIOPS].$error.server}}</span>
+            </div>
+          </div>
+          <p class="form-help-content">
+            Allows to override default operating system volume. This is used to store operating system and
+            docker container persistent data volumes. It will get deleted only on instance termination. Defaults to
+            <code>8G</code>.
+            See <a href="https://docs.docker.com/storage/volumes/" rel="nofollow noreferrer" target="_blank">docker
+            volumes</a>
+            for more information.
+          </p>
+        </div>
+
+        <div class="form_item_block">
+          <div class="col-3">
+            <div class="col">
+              <label>Docker Volume type</label>
+              <select ng-model="LinuxDockerVolumeType"
+                      ng-init="LinuxDockerVolumeType = (LinuxDockerVolumeType || 'none')">
+                <option value="none">None</option>
+                <option value="gp2">General Purpose SSD (GP2)</option>
+                <option value="io1">Provisioned IOPS SSD (IO1)</option>
+                <option value="sc1">Cold HDD (SC1)</option>
+                <option value="st1">Throughput Optimized HDD (ST1)</option>
+                <option value="standard">Magnetic</option>
+              </select>
+              <span class="form_error" ng-show="GOINPUTNAME[LinuxDockerVolumeType].$error.server">{{GOINPUTNAME[LinuxDockerVolumeType].$error.server}}</span>
+            </div>
+
+            <div class="col" ng-show="LinuxDockerVolumeType != 'none'">
+              <label>Volume size
+                <small>(in GB)</small>
+              </label>
+              <input type="text" ng-model="LinuxDockerVolumeSize"/>
+              <span class="form_error"
+                    ng-show="GOINPUTNAME[LinuxDockerVolumeSize].$error.server">{{GOINPUTNAME[LinuxDockerVolumeSize].$error.server}}</span>
+            </div>
+
+            <div class="col" ng-show="LinuxDockerVolumeType == 'io1'">
+              <label>Provisioned IOPS</label>
+              <input type="text" ng-model="LinuxDockerVolumeProvisionedIOPS"
+                     ng-required="LinuxDockerVolumeType == 'io1'"/>
+              <span class="form_error"
+                    ng-show="GOINPUTNAME[LinuxDockerVolumeProvisionedIOPS].$error.server">{{GOINPUTNAME[LinuxDockerVolumeProvisionedIOPS].$error.server}}</span>
+            </div>
+          </div>
+          <p class="form-help-content">
+            Allows to override default storage with specified type and size. This is used to store docker images and
+            metadata. It will get deleted only on instance termination. Defaults to <code>22G</code>.
+            See <a href="https://docs.docker.com/storage/storagedriver/" rel="nofollow noreferrer" target="_blank">docker
+            storage</a> for more information.
+          </p>
+        </div>
+
+        <div class="form_item_block">
+          <label>Instance creation timeout (in minutes)</label>
+          <input type="text" ng-model="LinuxRegisterTimeout" placeholder="default: 5"/>
+          <span class="form_error" ng-show="GOINPUTNAME[LinuxRegisterTimeout].$error.server">{{GOINPUTNAME[LinuxRegisterTimeout].$error.server}}</span>
+          <p class="form-help-content">
+            If an EC2 instance created by this plugin does not register with the container service within this timeout
+            period, the plugin will assume that the instance has failed to start and will be terminated.
+            Defaults to <code>5 minutes</code>.
+          </p>
+        </div>
+
+        <div class="form_item_block">
+          <div class="col-2">
+            <div class="col">
+              <label>Minimum instance required in cluster</label>
+              <input type="text" ng-model="MinLinuxInstanceCount" placeholder="default: 0"/>
+              <span class="form_error" ng-show="GOINPUTNAME[MinLinuxInstanceCount].$error.server">{{GOINPUTNAME[MinLinuxInstanceCount].$error.server}}</span>
+              <p class="form-help-content">
+                Minimum linux instances you'd like to have running at any point of time. Defaults to <code>0</code>.
+              </p>
+            </div>
+
+            <div class="col">
+              <label>Maximum instances allowed</label>
+              <input type="text" ng-model="MaxLinuxInstancesAllowed" placeholder="default: 5"/>
+              <span class="form_error" ng-show="GOINPUTNAME[MaxLinuxInstancesAllowed].$error.server">{{GOINPUTNAME[MaxLinuxInstancesAllowed].$error.server}}</span>
+              <p class="form-help-content">
+                Restricts maximum number of linux instances in the cluster. Plugin will not launch new linux instance
+                if the cluster is already running specified number of instances. Defaults to <code>5</code>.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="form_item_block">
+          <div class="col-2">
+            <div class="col">
+              <label class="required">Instance stop policy</label>
+              <select ng-model="LinuxStopPolicy" ng-required="true"
+                      ng-init="LinuxStopPolicy = (LinuxStopPolicy || 'StopIdleInstance')">
+                <option value="StopIdleInstance">Stop Idle Instance</option>
+                <option value="StopOldestInstance">Stop Oldest Instance</option>
+              </select>
+              <span class="form_error" ng-show="GOINPUTNAME[LinuxStopPolicy].$error.server">{{GOINPUTNAME[LinuxStopPolicy].$error.server}}</span>
+            </div>
+            <div class="col" ng-hide="LinuxStopPolicy == 'StopOldestInstance'">
+              <label>Idle timeout
+                <small>(in minutes)</small>
+              </label>
+              <input type="text" ng-model="StopLinuxInstanceAfter" ng-required="true" placeholder="default: 5"/>
+              <span class="form_error" ng-show="GOINPUTNAME[StopLinuxInstanceAfter].$error.server">{{GOINPUTNAME[StopLinuxInstanceAfter].$error.server}}</span>
+            </div>
+          </div>
+          <div class="help" ng-init="HelpLinuxStopPolicy = false">
+            <div class="help_header" ng-class="{'expanded': HelpLinuxStopPolicy}"
+                 ng-click="HelpLinuxStopPolicy = !HelpLinuxStopPolicy">
+              Help
+            </div>
+            <div class="help_body" ng-show="HelpLinuxStopPolicy">
+              <p>Plugin will stop instances in the ECS cluster based stop policy.</p>
+              <dl>
+                <dt>StopIdleInstance</dt>
+                <dd>The plugin stops the instance which is idle for more than specified idle timeout. Defaults to <code>5
+                  minutes</code>.
+                </dd>
+                <dt>StopOldestInstance</dt>
+                <dd>The plugin stop the oldest instance in the group. This option is useful when you're upgrading
+                  the instances in the cluster to a new <code>InstanceType</code> or <code>AMI</code> etc., so you can
+                  gradually replace instances of the old type with instances of the new type.
+                </dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+
+        <div class="form_item_block">
+          <label>Terminate stopped instance after(in minutes)</label>
+          <input type="text" ng-model="TerminateStoppedLinuxInstanceAfter" placeholder="default: 5"/>
+          <span class="form_error" ng-show="GOINPUTNAME[TerminateStoppedLinuxInstanceAfter].$error.server">{{GOINPUTNAME[TerminateStoppedLinuxInstanceAfter].$error.server}}</span>
+          <p class="form-help-content">
+            The plugin terminates the instance which is stopped for more than specified period. Defaults to
+            <code>5 minutes</code>.
+          </p>
+        </div>
+
+        <div>
+          Spot Instance configuration
+        </div>
+        <div>
+          <fieldset>
+            <div class="col-2">
+              <div class="col">
+                <label>Maximum Spot Instances Allowed in Cluster </label>
+                <input type="text" ng-model="MaxLinuxSpotInstanceAllowed" placeholder="default: 10"/>
+                <p class="form-help-content">
+                  Restricts the maximum number of linux Spot Instances allowed in the cluster. Plugin will not launch new
+                  Spot Instance
+                  if the cluster is already running specified number of instances or has Spot Instance requests pending. Defaults to <code>10</code>.
+                </p>
+              </div>
+
+              <div class="col">
+                <label>Terminate Idle Spot Instances after(in minutes) </label>
+                <input type="text" ng-model="TerminateIdleLinuxSpotInstanceAfter" placeholder="default: 30"/>
+                <p class="form-help-content">
+                  The plugin terminates a Spot Instance which is idle for more than specified period. Defaults to
+                  <code>30 minutes</code>.
+                </p>
+              </div>
+            </div>
+            <div class="help" ng-init="HelpToggleLinuxSpotInstance = false">
+              <div class="help_header" ng-class="{'expanded': HelpToggleLinuxSpotInstance}"
+                   ng-click="HelpToggleLinuxSpotInstance = !HelpToggleLinuxSpotInstance">
+                Help
+              </div>
+              <div class="help_body" ng-show="HelpToggleLinuxSpotInstance">
+                <p>The Spot Instance configuration is required if the Elastic Agent profiles are configured to run builds
+                  on a Spot Instance.
+                </p>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+
+
+        <div class="form_item_block">
+          <label>Userdata script</label>
+          <textarea ng-model="LinuxUserdataScript" rows="5"></textarea>
+          <span class="form_error" ng-show="GOINPUTNAME[LinuxUserdataScript].$error.server">{{GOINPUTNAME[LinuxUserdataScript].$error.server}}</span>
+
+          <div class="help" ng-init="HelpToggleLinuxUserdata = false">
+            <div class="help_header" ng-class="{'expanded': HelpToggleLinuxUserdata}"
+                 ng-click="HelpToggleLinuxUserdata = !HelpToggleLinuxUserdata">
+              Help
+            </div>
+            <div class="help_body" ng-show="HelpToggleLinuxUserdata">
+              <p>This allows user to execute command(s) on startup of ec2 instance. Read more about
+                <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html" target="_blank">userdata
+                  script</a>.
+              </p>
+              <label>For example:</label>
+              <div class="code">yum update -y<br/>service httpd start<br/>chkconfig httpd on</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="ea-h-tab_content" ng-show="SelectedTab == 'windows'">
+        <div class="form_item_block">
+          <label>AMI ID</label>
+          <input type="text" ng-model="WindowsAmi" placeholder="e.g. ami-40286957"/>
+          <span class="form_error"
+                ng-show="GOINPUTNAME[WindowsAmi].$error.server">{{GOINPUTNAME[WindowsAmi].$error.server}}</span>
+          <p class="form-help-content">
+            The <code>AMI ID</code> will be used to launch a new instance. User can override this from elastic profile.
+            We recommend using an
+            <a href="http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html"
+               target="_blank" rel="nofollow noreferrer">Amazon ECS-Optimized AMI</a>.
+          </p>
+        </div>
+        <div class="form_item_block">
+          <label>Instance type</label>
+          <input type="text" ng-model="WindowsInstanceType" placeholder="e.g. m5.2xlarge"/>
+          <span class="form_error" ng-show="GOINPUTNAME[WindowsInstanceType].$error.server">
+            {{GOINPUTNAME[WindowsInstanceType].$error.server}}</span>
+          <p class="form-help-content">
+            The specified <code>InstanceType</code> will be used to spin up new instances. User can override this
+            from elastic profile. Read more about
+            <a href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html" target="_blank"
+               rel="nofollow noreferrer">
+              Instance Type</a>
+          </p>
+        </div>
+
+        <div class="form_item_block">
+          <div class="col-3">
+            <div class="col">
+              <label>Volume type</label>
+              <select ng-model="WindowsOSVolumeType" ng-required="true"
+                      ng-init="WindowsOSVolumeType = (WindowsOSVolumeType || 'none')">
+                <option value="none">None</option>
+                <option value="gp2">General Purpose SSD (GP2)</option>
+                <option value="io1">Provisioned IOPS SSD (IO1)</option>
+                <option value="sc1">Cold HDD (SC1)</option>
+                <option value="st1">Throughput Optimized HDD (ST1)</option>
+                <option value="standard">Magnetic</option>
+              </select>
+              <span class="form_error" ng-show="GOINPUTNAME[WindowsOSVolumeType].$error.server">{{GOINPUTNAME[WindowsOSVolumeType].$error.server}}</span>
+            </div>
+
+            <div class="col" ng-show="WindowsOSVolumeType != 'none'">
+              <label>Volume size
+                <small>(in GB)</small>
+              </label>
+              <input type="text" ng-model="WindowsOSVolumeSize" ng-required="true"/>
+              <span class="form_error"
+                    ng-show="GOINPUTNAME[WindowsOSVolumeSize].$error.server">{{GOINPUTNAME[WindowsOSVolumeSize].$error.server}}</span>
+            </div>
+
+            <div class="col" ng-show="WindowsOSVolumeType == 'io1'">
+              <label>Provisioned IOPS</label>
+              <input type="text" ng-model="WindowsOSVolumeProvisionedIOPS" ng-required="WindowsOSVolumeType == 'io1'"/>
+              <span class="form_error"
+                    ng-show="GOINPUTNAME[WindowsOSVolumeProvisionedIOPS].$error.server">{{GOINPUTNAME[WindowsOSVolumeProvisionedIOPS].$error.server}}</span>
+            </div>
+
+          </div>
+          <p class="form-help-content">
+            Allows to override default storage with specified type and size. It will get deleted only on instance
+            termination. Defaults to <code>50G</code>.
+          </p>
+        </div>
+
+        <div class="form_item_block">
+          <label>Instance creation timeout (in minutes)</label>
+          <input type="text" ng-model="WindowsRegisterTimeout" placeholder="default: 15"/>
+          <span class="form_error" ng-show="GOINPUTNAME[WindowsRegisterTimeout].$error.server">{{GOINPUTNAME[WindowsRegisterTimeout].$error.server}}</span>
+
+          <p class="form-help-content">
+            If an EC2 instance created by this plugin does not register with the container service within specified
+            timeout period, the plugin will assume that the instance has failed to start and will be terminated.
+            Defaults to <code>15 minutes</code>.
+          </p>
+        </div>
+
+        <div class="form_item_block">
+          <div class="col-2">
+            <div class="col">
+              <label>Minimum instances required in cluster</label>
+              <input type="text" ng-model="MinWindowsInstanceCount" placeholder="default: 0"/>
+              <span class="form_error" ng-show="GOINPUTNAME[MinWindowsInstanceCount].$error.server">{{GOINPUTNAME[MinWindowsInstanceCount].$error.server}}</span>
+              <p class="form-help-content">
+                Minimum windows instances you'd like to have running at any point of time. Defaults to <code>0</code>.
+              </p>
+            </div>
+
+            <div class="col">
+              <label>Maximum instances allowed</label>
+              <input type="text" ng-model="MaxWindowsInstancesAllowed" placeholder="default: 5"/>
+              <span class="form_error" ng-show="GOINPUTNAME[MaxWindowsInstancesAllowed].$error.server">{{GOINPUTNAME[MaxWindowsInstancesAllowed].$error.server}}</span>
+              <p class="form-help-content">
+                Restricts maximum number of windows instances in the cluster. Plugin will not launch new windows
+                instance if the cluster is already running specified number of instances. Defaults to <code>5</code>.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="form_item_block">
+          <div class="col-2">
+            <div class="col">
+              <label class="required">Instance stop policy</label>
+              <select ng-model="WindowsStopPolicy" ng-required="true"
+                      ng-init="WindowsStopPolicy = (WindowsStopPolicy || 'StopIdleInstance')">
+                <option value="StopIdleInstance">Stop Idle Instance</option>
+                <option value="StopOldestInstance">Stop Oldest Instance</option>
+              </select>
+              <span class="form_error" ng-show="GOINPUTNAME[WindowsStopPolicy].$error.server">{{GOINPUTNAME[WindowsStopPolicy].$error.server}}</span>
+            </div>
+            <div class="col" ng-hide="WindowsStopPolicy == 'StopOldestInstance'">
+              <label>Idle timeout
+                <small>(in minutes)</small>
+              </label>
+              <input type="text" ng-model="StopWindowsInstanceAfter" ng-required="true" placeholder="default: 5"/>
+              <span class="form_error" ng-show="GOINPUTNAME[StopWindowsInstanceAfter].$error.server">{{GOINPUTNAME[StopWindowsInstanceAfter].$error.server}}</span>
+            </div>
+          </div>
+          <div class="help" ng-init="HelpWindowsStopPolicy = false">
+            <div class="help_header" ng-class="{'expanded': HelpWindowsStopPolicy}"
+                 ng-click="HelpWindowsStopPolicy = !HelpWindowsStopPolicy">
+              Help
+            </div>
+            <div class="help_body" ng-show="HelpWindowsStopPolicy">
+              <p>Plugin will stop instances in the ECS cluster based stop policy.</p>
+              <dl>
+                <dt>TerminateIdleInstance</dt>
+                <dd>The plugin terminates the instance which is idle for more than specified idle timeout. Defaults to
+                  <code>5 minutes</code>.
+                </dd>
+                <dt>StopIdleInstance</dt>
+                <dd>The plugin stops the instance which is idle for more than specified idle timeout. Defaults to <code>5
+                  minutes</code>.
+                </dd>
+                <dt>StopOldestInstance</dt>
+                <dd>The plugin stops the oldest instance in the group. This option is useful when you're upgrading
+                  the instances in the cluster to a new <code>InstanceType</code> or <code>AMI</code> etc., so you can
+                  gradually replace instances of the old type with instances of the new type.
+                </dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+
+        <div class="form_item_block">
+          <label>Terminate stopped instance after(in minutes)</label>
+          <input type="text" ng-model="TerminateStoppedWindowsInstanceAfter" placeholder="default: 5"/>
+          <span class="form_error" ng-show="GOINPUTNAME[TerminateStoppedWindowsInstanceAfter].$error.server">{{GOINPUTNAME[TerminateStoppedWindowsInstanceAfter].$error.server}}</span>
+          <p class="form-help-content">
+            The plugin terminates the instance which is stopped for more than specified period. Defaults to
+            <code>5 minutes</code>.
+          </p>
+        </div>
+
+        <div>
+          Spot Instance configuration
+        </div>
+        <div>
+          <fieldset>
+            <div class="col-2">
+              <div class="col">
+                <label>Maximum Spot Instances Allowed in Cluster </label>
+                <input type="text" ng-model="MaxWindowsSpotInstanceAllowed" placeholder="default: 10"/>
+                <p class="form-help-content">
+                  Restricts the maximum number of windows Spot Instances allowed in the cluster. Plugin will not launch new
+                  Spot Instance
+                  if the cluster is already running specified number of instances or has Spot Instance requests pending. Defaults to <code>10</code>.
+                </p>
+              </div>
+
+              <div class="col">
+                <label>Terminate Idle Spot Instances after(in minutes) </label>
+                <input type="text" ng-model="TerminateIdleWindowsSpotInstanceAfter" placeholder="default: 30"/>
+                <p class="form-help-content">
+                  The plugin terminates a Spot Instance which is idle for more than specified period. Defaults to
+                  <code>30 minutes</code>.
+                </p>
+              </div>
+            </div>
+            <div class="help" ng-init="HelpToggleWindowsSpotInstance = false">
+              <div class="help_header" ng-class="{'expanded': HelpToggleWindowsSpotInstance}"
+                   ng-click="HelpToggleWindowsSpotInstance = !HelpToggleWindowsSpotInstance">
+                Help
+              </div>
+              <div class="help_body" ng-show="HelpToggleWindowsSpotInstance">
+                <p>The Spot Instance configuration is required if the Elastic Agent profiles are configured to run builds
+                  on a Spot Instance.
+                </p>
+              </div>
+            </div>
+          </fieldset>
+        </div>
+
+        <div class="form_item_block">
+          <label>Userdata script</label>
+          <textarea ng-model="WindowsUserdataScript" rows="5"></textarea>
+          <span class="form_error" ng-show="GOINPUTNAME[WindowsUserdataScript].$error.server">{{GOINPUTNAME[WindowsUserdataScript].$error.server}}</span>
+          <div class="help" ng-init="HelpToggleWindowsUserdata = false">
+            <div class="help_header" ng-class="{'expanded': HelpToggleWindowsUserdata}"
+                 ng-click="HelpToggleWindowsUserdata = !HelpToggleWindowsUserdata">
+              Help
+            </div>
+            <div class="help_body" ng-show="HelpToggleWindowsUserdata">
+              <p>This allows user to execute <code>powershell</code> commands on startup of instance. Do not use
+                &ltpowershell&gt
+                or &ltscript&gt tags in script. Read more about
+                <a href="https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/ec2-windows-user-data.html"
+                   target="_blank" rel="nofollow noreferrer">userdata script</a>.
+              </p>
+              <label>For example:</label>
+              <div class="code">
+                $file = $env:SystemRoot + "\Temp\" + (Get-Date).ToString("MM-dd-yy-hh-mm")<br/>
+                New-Item $file -ItemType file
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ea-panel">
+    <div class="ea-panel_header">AWS Cluster configuration</div>
+
+    <div class="ea-panel_body">
+      <div class="form_item_block">
+        <label class="required">AWS Cluster Name</label>
+        <input type="text" ng-model="ClusterName" ng-required="true" placeholder="e.g. GoCD"/>
+        <span class="form_error"
+              ng-show="GOINPUTNAME[ClusterName].$error.server">{{GOINPUTNAME[ClusterName].$error.server}}</span>
+        <p class="form-help-content">Name of the
+          <a href="http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ECS_clusters.html" target="_blank"
+             rel="nofollow noreferrer">
+            ECS cluster</a> that will be managed by the plugin. This cluster must already exist.
+        </p>
+      </div>
+
+      <div class="form_item_block">
+        <label>AWS Region</label>
+        <input type="text" ng-model="AWSRegion" ng-required="true" placeholder="e.g. us-east-1"/>
+        <span class="form_error"
+              ng-show="GOINPUTNAME[AWSRegion].$error.server">{{GOINPUTNAME[AWSRegion].$error.server}}</span>
+        <p class="form-help-content">
+          If you don't specify an
+          <a href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html"
+             target="_blank" rel="nofollow noreferrer">Availability Zone</a>, AWS will choose one for you.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="ea-panel">
+    <div class="ea-panel_header">Log configuration</div>
+    <div class="ea-panel_body">
+      <div class="form_item_block">
+        <label>Log driver name</label>
+        <input type="text" ng-model="LogDriver" ng-required="true" placeholder="e.g. awslogs"/>
+        <span class="form_error"
+              ng-show="GOINPUTNAME[LogDriver].$error.server">{{GOINPUTNAME[LogDriver].$error.server}}</span>
+        <p class="form-help-content">
+          Read more about
+          <a href="http://docs.aws.amazon.com/AmazonECS/latest/developerguide/using_awslogs.html#enable_awslogs"
+             target="_blank" rel="nofollow noreferrer">enabling the awslogs</a> on your Container Instances. Supported
+          logging drivers are listed
+          <a href="https://docs.docker.com/engine/admin/logging/overview/#supported-logging-drivers"
+             target="_blank" rel="nofollow noreferrer">here.</a>
+        </p>
+      </div>
+
+      <div class="form_item_block">
+        <label>Log options
+          <small>(Enter one variable per line)</small>
+        </label>
+        <textarea ng-model="LogOptions" ng-required="true" placeholder="" rows="5"></textarea>
+        <span class="form_error"
+              ng-show="GOINPUTNAME[LogOptions].$error.server">{{GOINPUTNAME[LogOptions].$error.server}}</span>
+        <div class="help" ng-init="HelpToggleLogOptions = false">
+          <div class="help_header" ng-class="{'expanded': HelpToggleLogOptions}"
+               ng-click="HelpToggleLogOptions = !HelpToggleLogOptions">
+            Help
+          </div>
+          <div class="help_body" ng-show="HelpToggleLogOptions">
+            <p>Log options are used to filter log for the container instance. Read more about
+              <a href="https://docs.docker.com/engine/admin/logging/awslogs/" target="_blank" rel="nofollow noreferrer">log
+                options</a></p>
+            <label>For example:</label>
+            <div class="code">
+              awslogs-group=awslogs-mysql<br/>
+              awslogs-region=ap-northeast-1
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ea-panel">
+    <div class="ea-panel_header">Docker Registry</div>
+    <div class="ea-panel_body">
+      <div class="form_item_block">
+        <input type="radio" ng-model="PrivateDockerRegistryAuthType" value="default" id="use-default-docker-registry"
+               ng-init="PrivateDockerRegistryAuthType = (PrivateDockerRegistryAuthType || 'default')"/>
+        <label for="use-default-docker-registry">Default Docker Registry</label>
+      </div>
+      <div class="form_item_block">
+        <label>Select an authentication method if you want to use private Docker registry</label>
+        <input type="radio" ng-model="PrivateDockerRegistryAuthType" value="dockercfg"
+               id="private-registry-with-auth-token"/>
+        <label for="private-registry-with-auth-token">Authenticate using auth token</label>
+
+        <input type="radio" ng-model="PrivateDockerRegistryAuthType" value="docker"
+               id="private-registry-with-username-password"/>
+        <label for="private-registry-with-username-password">Authenticate using username and password</label>
+        <span class="form_error" ng-show="GOINPUTNAME[PrivateDockerRegistryAuthType].$error.server">{{GOINPUTNAME[PrivateDockerRegistryAuthType].$error.server}}</span>
+      </div>
+
+      <div class="form_item_block"
+           ng-show="PrivateDockerRegistryAuthType == 'dockercfg' || PrivateDockerRegistryAuthType == 'docker'">
+        <label class="required">Private docker registry url</label>
+        <input type="text" ng-model="PrivateDockerRegistryUrl" ng-required="true"
+               placeholder="e.g. https://your-private-registry-url"/>
+        <span class="form_error"
+              ng-show="GOINPUTNAME[PrivateDockerRegistryUrl].$error.server">{{GOINPUTNAME[PrivateDockerRegistryUrl].$error.server}}</span>
+      </div>
+
+      <div class="form_item_block"
+           ng-show="PrivateDockerRegistryAuthType == 'dockercfg' || PrivateDockerRegistryAuthType == 'docker'">
+        <label class="required">Email</label>
+        <input type="text" ng-model="PrivateDockerRegistryEmail" ng-required="true"/>
+        <span class="form_error"
+              ng-show="GOINPUTNAME[PrivateDockerRegistryEmail].$error.server">{{GOINPUTNAME[PrivateDockerRegistryEmail].$error.server}}</span>
+      </div>
+
+      <div class="form_item_block" ng-show="PrivateDockerRegistryAuthType == 'docker'">
+        <label class="required">Docker registry username</label>
+        <input type="text" ng-model="PrivateDockerRegistryUsername" ng-required="true"/>
+        <span class="form_error"
+              ng-show="GOINPUTNAME[PrivateDockerRegistryUsername].$error.server">{{GOINPUTNAME[PrivateDockerRegistryUsername].$error.server}}</span>
+      </div>
+
+      <div class="form_item_block" ng-show="PrivateDockerRegistryAuthType == 'docker'">
+        <label class="required">Docker registry password</label>
+        <input type="password" ng-model="PrivateDockerRegistryPassword" ng-required="true"/>
+        <span class="form_error"
+              ng-show="GOINPUTNAME[PrivateDockerRegistryPassword].$error.server">{{GOINPUTNAME[PrivateDockerRegistryPassword].$error.server}}</span>
+      </div>
+
+      <div class="form_item_block" ng-show="PrivateDockerRegistryAuthType == 'dockercfg'">
+        <label class="required">Docker registry auth token</label>
+        <input type="password" ng-model="PrivateDockerRegistryAuthToken" ng-required="true"
+               placeholder="docker registry auth token "/>
+        <span class="form_error"
+              ng-show="GOINPUTNAME[PrivateDockerRegistryAuthToken].$error.server">{{GOINPUTNAME[PrivateDockerRegistryAuthToken].$error.server}}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="ea-panel">
+    <div class="ea-panel_header">EFS</div>
+    <div class="ea-panel_body form_item_block">
+      <label>EFS IP address or DNS</label>
+      <input type="text" ng-model="EfsDnsOrIP" ng-required="true"/>
+      <span class="form_error"
+            ng-show="GOINPUTNAME[EfsDnsOrIP].$error.server">{{GOINPUTNAME[EfsDnsOrIP].$error.server}}</span>
+      <p class="form-help-content">
+        Plugin will use provided EFS volume and mount it at <code>/efs</code> in ec2 instances and in docker containers.
+        Multiple Amazon EC2 instances can access an <code>EFS</code> volumes, so it can be used to store credentials for
+        docker container.
+        <span>EFS settings is supported only on <code>RPM</code> based linux operating system. This may get removed
+          in subsequent releases.</span>
+      </p>
+    </div>
+  </div>
+</div>

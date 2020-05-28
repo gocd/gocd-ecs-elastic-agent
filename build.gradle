@@ -1,0 +1,150 @@
+/*
+ * Copyright 2020 ThoughtWorks, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+apply from: "https://raw.githubusercontent.com/gocd/gocd-plugin-gradle-task-helpers/master/helper.gradle?_=${(int) (new Date().toInstant().epochSecond / 60)}"
+apply plugin: 'java'
+
+group = 'com.thoughtworks.gocd'
+
+gocdPlugin {
+  id = 'com.thoughtworks.gocd.elastic-agent.ecs'
+  pluginVersion = '6.3.0'
+  goCdVersion = '19.3.0'
+  name = 'GoCD Elastic Agent Plugin for Amazon ECS'
+  description = 'GoCD Elastic Agent Plugin for Amazon Elastic Container Service allow for more efficient use of instances'
+  vendorName = 'ThoughtWorks, Inc.'
+  vendorUrl = 'https://github.com/gocd/gocd-ecs-elastic-agent'
+
+  githubRepo {
+    owner = System.getenv('GITHUB_USER') ?: 'bob'
+    repo = 'gocd-ecs-elastic-agent'
+    token = System.getenv('GITHUB_TOKEN') ?: 'bad-token'
+  }
+
+  pluginProject = project
+
+  prerelease = !"No".equalsIgnoreCase(System.getenv('PRERELEASE'))
+  assetsToRelease = [project.tasks.findByName('jar')]
+}
+
+version = gocdPlugin.fullVersion(project)
+
+repositories {
+  jcenter()
+  mavenLocal()
+}
+
+sourceSets {
+  test {
+    java {
+      compileClasspath += configurations.compileOnly
+      runtimeClasspath += configurations.compileOnly
+    }
+  }
+}
+
+project.ext.versions = [
+  goPluginApi: "18.9.0",
+  lombok     : "1.18.4",
+  gson       : '2.8.5',
+  guava      : '24.0-jre',
+  lang3      : '3.8.1',
+  joda       : '2.10.1',
+  collection4: '4.2',
+  awsSDK     : '1.11.454',
+  freemarker : '2.3.28',
+  jclOverSl4j: '1.7.25',
+  mockito    : '2.22.0',
+  jsonAssert : '1.5.0',
+  jsoup      : '1.10.2',
+  asserj     : '3.6.2',
+  junit5     : '5.3.0-M1'
+]
+
+dependencies {
+  annotationProcessor group: 'org.projectlombok', name: 'lombok', version: project.versions.lombok
+
+  compileOnly group: 'cd.go.plugin', name: 'go-plugin-api', version: project.versions.goPluginApi
+  compileOnly group: 'org.projectlombok', name: 'lombok', version: project.versions.lombok
+
+  compile group: 'com.google.code.gson', name: 'gson', version: project.versions.gson
+  compile group: 'com.google.guava', name: 'guava', version: project.versions.guava
+  compile group: 'org.apache.commons', name: 'commons-lang3', version: project.versions.lang3
+  compile group: 'joda-time', name: 'joda-time', version: project.versions.joda
+  compile group: 'org.apache.commons', name: 'commons-collections4', version: project.versions.collection4
+
+  compile group: 'com.amazonaws', name: 'aws-java-sdk-ecs', version: project.versions.awsSDK
+  compile group: 'com.amazonaws', name: 'aws-java-sdk-ec2', version: project.versions.awsSDK
+  compile group: 'org.freemarker', name: 'freemarker', version: project.versions.freemarker
+  compile group: 'org.slf4j', name: 'jcl-over-slf4j', version: project.versions.jclOverSl4j
+
+  testCompile group: 'org.mockito', name: 'mockito-core', version: project.versions.mockito
+  testCompile group: 'org.skyscreamer', name: 'jsonassert', version: project.versions.jsonAssert
+  testCompile group: 'org.jsoup', name: 'jsoup', version: project.versions.jsoup
+  testCompile group: 'org.assertj', name: 'assertj-core', version: project.versions.asserj
+
+  testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: project.versions.junit5
+  testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: project.versions.junit5
+  testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-params', version: project.versions.junit5
+}
+
+tasks.withType(JavaCompile) {
+  options.deprecation = true
+  options.encoding = 'utf-8'
+  options.warnings = true
+  options.compilerArgs << "-Xlint:all"
+  options.compilerArgs << "-Xlint:-serial"
+}
+
+test {
+  useJUnitPlatform()
+}
+
+jar {
+  from(configurations.compile) {
+    into "lib/"
+  }
+}
+
+task bundleInstall {
+  inputs.files(project.files('contrib/cloudformation-template/Gemfile', 'contrib/cloudformation-template/Gemfile.lock'))
+  outputs.dir(project.file('.bundle'))
+
+  doLast {
+    project.exec {
+      commandLine = ['bundle', 'install', '--path', project.file('.bundle'), '--jobs=4', '--clean']
+      workingDir = project.file('contrib/cloudformation-template')
+      standardOutput = System.out
+      errorOutput = System.err
+    }
+  }
+}
+
+task stackfile {
+  dependsOn bundleInstall
+
+  inputs.file(project.file('contrib/cloudformation-template/ecs_cloud_formation_template.rb'))
+  outputs.file(project.file("${project.buildDir}/ecs_cloud_formation_template.json"))
+
+  doLast {
+    project.exec {
+      commandLine = ['bundle', 'exec', 'ruby', 'ecs_cloud_formation_template.rb', 'expand']
+      workingDir = project.file('contrib/cloudformation-template')
+      standardOutput = new FileOutputStream(project.file("${project.buildDir}/ecs_cloud_formation_template.json"))
+      errorOutput = System.err
+    }
+  }
+}
