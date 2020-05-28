@@ -29,7 +29,7 @@ class PluginPropertiesTest {
         assertThat(properties.get("name")).isEqualTo("GoCD Elastic Agent Plugin for Amazon ECS");
         assertThat(properties.get("description")).isEqualTo("GoCD Elastic Agent Plugin for Amazon Elastic Container Service allow for more efficient use of instances");
         assertThat(properties.get("vendorName")).isEqualTo("ThoughtWorks, Inc.");
-        assertThat(properties.get("vendorUrl")).isEqualTo("https://github.com/gocd-private/ecs-elastic-agent-plugin");
+        assertThat(properties.get("vendorUrl")).isEqualTo("https://github.com/gocd/gocd-ecs-elastic-agent");
         assertThat(properties.get("goCdVersion")).isEqualTo("19.3.0");
         assertThat(properties.get("version")).isNotBlank();
     }
