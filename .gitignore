@@ -15,7 +15,9 @@ src/main/resources-generated
 #Classes
 classes/
 
-.bundle/
-contrib/cloudformation-template/bin/
+contrib/cloudformation-template/.bundle/ruby
 
 .DS_Store
+
+.ruby-version
+.ruby-gemset

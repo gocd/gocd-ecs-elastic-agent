@@ -80,25 +80,25 @@ dependencies {
   compileOnly group: 'cd.go.plugin', name: 'go-plugin-api', version: project.versions.goPluginApi
   compileOnly group: 'org.projectlombok', name: 'lombok', version: project.versions.lombok
 
-  compile group: 'com.google.code.gson', name: 'gson', version: project.versions.gson
-  compile group: 'com.google.guava', name: 'guava', version: project.versions.guava
-  compile group: 'org.apache.commons', name: 'commons-lang3', version: project.versions.lang3
-  compile group: 'joda-time', name: 'joda-time', version: project.versions.joda
-  compile group: 'org.apache.commons', name: 'commons-collections4', version: project.versions.collection4
+  implementation group: 'com.google.code.gson', name: 'gson', version: project.versions.gson
+  implementation group: 'com.google.guava', name: 'guava', version: project.versions.guava
+  implementation group: 'org.apache.commons', name: 'commons-lang3', version: project.versions.lang3
+  implementation group: 'joda-time', name: 'joda-time', version: project.versions.joda
+  implementation group: 'org.apache.commons', name: 'commons-collections4', version: project.versions.collection4
 
-  compile group: 'com.amazonaws', name: 'aws-java-sdk-ecs', version: project.versions.awsSDK
-  compile group: 'com.amazonaws', name: 'aws-java-sdk-ec2', version: project.versions.awsSDK
-  compile group: 'org.freemarker', name: 'freemarker', version: project.versions.freemarker
-  compile group: 'org.slf4j', name: 'jcl-over-slf4j', version: project.versions.jclOverSl4j
+  implementation group: 'com.amazonaws', name: 'aws-java-sdk-ecs', version: project.versions.awsSDK
+  implementation group: 'com.amazonaws', name: 'aws-java-sdk-ec2', version: project.versions.awsSDK
+  implementation group: 'org.freemarker', name: 'freemarker', version: project.versions.freemarker
+  implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: project.versions.jclOverSl4j
 
-  testCompile group: 'org.mockito', name: 'mockito-core', version: project.versions.mockito
-  testCompile group: 'org.skyscreamer', name: 'jsonassert', version: project.versions.jsonAssert
-  testCompile group: 'org.jsoup', name: 'jsoup', version: project.versions.jsoup
-  testCompile group: 'org.assertj', name: 'assertj-core', version: project.versions.asserj
+  testImplementation group: 'org.mockito', name: 'mockito-core', version: project.versions.mockito
+  testImplementation group: 'org.skyscreamer', name: 'jsonassert', version: project.versions.jsonAssert
+  testImplementation group: 'org.jsoup', name: 'jsoup', version: project.versions.jsoup
+  testImplementation group: 'org.assertj', name: 'assertj-core', version: project.versions.asserj
 
-  testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: project.versions.junit5
-  testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: project.versions.junit5
-  testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-params', version: project.versions.junit5
+  testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: project.versions.junit5
+  testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: project.versions.junit5
+  testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-params', version: project.versions.junit5
 }
 
 tasks.withType(JavaCompile) {
@@ -114,7 +114,7 @@ test {
 }
 
 jar {
-  from(configurations.compile) {
+  from(configurations.compileClasspath) {
     into "lib/"
   }
 }
@@ -125,7 +125,7 @@ task bundleInstall {
 
   doLast {
     project.exec {
-      commandLine = ['bundle', 'install', '--path', project.file('.bundle'), '--jobs=4', '--clean']
+      commandLine = ['bundle']
       workingDir = project.file('contrib/cloudformation-template')
       standardOutput = System.out
       errorOutput = System.err
