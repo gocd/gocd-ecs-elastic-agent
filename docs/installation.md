@@ -31,7 +31,9 @@ To configure ECS using the AWS CloudFormation templates, follow these steps,
   * ```$ aws cloudformation create-stack --stack-name <stack_name> --region <region_name> --capabilities CAPABILITY_IAM --template-body file:///<path_to_json_template_file>```
 
 ---
-### Alternatively configure ECS manually (if you prefer to manually configure ECS instead of using the above CloudFormation template).
+### Alternatively configure ECS manually
+
+Listed below are the steps to be followed if you prefer to manually configure ECS instead of using the above CloudFormation template:
 
   * An ECS cluster. This cluster MUST be empty, as the plugin will manage instances and scaling in this cluster.
   * An IAM user with permissions to manage the ECS cluster. The credentials for this IAM user may be provided to the this plugin or applied via an IAM instance profile to the EC2 instance running the GoCD server. The following IAM permissions are needed
