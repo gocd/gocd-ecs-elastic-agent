@@ -15,12 +15,32 @@ Table of Contents
 
   * [Building the code base](#building-the-code-base)
   * [Installing and configuring the plugin](docs/installation.md)
+    * [Prerequisites](docs/installation.md#prerequisites)
+        * [Configure ECS using the *AWS CloudFormation* template](docs/installation.md#configure-ecs-using-the-aws-cloudformation-template)
+        * [Alternatively configure ECS manually](docs/installation.md#alternatively-configure-ecs-manually)
+    * [Installation](docs/installation.md#installation)
+    * [Configuration](docs/installation.md#configuration)
+        * [Configure cluster profile(s)](docs/cluster_profile_configuration.md)
+            * [Cluster configuration](docs/cluster_profile_configuration.md#cluster-configuration)
+            * [Advanced Container Configuration](docs/cluster_profile_configuration.md#advanced-container-configuration)
+            * [AWS Credentials](docs/cluster_profile_configuration.md#aws-credentials)
+            * [EC2 Instance Settings](docs/cluster_profile_configuration.md#ec2-instance-settings)
+                * [For Linux](docs/cluster_profile_configuration.md#ec2-instance-settings-for-linux)
+                * [For Windows](docs/cluster_profile_configuration.md#ec2-instance-settings-for-windows)
+            * [AWS Cluster Configuration](docs/cluster_profile_configuration.md#aws-cluster-configuration)
+            * [Log Configuration](docs/cluster_profile_configuration.md#log-configuration)
+            * [Docker Registry](docs/cluster_profile_configuration.md#docker-registry)
+            * [EFS](docs/cluster_profile_configuration.md#efs)
+        * [Create elastic agent profile(s)](docs/elastic_profile_configuration.md)
+            * [container-configuration](docs/elastic_profile_configuration.md#container-configuration)
+            * [ec2-instance-configuration](docs/elastic_profile_configuration.md#ec2-instance-configuration)
+        * [Configure job to use an elastic agent profile](docs/job_configuration.md)
   * [FAQ](docs/faq.md)
   * [Troubleshooting](docs/troubleshooting.md)
 
 ## Building the code base
 
-To build the jar, run `./gradlew clean test assemble`
+To build the jar, run `./gradlew clean check assemble`
 
 ## License
 
