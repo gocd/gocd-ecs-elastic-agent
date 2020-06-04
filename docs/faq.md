@@ -51,3 +51,9 @@ Yes, configuring plugin for different environments is supported using cluster pr
 ## Q. I am using Spot Instances, how do I check my savings?
 
 The plugin currently does not capture any data to calculate the savings. AWS provides a Spot Instance [Savings Summary](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-savings.html) page to get this information. Alternatively, you can also subscribe to the [Spot Instance Data Feed](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-data-feeds.html) to get this information from AWS.
+
+## Q. My agents are getting killed while running a job. What can be the issue?
+
+You might have multiple GoCD servers with cluster profiles pointing to the same ECS cluster with the same name.
+This would cause the plugin of one GoCD server to terminate pods started by the plugin in the other GoCD servers, since those pods won't register with the former.
+Make sure you use different cluster names for each of your running server instances.
