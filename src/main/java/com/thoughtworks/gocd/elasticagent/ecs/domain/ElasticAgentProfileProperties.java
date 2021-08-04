@@ -48,6 +48,9 @@ public class ElasticAgentProfileProperties {
     public static final String TASK_ROLE_ARN = "TaskRoleArn";
     public static final String SECURITY_GROUP_IDS = "SecurityGroupIds";
     public static final String SUBNET_IDS = "SubnetIds";
+    public static final String SECRET_NAME = "SecretName";
+    public static final String SECRET_VALUE = "SecretValue";
+    public static final String EXECUTION_ROLE_ARN = "ExecutionRoleArn";
     public static final String PLATFORM = "Platform";
     public static final String BIND_MOUNT = "BindMount";
     public static final String RUN_AS_SPOT_INSTANCE = "RunAsSpotInstance";
@@ -113,6 +116,21 @@ public class ElasticAgentProfileProperties {
     @SerializedName(SUBNET_IDS)
     @Metadata(key = SUBNET_IDS, required = false, secure = false)
     private String subnetIds;
+
+    @Expose
+    @SerializedName(SECRET_NAME)
+    @Metadata(key = SECRET_NAME, required = false, secure = false)
+    private String secretName;
+
+    @Expose
+    @SerializedName(SECRET_VALUE)
+    @Metadata(key = SECRET_VALUE, required = false, secure = false)
+    private String secretValue;
+
+    @Expose
+    @SerializedName(EXECUTION_ROLE_ARN)
+    @Metadata(key = EXECUTION_ROLE_ARN, required = false, secure = false)
+    private String executionRoleArn;
 
     @Expose
     @SerializedName(SECURITY_GROUP_IDS)
@@ -191,6 +209,18 @@ public class ElasticAgentProfileProperties {
 
     public List<String> getSubnetIds() {
         return listFromCommaSeparatedString(subnetIds);
+    }
+
+    public String getSecretName() {
+        return stripToEmpty(secretName);
+    }
+
+    public String getSecretValue() {
+        return stripToEmpty(secretValue);
+    }
+
+    public String getExecutionRoleArn() {
+        return executionRoleArn;
     }
 
     public List<String> getSecurityGroupIds() {

@@ -114,6 +114,27 @@ class ElasticAgentProfilePropertiesTest {
                 "    }\n" +
                 "  },\n" +
                 "  {\n" +
+                "    \"key\": \"SecretName\",\n" +
+                "    \"metadata\": {\n" +
+                "      \"required\": false,\n" +
+                "      \"secure\": false\n" +
+                "    }\n" +
+                "  },\n" +
+                "  {\n" +
+                "    \"key\": \"SecretValue\",\n" +
+                "    \"metadata\": {\n" +
+                "      \"required\": false,\n" +
+                "      \"secure\": false\n" +
+                "    }\n" +
+                "  },\n" +
+                "  {\n" +
+                "    \"key\": \"ExecutionRoleArn\",\n" +
+                "    \"metadata\": {\n" +
+                "      \"required\": false,\n" +
+                "      \"secure\": false\n" +
+                "    }\n" +
+                "  },\n" +
+                "  {\n" +
                 "    \"key\": \"SecurityGroupIds\",\n" +
                 "    \"metadata\": {\n" +
                 "      \"required\": false,\n" +
@@ -178,6 +199,9 @@ class ElasticAgentProfilePropertiesTest {
                 "  \"AMI\": \"ami-123456\",\n" +
                 "  \"InstanceType\": \"t2.small\",\n" +
                 "  \"SubnetIds\": \"subnet-abc045we\",\n" +
+                "  \"SecretName\": \"secret-name\",\n" +
+                "  \"SecretValue\": \"secret-value\",\n" +
+                "  \"ExecutionRoleArn\": \"executionRoleArn\",\n" +
                 "  \"SecurityGroupIds\": \"sg-ec33sl0,sg-ec33sl2,sg-ec33sl1\",\n" +
                 "  \"EC2TerminateAfter\": \"240\",\n" +
                 "  \"IAMInstanceProfile\": \"ecsInstanceRole\",\n" +
@@ -197,6 +221,9 @@ class ElasticAgentProfilePropertiesTest {
         assertThat(elasticAgentProfileProperties.getAmiID()).isEqualTo("ami-123456");
         assertThat(elasticAgentProfileProperties.getInstanceType()).isEqualTo("t2.small");
         assertThat(elasticAgentProfileProperties.getSubnetIds()).contains("subnet-abc045we");
+        assertThat(elasticAgentProfileProperties.getSecretName()).isEqualTo("secret-name");
+        assertThat(elasticAgentProfileProperties.getSecretValue()).isEqualTo("secret-value");
+        assertThat(elasticAgentProfileProperties.getExecutionRoleArn()).isEqualTo("executionRoleArn");
         assertThat(elasticAgentProfileProperties.getSecurityGroupIds()).contains("sg-ec33sl0", "sg-ec33sl2", "sg-ec33sl1");
         assertThat(elasticAgentProfileProperties.getEC2IamInstanceProfile()).isEqualTo("ecsInstanceRole");
         assertThat(elasticAgentProfileProperties.isPrivileged()).isEqualTo(true);
