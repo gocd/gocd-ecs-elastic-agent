@@ -71,7 +71,7 @@ class ValidateClusterProfileRequestExecutorTest {
 
         JSONAssert.assertEquals("[\n" +
                 "  {\n" +
-                "    \"message\": \"Log driver unknown-log-driver-name is not supported. Supported log drivers are [json-file, syslog, journald, gelf, fluentd, awslogs, splunk] \",\n" +
+                "    \"message\": \"Log driver unknown-log-driver-name is not supported. Supported log drivers are [json-file, syslog, journald, gelf, fluentd, awslogs, splunk, awsfirelens] \",\n" +
                 "    \"key\": \"LogDriver\"\n" +
                 "  }\n" +
                 "]", response.responseBody(), true);
