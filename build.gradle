@@ -43,62 +43,36 @@ gocdPlugin {
 version = gocdPlugin.fullVersion(project)
 
 repositories {
-  jcenter()
+  mavenCentral()
   mavenLocal()
 }
 
-sourceSets {
-  test {
-    java {
-      compileClasspath += configurations.compileOnly
-      runtimeClasspath += configurations.compileOnly
-    }
-  }
-}
-
-project.ext.versions = [
-  goPluginApi: "18.9.0",
-  lombok     : "1.18.4",
-  gson       : '2.8.5',
-  guava      : '24.0-jre',
-  lang3      : '3.8.1',
-  joda       : '2.10.1',
-  collection4: '4.2',
-  awsSDK     : '1.11.454',
-  freemarker : '2.3.28',
-  jclOverSl4j: '1.7.25',
-  mockito    : '2.22.0',
-  jsonAssert : '1.5.0',
-  jsoup      : '1.10.2',
-  asserj     : '3.6.2',
-  junit5     : '5.3.0-M1'
-]
-
 dependencies {
-  annotationProcessor group: 'org.projectlombok', name: 'lombok', version: project.versions.lombok
+  annotationProcessor group: 'org.projectlombok', name: 'lombok', version: '1.18.4'
 
-  compileOnly group: 'cd.go.plugin', name: 'go-plugin-api', version: project.versions.goPluginApi
-  compileOnly group: 'org.projectlombok', name: 'lombok', version: project.versions.lombok
+  compileOnly group: 'cd.go.plugin', name: 'go-plugin-api', version: '18.9.0'
+  compileOnly group: 'org.projectlombok', name: 'lombok', version: '1.18.4'
 
-  implementation group: 'com.google.code.gson', name: 'gson', version: project.versions.gson
-  implementation group: 'com.google.guava', name: 'guava', version: project.versions.guava
-  implementation group: 'org.apache.commons', name: 'commons-lang3', version: project.versions.lang3
-  implementation group: 'joda-time', name: 'joda-time', version: project.versions.joda
-  implementation group: 'org.apache.commons', name: 'commons-collections4', version: project.versions.collection4
+  implementation group: 'com.google.code.gson', name: 'gson', version: '2.8.5'
+  implementation group: 'com.google.guava', name: 'guava', version: '24.0-jre'
+  implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
+  implementation group: 'joda-time', name: 'joda-time', version: '2.10.1'
+  implementation group: 'org.apache.commons', name: 'commons-collections4', version: '4.2'
 
-  implementation group: 'com.amazonaws', name: 'aws-java-sdk-ecs', version: project.versions.awsSDK
-  implementation group: 'com.amazonaws', name: 'aws-java-sdk-ec2', version: project.versions.awsSDK
-  implementation group: 'org.freemarker', name: 'freemarker', version: project.versions.freemarker
-  implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: project.versions.jclOverSl4j
+  implementation group: 'com.amazonaws', name: 'aws-java-sdk-ecs', version: '1.11.454'
+  implementation group: 'com.amazonaws', name: 'aws-java-sdk-ec2', version: '1.11.454'
+  implementation group: 'org.freemarker', name: 'freemarker', version: '2.3.28'
+  implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.25'
 
-  testImplementation group: 'org.mockito', name: 'mockito-core', version: project.versions.mockito
-  testImplementation group: 'org.skyscreamer', name: 'jsonassert', version: project.versions.jsonAssert
-  testImplementation group: 'org.jsoup', name: 'jsoup', version: project.versions.jsoup
-  testImplementation group: 'org.assertj', name: 'assertj-core', version: project.versions.asserj
+  testImplementation group: 'cd.go.plugin', name: 'go-plugin-api', version: '18.9.0'
+  testImplementation group: 'org.mockito', name: 'mockito-core', version: '2.22.0'
+  testImplementation group: 'org.skyscreamer', name: 'jsonassert', version: '1.5.0'
+  testImplementation group: 'org.jsoup', name: 'jsoup', version: '1.10.2'
+  testImplementation group: 'org.assertj', name: 'assertj-core', version: '3.6.2'
 
-  testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: project.versions.junit5
-  testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: project.versions.junit5
-  testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-params', version: project.versions.junit5
+  testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.3.0-M1'
+  testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-params', version: '5.3.0-M1'
+  testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.3.0-M1'
 }
 
 tasks.withType(JavaCompile) {
@@ -114,7 +88,7 @@ test {
 }
 
 jar {
-  from(configurations.compileClasspath) {
+  from(configurations.runtimeClasspath) {
     into "lib/"
   }
 }
