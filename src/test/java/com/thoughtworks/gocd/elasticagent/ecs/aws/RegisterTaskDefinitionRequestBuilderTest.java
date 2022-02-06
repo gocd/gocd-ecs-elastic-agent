@@ -33,7 +33,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
-import static org.mockito.MockitoAnnotations.initMocks;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 class RegisterTaskDefinitionRequestBuilderTest {
 
@@ -47,7 +47,7 @@ class RegisterTaskDefinitionRequestBuilderTest {
 
     @BeforeEach
     void setUp() {
-        initMocks(this);
+        openMocks(this);
         builder = new RegisterTaskDefinitionRequestBuilder();
 
     }

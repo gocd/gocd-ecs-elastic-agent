@@ -37,7 +37,7 @@ import static com.thoughtworks.gocd.elasticagent.ecs.Constants.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.*;
-import static org.mockito.MockitoAnnotations.initMocks;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 class TaskHelperTest {
     @Mock
@@ -65,7 +65,7 @@ class TaskHelperTest {
 
     @BeforeEach
     void setUp() {
-        initMocks(this);
+        openMocks(this);
 
         when(pluginSettings.ecsClient()).thenReturn(ecsClient);
         when(pluginSettings.getClusterName()).thenReturn("Cluster-Name");

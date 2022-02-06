@@ -36,7 +36,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
-import static org.mockito.MockitoAnnotations.initMocks;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class JobCompletionRequestExecutorTest {
     @Mock
@@ -48,7 +48,7 @@ public class JobCompletionRequestExecutorTest {
 
     @BeforeEach
     public void setUp() {
-        initMocks(this);
+        openMocks(this);
     }
 
     @Test
@@ -92,7 +92,7 @@ public class JobCompletionRequestExecutorTest {
 
         verify(mockPluginRequest, never()).disableAgents(anyCollection());
         verify(mockPluginRequest, never()).deleteAgents(anyCollection());
-        verifyZeroInteractions(mockAgentInstances);
+        verifyNoInteractions(mockAgentInstances);
         assertThat(200).isEqualTo(response.responseCode());
     }
 }

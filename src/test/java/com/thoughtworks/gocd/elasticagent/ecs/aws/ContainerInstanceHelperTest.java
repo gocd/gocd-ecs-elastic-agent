@@ -55,7 +55,7 @@ import static com.thoughtworks.gocd.elasticagent.ecs.domain.Platform.WINDOWS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
-import static org.mockito.MockitoAnnotations.initMocks;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 class ContainerInstanceHelperTest {
     private AmazonECSClient ecsClient;
@@ -71,7 +71,7 @@ class ContainerInstanceHelperTest {
 
     @BeforeEach
     void setUp() {
-        initMocks(this);
+        openMocks(this);
         pluginSettings = mock(PluginSettings.class);
         ecsClient = mock(AmazonECSClient.class);
         ec2Client = mock(AmazonEC2Client.class);

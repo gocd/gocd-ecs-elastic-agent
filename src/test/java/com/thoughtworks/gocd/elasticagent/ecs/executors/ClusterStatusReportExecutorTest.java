@@ -104,7 +104,7 @@ class ClusterStatusReportExecutorTest {
         verify(containerInstanceHelper).getCluster(clusterProfileProperties);
         verify(containerInstanceHelper, times(0)).getContainerInstances(clusterProfileProperties);
         verify(containerInstanceHelper, times(0)).ec2InstancesFromContainerInstances(eq(clusterProfileProperties), anyList());
-        verifyZeroInteractions(taskHelper);
+        verifyNoInteractions(taskHelper);
     }
 
     @Test

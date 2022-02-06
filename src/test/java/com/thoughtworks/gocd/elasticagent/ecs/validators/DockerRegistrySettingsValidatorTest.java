@@ -28,7 +28,7 @@ import java.util.Map;
 import static com.thoughtworks.gocd.elasticagent.ecs.executors.GetPluginConfigurationExecutor.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 class DockerRegistrySettingsValidatorTest {
 
@@ -38,7 +38,7 @@ class DockerRegistrySettingsValidatorTest {
 
     @BeforeEach
     void setUp() {
-        initMocks(this);
+        openMocks(this);
 
         this.validator = new DockerRegistrySettingsValidator();
     }

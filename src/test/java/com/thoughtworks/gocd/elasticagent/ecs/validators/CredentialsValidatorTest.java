@@ -35,7 +35,7 @@ import static com.thoughtworks.gocd.elasticagent.ecs.executors.GetPluginConfigur
 import static com.thoughtworks.gocd.elasticagent.ecs.executors.GetPluginConfigurationExecutor.AWS_SECRET_ACCESS_KEY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 class CredentialsValidatorTest {
     @Mock
@@ -44,7 +44,7 @@ class CredentialsValidatorTest {
 
     @BeforeEach
     void setUp() {
-        initMocks(this);
+        openMocks(this);
         credentialsValidator = new CredentialsValidator(new AWSCredentialsProviderChain(new EnvironmentVariableCredentialsProvider(), new SystemPropertiesCredentialsProvider()));
     }
 

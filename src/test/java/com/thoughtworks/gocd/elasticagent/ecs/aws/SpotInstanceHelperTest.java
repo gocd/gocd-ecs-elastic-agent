@@ -42,10 +42,10 @@ import static com.thoughtworks.gocd.elasticagent.ecs.domain.EC2InstanceState.RUN
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.Platform.LINUX;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
-import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
-import static org.mockito.MockitoAnnotations.initMocks;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class SpotInstanceHelperTest {
     private ContainerInstanceHelper containerInstanceHelper;
@@ -60,7 +60,7 @@ public class SpotInstanceHelperTest {
 
     @BeforeEach
     void setUp() {
-        initMocks(this);
+        openMocks(this);
         containerInstanceHelper = mock(ContainerInstanceHelper.class);
         spotInstanceRequestBuilder = mock(SpotInstanceRequestBuilder.class);
         subnetSelector = mock(SubnetSelector.class);
@@ -439,8 +439,8 @@ public class SpotInstanceHelperTest {
 
             final CreateTagsRequest createTagsRequest = argumentCaptor.getValue();
             assertThat(createTagsRequest.getResources()).hasSize(2).contains("spot_id1").contains("spot_id2");
-            Assertions.assertThat(createTagsRequest.getTags()).hasSize(1);
-            Assertions.assertThat(createTagsRequest.getTags().get(0).getKey()).isEqualTo(LAST_SEEN_IDLE);
+            assertThat(createTagsRequest.getTags()).hasSize(1);
+            assertThat(createTagsRequest.getTags().get(0).getKey()).isEqualTo(LAST_SEEN_IDLE);
         }
     }
 

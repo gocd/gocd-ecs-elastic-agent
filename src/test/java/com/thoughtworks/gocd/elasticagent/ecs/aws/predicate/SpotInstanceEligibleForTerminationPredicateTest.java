@@ -35,7 +35,7 @@ import static com.thoughtworks.gocd.elasticagent.ecs.aws.InstanceMother.*;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.EC2InstanceState.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.initMocks;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 class SpotInstanceEligibleForTerminationPredicateTest {
     @Mock
@@ -43,7 +43,7 @@ class SpotInstanceEligibleForTerminationPredicateTest {
 
     @BeforeEach
     void setUp() {
-        initMocks(this);
+        openMocks(this);
     }
 
     @Test

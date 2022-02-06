@@ -19,7 +19,7 @@ package com.thoughtworks.gocd.elasticagent.ecs.domain;
 import org.junit.jupiter.api.Test;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.utils.Util.GSON;
-import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class BindMountTest {
     @Test

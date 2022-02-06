@@ -33,10 +33,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.aws.InstanceMother.spotInstance;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.Platform.LINUX;
@@ -44,10 +41,10 @@ import static com.thoughtworks.gocd.elasticagent.ecs.domain.Platform.WINDOWS;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
-import static org.mockito.MockitoAnnotations.initMocks;
+import static org.mockito.MockitoAnnotations.openMocks;
 
 public class SpotInstanceServiceTest {
 
@@ -73,7 +70,7 @@ public class SpotInstanceServiceTest {
 
     @BeforeEach
     void setUp() {
-        initMocks(this);
+        openMocks(this);
 
         service = new SpotInstanceService(spotInstanceHelper, configBuilder, containerInstanceHelper, terminateOperation, spotRequestMatcher);
     }
