@@ -66,7 +66,7 @@ dependencies {
 
   implementation group: 'com.amazonaws', name: 'aws-java-sdk-ecs', version: '1.11.454'
   implementation group: 'com.amazonaws', name: 'aws-java-sdk-ec2', version: '1.11.454'
-  implementation group: 'org.freemarker', name: 'freemarker', version: '2.3.28'
+  implementation group: 'org.freemarker', name: 'freemarker', version: '2.3.31'
   implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.35'
 
   testImplementation group: 'cd.go.plugin', name: 'go-plugin-api', version: '21.4.0'
