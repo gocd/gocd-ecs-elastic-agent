@@ -11,3 +11,11 @@ updates:
     interval: weekly
     day: friday
   open-pull-requests-limit: 99
+- package-ecosystem: bundler
+  directory: "/contrib/cloudformation-template"
+  schedule:
+    interval: weekly
+    day: friday
+  open-pull-requests-limit: 99
+  allow:
+    - dependency-type: all
