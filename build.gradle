@@ -73,7 +73,7 @@ dependencies {
       replacedBy('org.slf4j:jcl-over-slf4j', "Everything should go via SLF4J")
     }
   }
-  implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.35'
+  implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.36'
 
   testImplementation group: 'cd.go.plugin', name: 'go-plugin-api', version: '21.4.0'
   testImplementation group: 'org.mockito', name: 'mockito-core', version: '4.3.1'
