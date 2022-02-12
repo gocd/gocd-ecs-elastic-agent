@@ -49,8 +49,15 @@ public class SubnetSelector {
     private Subnet findSubnetWithMinimumInstances(List<Subnet> subnets, List<Instance> instances) {
         final Map<Subnet, Long> instancePerSubnet = instancePerSubnet(subnets, instances);
 
+        // Can happen if all found instances happen to be from other elastic agent profiles (which may or may not
+        // be sharing a profile with our plugin configuration
+        if (instancePerSubnet.isEmpty()) {
+            return subnets.get(0);
+        }
+
         return subnets.stream()
-                .filter(subnet -> !instancePerSubnet.containsKey(subnet)).findFirst()
+                .filter(subnet -> !instancePerSubnet.containsKey(subnet))
+                .findFirst()
                 .orElse(Collections.min(instancePerSubnet.entrySet(), Comparator.comparingDouble(Map.Entry::getValue)).getKey());
     }
 
@@ -58,7 +65,7 @@ public class SubnetSelector {
         final Map<String, Subnet> subnetMap = subnets.stream().collect(Collectors.toMap(Subnet::getSubnetId, subnet -> subnet));
 
         return instances.stream()
-                .filter(instance -> subnetMap.keySet().contains(instance.getSubnetId()))
+                .filter(instance -> subnetMap.containsKey(instance.getSubnetId()))
                 .collect(Collectors.groupingBy(subnet -> subnetMap.get(subnet.getSubnetId()), Collectors.counting()));
     }
 

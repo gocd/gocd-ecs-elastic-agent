@@ -34,7 +34,6 @@ import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.SpotRequestState.ACTIVE;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.SpotRequestState.OPEN;
 import static java.lang.String.format;
-import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.*;
 import static org.apache.commons.collections4.CollectionUtils.union;
 import static org.apache.commons.lang3.StringUtils.containsAny;
@@ -46,7 +45,7 @@ public class SpotInstanceService {
     private final ContainerInstanceHelper containerInstanceHelper;
     private final TerminateOperation terminateOperation;
     private final SpotRequestMatcher spotRequestMatcher;
-    private Set<SpotInstanceRequest> untaggedSpotRequests = Collections.synchronizedSet(new HashSet<>());
+    private final Set<SpotInstanceRequest> untaggedSpotRequests = Collections.synchronizedSet(new HashSet<>());
     private static final SpotInstanceService spotInstanceService = new SpotInstanceService();
 
     private SpotInstanceService() {
@@ -150,15 +149,13 @@ public class SpotInstanceService {
 
     public void refreshUnTaggedSpotRequests(PluginSettings pluginSettings) {
         synchronized (untaggedSpotRequests) {
-            List<SpotInstanceRequest> allSpotRequestsforCluster = spotInstanceHelper.getAllSpotRequestsForCluster(pluginSettings);
-            List<String> spotRequestIds = allSpotRequestsforCluster.stream().map(SpotInstanceRequest::getSpotInstanceRequestId).collect(toList());
+            List<SpotInstanceRequest> allSpotRequestsForCluster = spotInstanceHelper.getAllSpotRequestsForCluster(pluginSettings);
+            List<String> spotRequestIds = allSpotRequestsForCluster.stream().map(SpotInstanceRequest::getSpotInstanceRequestId).collect(toList());
 
-            LOG.debug("[refresh-spot-requests] All SpotRequests for Cluster: '{}'", spotRequestIds.stream().collect(joining()));
+            LOG.debug("[refresh-spot-requests] All SpotRequests for Cluster: '{}'", String.join("", spotRequestIds));
             LOG.debug("[refresh-spot-requests] All Untagged spot requests: '{}'", untaggedSpotRequestIds(untaggedSpotRequests));
 
-            untaggedSpotRequests.removeIf(request -> {
-                return spotRequestIds.contains(request.getSpotInstanceRequestId());
-            });
+            untaggedSpotRequests.removeIf(request -> spotRequestIds.contains(request.getSpotInstanceRequestId()));
         }
     }
 
@@ -170,7 +167,7 @@ public class SpotInstanceService {
     private List<SpotInstanceRequest> spotRequestsWithoutRegisteredInstances(PluginSettings pluginSettings, Platform platform,
                                                                              List<Instance> allRegisteredSpotInstancesForPlatform) {
         List<String> registeredInstanceIds = allRegisteredSpotInstancesForPlatform.stream()
-                .map(instance -> instance.getInstanceId()).collect(toList());
+                .map(Instance::getInstanceId).collect(toList());
 
         List<SpotInstanceRequest> spotRequests = spotInstanceHelper
                 .getAllOpenOrSpotRequestsWithRunningInstances(pluginSettings, pluginSettings.getClusterName(), platform);
@@ -226,7 +223,7 @@ public class SpotInstanceService {
     }
 
     private Predicate<Instance> getIdleInstancePredicate() {
-        return instance -> !instance.getTags().stream().anyMatch(tag -> tag.getKey().equals(LAST_SEEN_IDLE));
+        return instance -> instance.getTags().stream().noneMatch(tag -> tag.getKey().equals(LAST_SEEN_IDLE));
     }
 
     private Map<String, List<SpotInstanceRequest>> groupSpotRequestsByPlatform(List<SpotInstanceRequest> spotInstanceRequests) {
@@ -246,7 +243,7 @@ public class SpotInstanceService {
             LOG.debug("[create-agent] Tagging open spot request.");
 
             spotInstanceRequest.withTags(new Tag().withKey("platform").withValue(elasticAgentProfileProperties.platform().name()));
-            spotInstanceHelper.tagSpotResources(pluginSettings, asList(spotInstanceRequest.getSpotInstanceRequestId()), elasticAgentProfileProperties.platform());
+            spotInstanceHelper.tagSpotResources(pluginSettings, List.of(spotInstanceRequest.getSpotInstanceRequestId()), elasticAgentProfileProperties.platform());
         } catch (Exception e) {
             LOG.error("[create-agent] There were errors while tagging spot instance request with id: '{}' cancelling the request.",
                     spotInstanceRequest.getSpotInstanceRequestId(), e);
