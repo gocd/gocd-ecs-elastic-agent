@@ -90,6 +90,23 @@ class SubnetSelectorTest {
     }
 
     @Test
+    void shouldReturnFirstAvailableSubnetIdIfContainerInstanceRunningInUnrelatedSubnet() {
+        final ArgumentCaptor<DescribeSubnetsRequest> argumentCaptor = ArgumentCaptor.forClass(DescribeSubnetsRequest.class);
+
+        when(pluginSettings.getSubnetIds()).thenReturn(Arrays.asList("subnet-1"));
+        when(ec2Client.describeSubnets(argumentCaptor.capture())).thenReturn(new DescribeSubnetsResult().withSubnets(
+                new Subnet().withSubnetId("subnet-1").withState("available")
+        ));
+
+        Instance instanceInOtherSubnet = new Instance().withSubnetId("some-other-subnet");
+
+        final Subnet subnet = subnetSelector.selectSubnetWithMinimumEC2Instances(pluginSettings, pluginSettings.getSubnetIds(), List.of(instanceInOtherSubnet));
+
+        assertThat(subnet.getSubnetId()).isEqualTo("subnet-1");
+        assertThat(argumentCaptor.getValue().getSubnetIds()).isEqualTo(Arrays.asList("subnet-1"));
+    }
+
+    @Test
     void shouldReturnSubnetIdWhichIsHavingMinimumEC2InstanceRunning() {
         final ArgumentCaptor<DescribeSubnetsRequest> argumentCaptor = ArgumentCaptor.forClass(DescribeSubnetsRequest.class);
 
