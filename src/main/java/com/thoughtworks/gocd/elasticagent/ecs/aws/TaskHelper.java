@@ -113,7 +113,7 @@ public class TaskHelper {
 
             consoleLogAppender.accept(message);
 
-            LOG.info(format("Task {0} scheduled on container instance ", containerInstance.get().getEc2InstanceId()));
+            LOG.info(format("[create-agent] Task {0} scheduled on container instance {1}", taskName, containerInstance.get().getEc2InstanceId()));
             return Optional.of(new ECSTask(startTaskResult.getTasks().get(0), taskDefinitionFromNewTask, elasticAgentProfileProperties, createAgentRequest.getJobIdentifier(), createAgentRequest.environment(), containerInstance.get().getEc2InstanceId()));
         } else {
             deregisterTaskDefinition(pluginSettings, taskDefinitionFromNewTask.getTaskDefinitionArn());
