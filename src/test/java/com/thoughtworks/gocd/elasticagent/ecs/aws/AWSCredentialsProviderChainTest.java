@@ -18,16 +18,29 @@ package com.thoughtworks.gocd.elasticagent.ecs.aws;
 
 import com.amazonaws.auth.*;
 import com.thoughtworks.gocd.elasticagent.ecs.exceptions.AWSCredentialsException;
-import com.thoughtworks.gocd.extensions.EnvironmentVariable;
-import com.thoughtworks.gocd.extensions.SystemProperty;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import uk.org.webcompere.systemstubs.environment.EnvironmentVariables;
+import uk.org.webcompere.systemstubs.jupiter.SystemStub;
+import uk.org.webcompere.systemstubs.jupiter.SystemStubsExtension;
+import uk.org.webcompere.systemstubs.properties.SystemProperties;
 
 import static com.amazonaws.SDKGlobalConfiguration.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@ExtendWith(SystemStubsExtension.class)
 class AWSCredentialsProviderChainTest {
+
+    @SystemStub
+    EnvironmentVariables environmentVariables = new EnvironmentVariables()
+            .set(ACCESS_KEY_ENV_VAR, "")
+            .set(ALTERNATE_ACCESS_KEY_ENV_VAR, "")
+            .set(SECRET_KEY_ENV_VAR, "")
+            .set(ALTERNATE_SECRET_KEY_ENV_VAR, "");
+    @SystemStub
+    SystemProperties systemProperties;
 
     private AWSCredentialsProviderChain awsCredentialsProviderChain;
 
@@ -48,58 +61,53 @@ class AWSCredentialsProviderChainTest {
     }
 
     @Test
-    @EnvironmentVariable(key = ACCESS_KEY_ENV_VAR, value = "access-key-from-env")
-    @EnvironmentVariable(key = SECRET_KEY_ENV_VAR, value = "secret-key-from-env")
-    void shouldReadCredentialsFromEnvironmentIfNotProvidedInMethodCall() {
-        final AWSCredentialsProvider credentialsProvider = awsCredentialsProviderChain.getAWSCredentialsProvider(null, null);
-        assertThat(credentialsProvider).isInstanceOf(EnvironmentVariableCredentialsProvider.class);
+    void shouldReadCredentialsFromEnvironmentIfNotProvidedInMethodCall() throws Exception {
+        environmentVariables
+                .set(ACCESS_KEY_ENV_VAR, "access-key-from-env")
+                .set(SECRET_KEY_ENV_VAR, "secret-key-from-env")
+                .execute(() -> {
+                    final AWSCredentialsProvider credentialsProvider = awsCredentialsProviderChain.getAWSCredentialsProvider(null, null);
+                    assertThat(credentialsProvider).isInstanceOf(EnvironmentVariableCredentialsProvider.class);
 
-        final AWSCredentials credentials = credentialsProvider.getCredentials();
-        assertThat(credentials.getAWSAccessKeyId()).isEqualTo("access-key-from-env");
-        assertThat(credentials.getAWSSecretKey()).isEqualTo("secret-key-from-env");
+                    final AWSCredentials credentials = credentialsProvider.getCredentials();
+                    assertThat(credentials.getAWSAccessKeyId()).isEqualTo("access-key-from-env");
+                    assertThat(credentials.getAWSSecretKey()).isEqualTo("secret-key-from-env");
+                });
     }
 
     @Test
-    @SystemProperty(key = ACCESS_KEY_SYSTEM_PROPERTY, value = "access-key-from-system-prop")
-    @SystemProperty(key = SECRET_KEY_SYSTEM_PROPERTY, value = "secret-key-from-system-prop")
-    void shouldReadCredentialsFromSystemPropertiesWhenEnvCredentialsAreNotProvided() {
-        final AWSCredentialsProvider credentialsProvider = awsCredentialsProviderChain.getAWSCredentialsProvider(null, null);
-        assertThat(credentialsProvider).isInstanceOf(SystemPropertiesCredentialsProvider.class);
+    void shouldReadCredentialsFromSystemPropertiesWhenEnvCredentialsAreNotProvided() throws Exception {
+        systemProperties
+                .set(ACCESS_KEY_SYSTEM_PROPERTY, "access-key-from-system-prop")
+                .set(SECRET_KEY_SYSTEM_PROPERTY, "secret-key-from-system-prop")
+                .execute(() -> {
+                    final AWSCredentialsProvider credentialsProvider = awsCredentialsProviderChain.getAWSCredentialsProvider(null, null);
+                    assertThat(credentialsProvider).isInstanceOf(SystemPropertiesCredentialsProvider.class);
 
-        final AWSCredentials credentials = credentialsProvider.getCredentials();
-        assertThat(credentials.getAWSAccessKeyId()).isEqualTo("access-key-from-system-prop");
-        assertThat(credentials.getAWSSecretKey()).isEqualTo("secret-key-from-system-prop");
+                    final AWSCredentials credentials = credentialsProvider.getCredentials();
+                    assertThat(credentials.getAWSAccessKeyId()).isEqualTo("access-key-from-system-prop");
+                    assertThat(credentials.getAWSSecretKey()).isEqualTo("secret-key-from-system-prop");
+                });
     }
 
     @Test
     void shouldErrorOutIfItFailsToLoadCredentials() {
-        try {
-            awsCredentialsProviderChain.getAWSCredentialsProvider(null, null);
-            fail("should fail");
-        } catch (AWSCredentialsException e) {
-            assertThat(e.getMessage()).isEqualTo("Unable to load AWS credentials from any provider in the chain");
-        }
+        assertThatThrownBy(() -> awsCredentialsProviderChain.getAWSCredentialsProvider(null, null))
+                .isExactlyInstanceOf(AWSCredentialsException.class)
+                .hasMessage("Unable to load AWS credentials from any provider in the chain");
     }
 
     @Test
     void shouldErrorOutIfOnlyAccessKeyIsProvided() {
-
-        try {
-            awsCredentialsProviderChain.getAWSCredentialsProvider("access-key", null);
-            fail("should fail");
-        } catch (AWSCredentialsException e) {
-            assertThat(e.getMessage()).isEqualTo("Secret key is mandatory if access key is provided");
-        }
+        assertThatThrownBy(() -> awsCredentialsProviderChain.getAWSCredentialsProvider("access-key", null))
+                .isExactlyInstanceOf(AWSCredentialsException.class)
+                .hasMessage("Secret key is mandatory if access key is provided");
     }
 
     @Test
     void shouldErrorOutIfOnlySecretKeyIsProvided() {
-
-        try {
-            awsCredentialsProviderChain.getAWSCredentialsProvider(null, "secret-key");
-            fail("should fail");
-        } catch (AWSCredentialsException e) {
-            assertThat(e.getMessage()).isEqualTo("Access key is mandatory if secret key is provided");
-        }
+        assertThatThrownBy(() -> awsCredentialsProviderChain.getAWSCredentialsProvider(null, "secret-key"))
+                .isExactlyInstanceOf(AWSCredentialsException.class)
+                .hasMessage("Access key is mandatory if secret key is provided");
     }
 }

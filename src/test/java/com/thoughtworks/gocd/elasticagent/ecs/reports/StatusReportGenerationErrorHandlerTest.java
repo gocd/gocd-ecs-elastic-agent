@@ -41,7 +41,7 @@ class StatusReportGenerationErrorHandlerTest {
 
         assertThat(response.responseCode()).isEqualTo(200);
 
-        final String view = new JsonParser().parse(response.responseBody()).getAsJsonObject().get("view").getAsString();
+        final String view = JsonParser.parseString(response.responseBody()).getAsJsonObject().get("view").getAsString();
         final Document document = Jsoup.parse(view);
 
         assertThat(document.select(".outer-container .container .error-container blockquote header").text())

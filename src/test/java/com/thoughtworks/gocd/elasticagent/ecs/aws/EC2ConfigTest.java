@@ -25,8 +25,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 
-import java.util.Date;
-
 import static com.thoughtworks.gocd.elasticagent.ecs.aws.EC2Config.Builder.PLATFORM;
 import static com.thoughtworks.gocd.elasticagent.ecs.aws.Userdata.decodeBase64;
 import static org.assertj.core.api.Assertions.assertThat;

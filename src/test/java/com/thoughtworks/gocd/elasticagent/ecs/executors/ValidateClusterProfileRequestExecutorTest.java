@@ -21,45 +21,58 @@ import com.thoughtworks.gocd.elasticagent.ecs.requests.ValidateClusterProfileReq
 import com.thoughtworks.gocd.elasticagent.ecs.validators.CredentialsValidator;
 import com.thoughtworks.gocd.elasticagent.ecs.validators.DockerRegistrySettingsValidator;
 import com.thoughtworks.gocd.elasticagent.ecs.validators.VolumeSettingsValidator;
-import com.thoughtworks.gocd.extensions.EnvironmentVariable;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.skyscreamer.jsonassert.JSONAssert;
+import uk.org.webcompere.systemstubs.environment.EnvironmentVariables;
+import uk.org.webcompere.systemstubs.jupiter.SystemStub;
+import uk.org.webcompere.systemstubs.jupiter.SystemStubsExtension;
 
-import static com.amazonaws.SDKGlobalConfiguration.ACCESS_KEY_ENV_VAR;
-import static com.amazonaws.SDKGlobalConfiguration.SECRET_KEY_ENV_VAR;
+import static com.amazonaws.SDKGlobalConfiguration.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+@ExtendWith(SystemStubsExtension.class)
 class ValidateClusterProfileRequestExecutorTest {
 
-    @Test
-    @EnvironmentVariable(key = ACCESS_KEY_ENV_VAR, value = "access-key-from-env")
-    @EnvironmentVariable(key = SECRET_KEY_ENV_VAR, value = "secret-key-from-env")
-    void shouldValidateABadConfiguration() throws Exception {
-        ValidateClusterProfileRequest request = new ValidateClusterProfileRequest();
-        GoPluginApiResponse response = new ValidateClusterProfileRequestExecutor(request).execute();
+    @SystemStub
+    EnvironmentVariables environmentVariables = new EnvironmentVariables()
+            .set(ACCESS_KEY_ENV_VAR, "")
+            .set(ALTERNATE_ACCESS_KEY_ENV_VAR, "")
+            .set(SECRET_KEY_ENV_VAR, "")
+            .set(ALTERNATE_SECRET_KEY_ENV_VAR, "");
 
-        assertThat(response.responseCode()).isEqualTo(200);
-        System.out.println(response.responseBody());
-        JSONAssert.assertEquals("[\n" +
-                "  {\n" +
-                "    \"message\": \"Go Server URL must not be blank.\",\n" +
-                "    \"key\": \"GoServerUrl\"\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"message\": \"AWS Cluster Name must not be blank.\",\n" +
-                "    \"key\": \"ClusterName\"\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"message\": \"Container auto-register timeout (in minutes) must be a positive integer.\",\n" +
-                "    \"key\": \"ContainerAutoregisterTimeout\"\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"message\": \"Iam instance profile must not be blank.\",\n" +
-                "    \"key\": \"IamInstanceProfile\"\n" +
-                "  }\n" +
-                "]", response.responseBody(), true);
+    @Test
+    void shouldValidateABadConfiguration() throws Exception {
+        environmentVariables
+                .set(ACCESS_KEY_ENV_VAR, "access-key-from-env")
+                .set(SECRET_KEY_ENV_VAR, "secret-key-from-env")
+                .execute(() -> {
+                    ValidateClusterProfileRequest request = new ValidateClusterProfileRequest();
+                    GoPluginApiResponse response = new ValidateClusterProfileRequestExecutor(request).execute();
+
+                    assertThat(response.responseCode()).isEqualTo(200);
+                    System.out.println(response.responseBody());
+                    JSONAssert.assertEquals("[\n" +
+                            "  {\n" +
+                            "    \"message\": \"Go Server URL must not be blank.\",\n" +
+                            "    \"key\": \"GoServerUrl\"\n" +
+                            "  },\n" +
+                            "  {\n" +
+                            "    \"message\": \"AWS Cluster Name must not be blank.\",\n" +
+                            "    \"key\": \"ClusterName\"\n" +
+                            "  },\n" +
+                            "  {\n" +
+                            "    \"message\": \"Container auto-register timeout (in minutes) must be a positive integer.\",\n" +
+                            "    \"key\": \"ContainerAutoregisterTimeout\"\n" +
+                            "  },\n" +
+                            "  {\n" +
+                            "    \"message\": \"Iam instance profile must not be blank.\",\n" +
+                            "    \"key\": \"IamInstanceProfile\"\n" +
+                            "  }\n" +
+                            "]", response.responseBody(), true);
+                });
     }
 
     @Test

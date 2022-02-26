@@ -162,9 +162,8 @@ class ProfileValidateRequestExecutorTest {
         JSONAssert.assertEquals("[]", json, JSONCompareMode.NON_EXTENSIBLE);
     }
 
-    //need to think about validating AMI ID and Instance type
     @Test
-    @Disabled
+    @Disabled("need to think about validating AMI ID and Instance type")
     void shouldErrorOutWhenInstanceTypAndAMIAreNotSpecifiedInProfileOrPluginSettings() throws Exception {
         final Map<String, String> properties = new HashMap<>();
         properties.put(KEY_MAX_MEMORY, "4G");
