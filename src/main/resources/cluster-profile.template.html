@@ -556,6 +556,13 @@ ecs:describeTaskDefinition
               <span class="form_error"
                     ng-show="GOINPUTNAME[LinuxOSVolumeProvisionedIOPS].$error.server">{{GOINPUTNAME[LinuxOSVolumeProvisionedIOPS].$error.server}}</span>
             </div>
+
+            <div class="col">
+              <label>Encrypt Volume</label>
+              <input type="checkbox" ng-model="LinuxVolumeEncryption"/>
+              <span class="form_error"
+                    ng-show="GOINPUTNAME[LinuxVolumeEncryption].$error.server">{{GOINPUTNAME[LinuxVolumeEncryption].$error.server}}</span>
+            </div>
           </div>
           <p class="form-help-content">
             Allows to override default operating system volume. This is used to store operating system and
@@ -599,6 +606,13 @@ ecs:describeTaskDefinition
                      ng-required="LinuxDockerVolumeType == 'io1'"/>
               <span class="form_error"
                     ng-show="GOINPUTNAME[LinuxDockerVolumeProvisionedIOPS].$error.server">{{GOINPUTNAME[LinuxDockerVolumeProvisionedIOPS].$error.server}}</span>
+            </div>
+
+            <div class="col" ng-show="LinuxDockerVolumeType != 'none'">
+              <label>Encrypt Volume</label>
+              <input type="checkbox" ng-model="LinuxDockerEncryption"/>
+              <span class="form_error"
+                    ng-show="GOINPUTNAME[LinuxDockerEncryption].$error.server">{{GOINPUTNAME[LinuxDockerEncryption].$error.server}}</span>
             </div>
           </div>
           <p class="form-help-content">
