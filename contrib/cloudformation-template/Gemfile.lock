@@ -916,7 +916,7 @@ GEM
       json
       rake
     detabulator (0.1.0)
-    diffy (3.3.0)
+    diffy (3.4.2)
     highline (2.0.3)
     jmespath (1.5.0)
     json (2.3.0)
