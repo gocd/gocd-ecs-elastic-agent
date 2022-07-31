@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 ThoughtWorks, Inc.
+ * Copyright 2022 Thoughtworks, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.Constants.LAST_SEEN_IDLE;
-import static com.thoughtworks.gocd.elasticagent.ecs.Constants.STOPPED_AT;
-import static com.thoughtworks.gocd.elasticagent.ecs.aws.InstanceMother.*;
-import static com.thoughtworks.gocd.elasticagent.ecs.domain.EC2InstanceState.*;
+import static com.thoughtworks.gocd.elasticagent.ecs.aws.InstanceMother.linuxInstanceWithTag;
+import static com.thoughtworks.gocd.elasticagent.ecs.aws.InstanceMother.spotInstance;
+import static com.thoughtworks.gocd.elasticagent.ecs.domain.EC2InstanceState.RUNNING;
+import static com.thoughtworks.gocd.elasticagent.ecs.domain.EC2InstanceState.STOPPED;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;

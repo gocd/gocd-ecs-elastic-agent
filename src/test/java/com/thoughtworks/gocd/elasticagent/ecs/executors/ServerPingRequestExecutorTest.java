@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 ThoughtWorks, Inc.
+ * Copyright 2022 Thoughtworks, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ import static com.thoughtworks.gocd.elasticagent.ecs.domain.EC2InstanceState.RUN
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.EC2InstanceState.STOPPED;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.Platform.LINUX;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.Platform.WINDOWS;
-import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;

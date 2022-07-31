@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 ThoughtWorks, Inc.
+ * Copyright 2022 Thoughtworks, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,13 +23,11 @@ import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import com.thoughtworks.gocd.elasticagent.ecs.RequestExecutor;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.*;
 import com.thoughtworks.gocd.elasticagent.ecs.requests.ProfileValidateRequest;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.ElasticAgentProfileProperties.*;
 import static java.lang.Double.parseDouble;
-import static java.lang.Integer.parseInt;
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 

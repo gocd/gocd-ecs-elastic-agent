@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 ThoughtWorks, Inc.
+ * Copyright 2022 Thoughtworks, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ class PluginPropertiesTest {
         assertThat(properties.get("id")).isEqualTo("com.thoughtworks.gocd.elastic-agent.ecs");
         assertThat(properties.get("name")).isEqualTo("GoCD Elastic Agent Plugin for Amazon ECS");
         assertThat(properties.get("description")).isEqualTo("GoCD Elastic Agent Plugin for Amazon Elastic Container Service allow for more efficient use of instances");
-        assertThat(properties.get("vendorName")).isEqualTo("ThoughtWorks, Inc.");
+        assertThat(properties.get("vendorName")).isEqualTo("Thoughtworks, Inc.");
         assertThat(properties.get("vendorUrl")).isEqualTo("https://github.com/gocd/gocd-ecs-elastic-agent");
         assertThat(properties.get("goCdVersion")).isEqualTo("20.9.0");
         assertThat(properties.get("version")).isNotBlank();

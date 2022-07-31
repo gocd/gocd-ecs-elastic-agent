@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 ThoughtWorks, Inc.
+ * Copyright 2022 Thoughtworks, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package com.thoughtworks.gocd.elasticagent.ecs.requests;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.thoughtworks.gocd.elasticagent.ecs.ECSTasks;
-import com.thoughtworks.gocd.elasticagent.ecs.PluginRequest;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.ClusterProfileProperties;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.JobIdentifier;
 import com.thoughtworks.gocd.elasticagent.ecs.executors.AgentStatusReportExecutor;

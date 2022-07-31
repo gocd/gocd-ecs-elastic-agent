@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 ThoughtWorks, Inc.
+ * Copyright 2022 Thoughtworks, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,9 @@ import static com.thoughtworks.gocd.elasticagent.ecs.domain.annotation.FieldType
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.annotation.FieldType.NUMBER;
 import static com.thoughtworks.gocd.elasticagent.ecs.utils.Util.*;
 import static java.lang.Boolean.parseBoolean;
-import static java.lang.Double.parseDouble;
-import static java.lang.Integer.numberOfLeadingZeros;
-import static java.lang.Integer.parseInt;
 import static java.util.Collections.emptyList;
-import static org.apache.commons.lang3.StringUtils.*;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static org.apache.commons.lang3.StringUtils.stripToEmpty;
 
 @EqualsAndHashCode
 public class ElasticAgentProfileProperties {

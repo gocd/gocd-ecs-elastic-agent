@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 ThoughtWorks, Inc.
+ * Copyright 2022 Thoughtworks, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,6 @@ import com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerInstanceHelper;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.TaskHelper;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.*;
 import com.thoughtworks.gocd.elasticagent.ecs.events.EventStream;
-import com.thoughtworks.gocd.elasticagent.ecs.exceptions.ContainerFailedToRegisterException;
-import com.thoughtworks.gocd.elasticagent.ecs.exceptions.LimitExceededException;
 import com.thoughtworks.gocd.elasticagent.ecs.requests.CreateAgentRequest;
 import org.joda.time.DateTime;
 import org.joda.time.Period;

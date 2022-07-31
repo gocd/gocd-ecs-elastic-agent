@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 ThoughtWorks, Inc.
+ * Copyright 2022 Thoughtworks, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package com.thoughtworks.gocd.elasticagent.ecs.domain;
 
 import java.util.Map;
-import java.util.Objects;
 
 public class ClusterProfileProperties extends PluginSettings {
     public ClusterProfileProperties() {
