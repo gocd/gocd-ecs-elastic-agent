@@ -26,7 +26,7 @@ Plugin now requires additional permissions on to support new termination policy
 - ec2:deleteTags
 ```
 
-Refer [prerequisites](https://extensions-docs.gocd.org/ecs/current/prerequisites/) for more information.
+Refer to [prerequisites](https://github.com/gocd/gocd-ecs-elastic-agent/blob/master/docs/installation.md#prerequisites) for more information.
 
 **_Note:_** *Requires GoCD version 18.10.0 or higher. Plugin will not work with the older version of GoCD.*
 
