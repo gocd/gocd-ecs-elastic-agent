@@ -16,7 +16,6 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.utils;
 
-import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.CharStreams;
@@ -31,6 +30,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.function.Function;
 
 public class Util {
     public static final Gson GSON = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
