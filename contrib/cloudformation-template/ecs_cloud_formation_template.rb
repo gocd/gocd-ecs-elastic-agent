@@ -79,17 +79,18 @@ template do
                      {
                        Effect: 'Allow',
                        Action: %w(
-                        ecs:describeClusters
-                        ecs:deregisterContainerInstance
-                        ecs:describeContainerInstances
-                        ecs:listContainerInstances
-                        ecs:registerTaskDefinition
-                        ecs:deregisterTaskDefinition
-                        ecs:startTask
-                        ecs:stopTask
-                        ecs:listTasks
-                        ecs:describeTasks
-                        ecs:describeTaskDefinition
+                        ecs:DescribeClusters
+                        ecs:DeregisterContainerInstance
+                        ecs:DescribeContainerInstances
+                        ecs:ListContainerInstances
+                        ecs:RegisterTaskDefinition
+                        ecs:DeregisterTaskDefinition
+                        ecs:DeleteTaskDefinitions
+                        ecs:StartTask
+                        ecs:StopTask
+                        ecs:ListTasks
+                        ecs:DescribeTasks
+                        ecs:DescribeTaskDefinition
                        ),
                        Resource: ['*'],
                      },
@@ -125,14 +126,14 @@ template do
                        Effect: 'Allow',
                        Action:
                          %w(
-                          ecs:describeClusters
-                          ecs:discoverPollEndpoint
-                          ecs:registerContainerInstance
-                          ecs:deregisterContainerInstance
-                          ecs:poll
-                          ecs:startTelemetrySession
-                          ecs:submitContainerStateChange
-                          ecs:submitTaskStateChange
+                          ecs:DescribeClusters
+                          ecs:DiscoverPollEndpoint
+                          ecs:RegisterContainerInstance
+                          ecs:DeregisterContainerInstance
+                          ecs:Poll
+                          ecs:StartTelemetrySession
+                          ecs:SubmitContainerStateChange
+                          ecs:SubmitTaskStateChange
                           logs:CreateLogStream
                           logs:PutLogEvents
                          ),

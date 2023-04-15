@@ -39,50 +39,51 @@ Listed below are the steps to be followed if you prefer to manually configure EC
   * An IAM user with permissions to manage the ECS cluster. The credentials for this IAM user may be provided to the this plugin or applied via an IAM instance profile to the EC2 instance running the GoCD server. The following IAM permissions are needed
 
     ```
-    ec2:createTags
-    ec2:runInstances
-    ec2:describeSubnets
-    ec2:describeInstances
-    ec2:terminateInstances
-    ec2:createVolume
-    ec2:attachVolume
+    ec2:CreateTags
+    ec2:RunInstances
+    ec2:DescribeSubnets
+    ec2:DescribeInstances
+    ec2:TerminateInstances
+    ec2:CreateVolume
+    ec2:AttachVolume
     iam:PassRole
     iam:GetRole
-    ecs:describeClusters
-    ecs:startTask
-    ecs:stopTask
-    ecs:listTasks
-    ecs:describeTasks
-    ecs:describeTaskDefinition
-    ecs:registerTaskDefinition
-    ecs:listContainerInstances
-    ecs:deregisterTaskDefinition
-    ecs:describeContainerInstances
-    ecs:deregisterContainerInstance
-    ec2:stopInstances
-    ec2:startInstances
-    ec2:deleteTags
+    ecs:DescribeClusters
+    ecs:StartTask
+    ecs:StopTask
+    ecs:ListTasks
+    ecs:DescribeTasks
+    ecs:DescribeTaskDefinition
+    ecs:RegisterTaskDefinition
+    ecs:DeregisterTaskDefinition
+    ecs:DeleteTaskDefinitions
+    ecs:ListContainerInstances
+    ecs:DescribeContainerInstances
+    ecs:DeregisterContainerInstance
+    ec2:StopInstances
+    ec2:StartInstances
+    ec2:DeleteTags
     ```
     
     Additionally, if Spot Instances are used, the additional permissions are needed:
     
     ```
-    ec2:requestSpotInstances
-    ec2:describeSpotInstanceRequests
+    ec2:RequestSpotInstances
+    ec2:DescribeSpotInstanceRequests
     ```
 
 
   * An IAM Role that allows the ECS agent running on the EC2 instance to register container instances with ECS cluster. The IAM instance profile must have following permissions:
 
     ```
-    ecs:poll
-    ecs:describeClusters
-    ecs:discoverPollEndpoint
-    ecs:startTelemetrySession
-    ecs:submitTaskStateChange
-    ecs:registerContainerInstance
-    ecs:submitContainerStateChange
-    ecs:deregisterContainerInstance
+    ecs:Poll
+    ecs:DescribeClusters
+    ecs:DiscoverPollEndpoint
+    ecs:StartTelemetrySession
+    ecs:SubmitTaskStateChange
+    ecs:RegisterContainerInstance
+    ecs:SubmitContainerStateChange
+    ecs:DeregisterContainerInstance
     logs:PutLogEvents
     logs:CreateLogStream
     ```
