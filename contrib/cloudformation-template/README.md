@@ -2,5 +2,5 @@
 
 ```bash
 bundle
-bundle exec ruby ecs_cloud_formation_template.rb create --stack-name <your-stack-name>i
+bundle exec ruby ecs_cloud_formation_template.rb create --stack-name <your-stack-name>
 ```
