@@ -222,16 +222,17 @@ class TaskHelperTest {
         }
 
         verify(ecsClient).deregisterTaskDefinition(any(DeregisterTaskDefinitionRequest.class));
+        verify(ecsClient).deleteTaskDefinitions(any(DeleteTaskDefinitionsRequest.class));
     }
 
     @Test
-    void shouldStopAndDeregisterTask() {
+    void shouldStopAndCleanupTask() {
         final ECSTask ecsTask = mock(ECSTask.class);
 
         when(ecsTask.taskArn()).thenReturn("task-arn");
         when(ecsTask.taskDefinitionArn()).thenReturn("task-definition-arn");
 
-        taskHelper.stopAndDeregisterTask(pluginSettings, ecsTask);
+        taskHelper.stopAndCleanupTask(pluginSettings, ecsTask);
 
         final ArgumentCaptor<StopTaskRequest> stopTaskRequestArgumentCaptor = ArgumentCaptor.forClass(StopTaskRequest.class);
         verify(ecsClient).stopTask(stopTaskRequestArgumentCaptor.capture());
@@ -242,18 +243,24 @@ class TaskHelperTest {
         assertThat(stopTaskRequest.getReason()).isEqualTo("Stopped by GoCD server.");
         assertThat(stopTaskRequest.getTask()).isEqualTo("task-arn");
 
-
         final ArgumentCaptor<DeregisterTaskDefinitionRequest> deregisterTaskDefinitionRequestArgumentCaptor = ArgumentCaptor.forClass(DeregisterTaskDefinitionRequest.class);
         verify(ecsClient).deregisterTaskDefinition(deregisterTaskDefinitionRequestArgumentCaptor.capture());
 
         final DeregisterTaskDefinitionRequest deregisterTaskDefinitionRequest = deregisterTaskDefinitionRequestArgumentCaptor.getValue();
         assertThat(deregisterTaskDefinitionRequest).isNotNull();
         assertThat(deregisterTaskDefinitionRequest.getTaskDefinition()).isEqualTo("task-definition-arn");
+
+        final ArgumentCaptor<DeleteTaskDefinitionsRequest> deleteTaskDefinitionsCaptor = ArgumentCaptor.forClass(DeleteTaskDefinitionsRequest.class);
+        verify(ecsClient).deleteTaskDefinitions(deleteTaskDefinitionsCaptor.capture());
+
+        final DeleteTaskDefinitionsRequest deleteTaskDefinitionRequest = deleteTaskDefinitionsCaptor.getValue();
+        assertThat(deleteTaskDefinitionRequest).isNotNull();
+        assertThat(deleteTaskDefinitionRequest.getTaskDefinitions()).containsExactly("task-definition-arn");
     }
 
     @Test
-    void shouldDeregisterTaskDefinition() {
-        taskHelper.deregisterTaskDefinition(pluginSettings, "task-definition-arn");
+    void shouldCleanupTaskDefinition() {
+        taskHelper.cleanupTaskDefinition(pluginSettings, "task-definition-arn");
 
         final ArgumentCaptor<DeregisterTaskDefinitionRequest> deregisterTaskDefinitionRequestArgumentCaptor = ArgumentCaptor.forClass(DeregisterTaskDefinitionRequest.class);
         verify(ecsClient).deregisterTaskDefinition(deregisterTaskDefinitionRequestArgumentCaptor.capture());
@@ -261,6 +268,13 @@ class TaskHelperTest {
         final DeregisterTaskDefinitionRequest deregisterTaskDefinitionRequest = deregisterTaskDefinitionRequestArgumentCaptor.getValue();
         assertThat(deregisterTaskDefinitionRequest).isNotNull();
         assertThat(deregisterTaskDefinitionRequest.getTaskDefinition()).isEqualTo("task-definition-arn");
+
+        final ArgumentCaptor<DeleteTaskDefinitionsRequest> deleteTaskDefinitionsCaptor = ArgumentCaptor.forClass(DeleteTaskDefinitionsRequest.class);
+        verify(ecsClient).deleteTaskDefinitions(deleteTaskDefinitionsCaptor.capture());
+
+        final DeleteTaskDefinitionsRequest deleteTaskDefinitionRequest = deleteTaskDefinitionsCaptor.getValue();
+        assertThat(deleteTaskDefinitionRequest).isNotNull();
+        assertThat(deleteTaskDefinitionRequest.getTaskDefinitions()).containsExactly("task-definition-arn");
     }
 
     @Test

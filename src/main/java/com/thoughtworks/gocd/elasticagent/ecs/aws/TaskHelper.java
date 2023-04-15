@@ -116,24 +116,25 @@ public class TaskHelper {
             LOG.info(format("[create-agent] Task {0} scheduled on container instance {1}", taskName, containerInstance.get().getEc2InstanceId()));
             return Optional.of(new ECSTask(startTaskResult.getTasks().get(0), taskDefinitionFromNewTask, elasticAgentProfileProperties, createAgentRequest.getJobIdentifier(), createAgentRequest.environment(), containerInstance.get().getEc2InstanceId()));
         } else {
-            deregisterTaskDefinition(pluginSettings, taskDefinitionFromNewTask.getTaskDefinitionArn());
+            cleanupTaskDefinition(pluginSettings, taskDefinitionFromNewTask.getTaskDefinitionArn());
             String errors = startTaskResult.getFailures().stream().map(failure -> "    " + failure.getArn() + " failed with reason :" + failure.getReason()).collect(Collectors.joining("\n"));
             throw new ContainerFailedToRegisterException("Fail to start task " + taskName + ":\n" + errors);
         }
     }
 
-    public void stopAndDeregisterTask(PluginSettings pluginSettings, ECSTask task) {
+    public void stopAndCleanupTask(PluginSettings pluginSettings, ECSTask task) {
         pluginSettings.ecsClient().stopTask(
                 new StopTaskRequest()
                         .withCluster(pluginSettings.getClusterName())
                         .withTask(task.taskArn())
                         .withReason("Stopped by GoCD server.")
         );
-        deregisterTaskDefinition(pluginSettings, task.taskDefinitionArn());
+        cleanupTaskDefinition(pluginSettings, task.taskDefinitionArn());
     }
 
-    public void deregisterTaskDefinition(PluginSettings settings, String taskDefinitionArn) {
+    public void cleanupTaskDefinition(PluginSettings settings, String taskDefinitionArn) {
         settings.ecsClient().deregisterTaskDefinition(new DeregisterTaskDefinitionRequest().withTaskDefinition(taskDefinitionArn));
+        settings.ecsClient().deleteTaskDefinitions(new DeleteTaskDefinitionsRequest().withTaskDefinitions(taskDefinitionArn));
     }
 
     public Map<Task, TaskDefinition> listAllTasks(PluginSettings settings) {

@@ -79,7 +79,7 @@ public class ECSTasks implements AgentInstances<ECSTask> {
         ECSTask task = tasks.get(agentId);
         try {
             if (task != null) {
-                taskHelper.stopAndDeregisterTask(pluginSettings, task);
+                taskHelper.stopAndCleanupTask(pluginSettings, task);
                 containerInstanceHelper.checkAndMarkEC2InstanceIdle(pluginSettings, task.getEC2InstanceId());
                 LOG.info(format("Task {0} is terminated.", task.name()));
             } else {
