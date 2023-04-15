@@ -16,11 +16,10 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.domain;
 
+import com.google.gson.reflect.TypeToken;
 import com.thoughtworks.gocd.elasticagent.ecs.requests.CreateAgentRequest;
 import com.thoughtworks.gocd.elasticagent.ecs.requests.JobCompletionRequest;
 import org.junit.jupiter.api.Test;
-
-import java.util.HashMap;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.utils.Util.GSON;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,7 +43,7 @@ class ClusterProfilePropertiesTest {
                 .addSetting("SecurityGroupIds", "sg-shouldAlwaysGenerateSameUUID")
                 .build();
 
-        ClusterProfileProperties clusterProfileProperties = ClusterProfileProperties.fromConfiguration(GSON.fromJson(GSON.toJson(pluginSettings), HashMap.class));
+        ClusterProfileProperties clusterProfileProperties = ClusterProfileProperties.fromConfiguration(GSON.fromJson(GSON.toJson(pluginSettings), new TypeToken<>() {}));
         assertThat(clusterProfileProperties.uuid()).isEqualTo(clusterProfileProperties.uuid());
     }
 
