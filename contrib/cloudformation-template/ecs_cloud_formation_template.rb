@@ -51,18 +51,18 @@ template do
                      {
                        Effect: 'Allow',
                        Action: %w(
-                        ec2:runInstances
-                        ec2:createTags
-                        ec2:terminateInstances
-                        ec2:describeInstances
-                        ec2:describeSubnets
-                        ec2:createVolume
-                        ec2:attachVolume
-                        ec2:stopInstances
-                        ec2:startInstances
-                        ec2:requestSpotInstances
-                        ec2:describeSpotInstanceRequests
-                        ec2:deleteTags
+                        ec2:RunInstances
+                        ec2:CreateTags
+                        ec2:TerminateInstances
+                        ec2:DescribeInstances
+                        ec2:DescribeSubnets
+                        ec2:CreateVolume
+                        ec2:AttachVolume
+                        ec2:StopInstances
+                        ec2:StartInstances
+                        ec2:RequestSpotInstances
+                        ec2:DescribeSpotInstanceRequests
+                        ec2:DeleteTags
                         iam:PassRole
                         iam:GetRole
                        ),
