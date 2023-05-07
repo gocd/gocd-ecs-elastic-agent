@@ -19,6 +19,7 @@ Table of Contents
         * [Configure ECS using the *AWS CloudFormation* template](docs/installation.md#configure-ecs-using-the-aws-cloudformation-template)
         * [Alternatively configure ECS manually](docs/installation.md#alternatively-configure-ecs-manually)
     * [Installation](docs/installation.md#installation)
+    * [Upgrading](docs/installation.md#upgrading)
     * [Configuration](docs/installation.md#configuration)
         * [Configure cluster profile(s)](docs/cluster_profile_configuration.md)
             * [Cluster configuration](docs/cluster_profile_configuration.md#cluster-configuration)
