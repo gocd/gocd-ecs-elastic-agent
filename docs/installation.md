@@ -5,6 +5,7 @@ Table of Contents
 
   * [Prerequisites](#prerequisites)
   * [Installation](#installation)
+  * [Upgrading](#upgrading)
   * [Configuration](#configuration)
   
 ## Prerequisites
@@ -100,6 +101,11 @@ Listed below are the steps to be followed if you prefer to manually configure EC
 * Copy the file `build/libs/ecs-elastic-agent-plugin-VERSION.jar` to the GoCD server under `${GO_SERVER_DIR}/plugins/external`
 and restart the server.
 * The `GO_SERVER_DIR` is usually `/var/lib/go-server` on **Linux** and `C:\Program Files\Go Server` on **Windows**. You can find the location of the GoCD Server installation [here](https://docs.gocd.org/current/installation/installing_go_server.html).
+
+## Upgrading
+
+* Generally the plugin JAR can be replaced with the latest version.
+* **Please note** that plugin verison `7.3.0+` requires additional permissions for the IAM role that allows creating and managing tasks. See https://github.com/gocd/gocd-ecs-elastic-agent/releases/tag/v7.3.0-407 for more details.
 
 ## Configuration
 
