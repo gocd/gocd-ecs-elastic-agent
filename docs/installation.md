@@ -105,7 +105,7 @@ and restart the server.
 ## Upgrading
 
 * Generally the plugin JAR can be replaced with the latest version.
-* **Please note** that plugin verison `7.3.0+` requires additional permissions for the IAM role that allows creating and managing tasks. See https://github.com/gocd/gocd-ecs-elastic-agent/releases/tag/v7.3.0-407 for more details.
+* **Please note** that plugin version `7.3.0+` requires additional permissions for the IAM role that allows creating and managing tasks. See https://github.com/gocd/gocd-ecs-elastic-agent/releases/tag/v7.3.0-407 for more details.
 
 ## Configuration
 
