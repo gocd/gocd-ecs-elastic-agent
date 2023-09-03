@@ -69,56 +69,110 @@ public class TaskHelper {
                 .build();
 
         StopPolicy stopPolicy = elasticAgentProfileProperties.platform() == LINUX ? pluginSettings.getLinuxStopPolicy() : pluginSettings.getWindowsStopPolicy();
-        Optional<ContainerInstance> containerInstance = instanceSelectionStrategyFactory
-                .strategyFor(stopPolicy)
-                .instanceForScheduling(pluginSettings, elasticAgentProfileProperties, containerDefinition);
 
-        if (!containerInstance.isPresent()) {
-            consoleLogAppender.accept("No running instance(s) found to build the ECS Task to perform current job.");
-            LOG.info(format("[create-agent] No running instances found to build container with profile {0}", createAgentRequest.elasticProfile().toJson()));
-            if (elasticAgentProfileProperties.runAsSpotInstance()) {
-                spotInstanceService.create(pluginSettings, elasticAgentProfileProperties, consoleLogAppender);
-                return Optional.empty();
+        if (!elasticAgentProfileProperties.isFargate()) {
+            Optional<ContainerInstance> containerInstance = instanceSelectionStrategyFactory
+                    .strategyFor(stopPolicy)
+                    .instanceForScheduling(pluginSettings, elasticAgentProfileProperties, containerDefinition);
+
+            if (!containerInstance.isPresent()) {
+                consoleLogAppender.accept("No running instance(s) found to build the ECS Task to perform current job.");
+                LOG.info(format("[create-agent] No running instances found to build container with profile {0}", createAgentRequest.elasticProfile().toJson()));
+                if (elasticAgentProfileProperties.runAsSpotInstance()) {
+                    spotInstanceService.create(pluginSettings, elasticAgentProfileProperties, consoleLogAppender);
+                    return Optional.empty();
+                } else {
+                    containerInstance = containerInstanceHelper.startOrCreateOneInstance(pluginSettings, elasticAgentProfileProperties, consoleLogAppender);
+                }
             } else {
-                containerInstance = containerInstanceHelper.startOrCreateOneInstance(pluginSettings, elasticAgentProfileProperties, consoleLogAppender);
+                consoleLogAppender.accept("Found existing running container instance platform matching ECS Task instance configuration. Not starting a new EC2 instance...");
             }
+
+            final RegisterTaskDefinitionRequest registerTaskDefinitionRequest = registerTaskDefinitionRequestBuilder
+                    .build(pluginSettings, elasticAgentProfileProperties, containerDefinition).withFamily(taskName);
+
+            consoleLogAppender.accept("Registering ECS Task definition with cluster...");
+            LOG.debug(format("[create-agent] Registering task definition: {0} ", registerTaskDefinitionRequest.toString()));
+            RegisterTaskDefinitionResult taskDefinitionResult = pluginSettings.ecsClient().registerTaskDefinition(registerTaskDefinitionRequest);
+            consoleLogAppender.accept("Done registering ECS Task definition with cluster.");
+            LOG.debug("[create-agent] Done registering task definition");
+
+            TaskDefinition taskDefinitionFromNewTask = taskDefinitionResult.getTaskDefinition();
+
+            StartTaskRequest startTaskRequest = new StartTaskRequest()
+                    .withTaskDefinition(taskDefinitionFromNewTask.getTaskDefinitionArn())
+                    .withContainerInstances(containerInstance.get().getContainerInstanceArn())
+                    .withCluster(pluginSettings.getClusterName());
+
+            consoleLogAppender.accept("Starting ECS Task to perform current job...");
+            LOG.debug(format("[create-agent] Starting task : {0} ", startTaskRequest.toString()));
+            StartTaskResult startTaskResult = pluginSettings.ecsClient().startTask(startTaskRequest);
+            LOG.debug("[create-agent] Done executing start task request.");
+
+            if (isStarted(startTaskResult)) {
+                String message = elasticAgentProfileProperties.runAsSpotInstance() ?
+                            "[WARNING] The ECS task is scheduled on a Spot Instance. A spot instance termination would re-schedule the job."
+                            : String.format("ECS Task %s scheduled on container instance %s.", taskName, containerInstance.get().getEc2InstanceId());
+
+                consoleLogAppender.accept(message);
+
+                LOG.info(format("[create-agent] Task {0} scheduled on container instance {1}", taskName, containerInstance.get().getEc2InstanceId()));
+                return Optional.of(new ECSTask(startTaskResult.getTasks().get(0), taskDefinitionFromNewTask, elasticAgentProfileProperties, createAgentRequest.getJobIdentifier(), createAgentRequest.environment(), containerInstance.get().getEc2InstanceId()));
+            } else {
+                cleanupTaskDefinition(pluginSettings, taskDefinitionFromNewTask.getTaskDefinitionArn());
+                String errors = startTaskResult.getFailures().stream().map(failure -> "    " + failure.getArn() + " failed with reason :" + failure.getReason()).collect(Collectors.joining("\n"));
+                throw new ContainerFailedToRegisterException("Fail to start task " + taskName + ":\n" + errors);
+            }
+
         } else {
-            consoleLogAppender.accept("Found existing running container instance platform matching ECS Task instance configuration. Not starting a new EC2 instance...");
-        }
+            consoleLogAppender.accept("This is an ECS Fargate task request. Not creating an EC2 instance.");
+            LOG.info("[create-agent] This is an ECS Fargate task request. Not creating an EC2 instance.");
 
-        final RegisterTaskDefinitionRequest registerTaskDefinitionRequest = registerTaskDefinitionRequestBuilder
-                .build(pluginSettings, elasticAgentProfileProperties, containerDefinition).withFamily(taskName);
+            final RegisterTaskDefinitionRequest registerTaskDefinitionRequest = registerTaskDefinitionRequestBuilder
+                    .build(pluginSettings, elasticAgentProfileProperties, containerDefinition).withFamily(taskName);
 
-        consoleLogAppender.accept("Registering ECS Task definition with cluster...");
-        LOG.debug(format("[create-agent] Registering task definition: {0} ", registerTaskDefinitionRequest.toString()));
-        RegisterTaskDefinitionResult taskDefinitionResult = pluginSettings.ecsClient().registerTaskDefinition(registerTaskDefinitionRequest);
-        consoleLogAppender.accept("Done registering ECS Task definition with cluster.");
-        LOG.debug("[create-agent] Done registering task definition");
+            consoleLogAppender.accept("Registering ECS Task definition with cluster...");
+            LOG.debug(format("[create-agent] Registering task definition: {0} ", registerTaskDefinitionRequest.toString()));
+            RegisterTaskDefinitionResult taskDefinitionResult = pluginSettings.ecsClient().registerTaskDefinition(registerTaskDefinitionRequest);
+            consoleLogAppender.accept("Done registering ECS Task definition with cluster.");
+            LOG.debug("[create-agent] Done registering task definition");
 
-        TaskDefinition taskDefinitionFromNewTask = taskDefinitionResult.getTaskDefinition();
-        StartTaskRequest startTaskRequest = new StartTaskRequest()
-                .withTaskDefinition(taskDefinitionFromNewTask.getTaskDefinitionArn())
-                .withContainerInstances(containerInstance.get().getContainerInstanceArn())
-                .withCluster(pluginSettings.getClusterName());
+            TaskDefinition taskDefinitionFromNewTask = taskDefinitionResult.getTaskDefinition();
 
-        consoleLogAppender.accept("Starting ECS Task to perform current job...");
-        LOG.debug(format("[create-agent] Starting task : {0} ", startTaskRequest.toString()));
-        StartTaskResult startTaskResult = pluginSettings.ecsClient().startTask(startTaskRequest);
-        LOG.debug("[create-agent] Done executing start task request.");
+            final EC2Config ec2Config = new EC2Config.Builder()
+                    .withSettings(pluginSettings).withProfile(elasticAgentProfileProperties)
+                    .build();
 
-        if (isStarted(startTaskResult)) {
-            String message = elasticAgentProfileProperties.runAsSpotInstance() ?
-                    "[WARNING] The ECS task is scheduled on a Spot Instance. A spot instance termination would re-schedule the job."
-                    : String.format("ECS Task %s scheduled on container instance %s.", taskName, containerInstance.get().getEc2InstanceId());
 
-            consoleLogAppender.accept(message);
+            AwsVpcConfiguration awsVpcConfiguration = new AwsVpcConfiguration()
+                .withSecurityGroups(ec2Config.getSecurityGroups())
+                .withSubnets(ec2Config.getSubnetIds());
 
-            LOG.info(format("[create-agent] Task {0} scheduled on container instance {1}", taskName, containerInstance.get().getEc2InstanceId()));
-            return Optional.of(new ECSTask(startTaskResult.getTasks().get(0), taskDefinitionFromNewTask, elasticAgentProfileProperties, createAgentRequest.getJobIdentifier(), createAgentRequest.environment(), containerInstance.get().getEc2InstanceId()));
-        } else {
-            cleanupTaskDefinition(pluginSettings, taskDefinitionFromNewTask.getTaskDefinitionArn());
-            String errors = startTaskResult.getFailures().stream().map(failure -> "    " + failure.getArn() + " failed with reason :" + failure.getReason()).collect(Collectors.joining("\n"));
-            throw new ContainerFailedToRegisterException("Fail to start task " + taskName + ":\n" + errors);
+            NetworkConfiguration networkConfiguration = new NetworkConfiguration()
+                .withAwsvpcConfiguration(awsVpcConfiguration);
+
+            RunTaskRequest runTaskRequest = new RunTaskRequest()
+                    .withLaunchType(LaunchType.FARGATE)
+                    .withTaskDefinition(taskDefinitionFromNewTask.getTaskDefinitionArn())
+                    .withCluster(pluginSettings.getClusterName())
+                    .withNetworkConfiguration(networkConfiguration);
+
+            consoleLogAppender.accept("Starting ECS Task to perform current job...");
+            LOG.debug(format("[create-agent] Starting task : {0} ", runTaskRequest.toString()));
+            RunTaskResult runTaskResult = pluginSettings.ecsClient().runTask(runTaskRequest);
+            LOG.debug("[create-agent] Done executing start task request.");
+
+            if (isStarted(runTaskResult)) {
+                String message = String.format("ECS Task %s scheduled on Fargate", taskName);
+                consoleLogAppender.accept(message);
+
+                LOG.info(format("[create-agent] Task {0} scheduled.", taskName));
+                return Optional.of(new ECSTask(runTaskResult.getTasks().get(0), taskDefinitionFromNewTask, elasticAgentProfileProperties, createAgentRequest.getJobIdentifier(), createAgentRequest.environment(), "FARGATE"));
+            } else {
+                cleanupTaskDefinition(pluginSettings, taskDefinitionFromNewTask.getTaskDefinitionArn());
+                String errors = runTaskResult.getFailures().stream().map(failure -> "    " + failure.getArn() + " failed with reason :" + failure.getReason()).collect(Collectors.joining("\n"));
+                throw new ContainerFailedToRegisterException("Fail to start task " + taskName + ":\n" + errors);
+            }
         }
     }
 
@@ -223,4 +277,9 @@ public class TaskHelper {
     private boolean isStarted(StartTaskResult startTaskResult) {
         return startTaskResult.getFailures().isEmpty() && !startTaskResult.getTasks().isEmpty();
     }
+
+    private boolean isStarted(RunTaskResult runTaskResult) {
+        return runTaskResult.getFailures().isEmpty() && !runTaskResult.getTasks().isEmpty();
+    }
+
 }
