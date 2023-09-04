@@ -151,14 +151,33 @@ public class TaskHelper {
             NetworkConfiguration networkConfiguration = new NetworkConfiguration()
                 .withAwsvpcConfiguration(awsVpcConfiguration);
 
-            RunTaskRequest runTaskRequest = new RunTaskRequest()
-                    .withLaunchType(LaunchType.FARGATE)
-                    .withTaskDefinition(taskDefinitionFromNewTask.getTaskDefinitionArn())
-                    .withCluster(pluginSettings.getClusterName())
-                    .withNetworkConfiguration(networkConfiguration);
+            // Try to run using capacity providers for possible FARGATE_SPOT but 
+            // gracefully fail back to using LaunchType.Fargate if it hasn't been
+            // set. 
+            // https://docs.aws.amazon.com/cdk/api/v2/python/aws_cdk.aws_ecs/README.html
+            CapacityProviderStrategyItem capacityProvider = elasticAgentProfileProperties.runAsSpotInstance() ?
+                new CapacityProviderStrategyItem()
+                    .withCapacityProvider("FARGATE_SPOT") :
+                new CapacityProviderStrategyItem()
+                    .withCapacityProvider("FARGATE");
 
-            consoleLogAppender.accept("Starting ECS Task to perform current job...");
-            LOG.debug(format("[create-agent] Starting task : {0} ", runTaskRequest.toString()));
+            RunTaskRequest runTaskRequest = new RunTaskRequest();
+            try {
+                LOG.info(format("[create-agent] Running Task {0} using capacity provider strategy.", taskName));
+                runTaskRequest.withCapacityProviderStrategy(capacityProvider)
+                        .withTaskDefinition(taskDefinitionFromNewTask.getTaskDefinitionArn())
+                        .withCluster(pluginSettings.getClusterName())
+                        .withNetworkConfiguration(networkConfiguration);
+            } catch (InvalidParameterException e) {
+                LOG.info(format("[create-agent] Running Task {0} using LaunchType of Fargate.", taskName));
+                runTaskRequest.withLaunchType(LaunchType.FARGATE)
+                        .withTaskDefinition(taskDefinitionFromNewTask.getTaskDefinitionArn())
+                        .withCluster(pluginSettings.getClusterName())
+                        .withNetworkConfiguration(networkConfiguration);            
+            } 
+
+            consoleLogAppender.accept(format("Starting ECS {0} Task to perform current job...", elasticAgentProfileProperties.runAsSpotInstance() ? "FARGATE_SPOT" : "FARGATE"));
+            LOG.debug(format("[create-agent] Starting {0} task : {1} ", elasticAgentProfileProperties.runAsSpotInstance() ? "FARGATE_SPOT" : "FARGATE", runTaskRequest.toString()));
             RunTaskResult runTaskResult = pluginSettings.ecsClient().runTask(runTaskRequest);
             LOG.debug("[create-agent] Done executing start task request.");
 
@@ -177,17 +196,21 @@ public class TaskHelper {
     }
 
     public void stopAndCleanupTask(PluginSettings pluginSettings, ECSTask task) {
+        LOG.info(format("[stop-and-clenup-task] Stopping Task {0}.", task.taskArn()));
         pluginSettings.ecsClient().stopTask(
                 new StopTaskRequest()
                         .withCluster(pluginSettings.getClusterName())
                         .withTask(task.taskArn())
                         .withReason("Stopped by GoCD server.")
         );
+        LOG.info(format("[stop-and-clenup-task] Cleaning up task def arn {0}.", task.taskDefinitionArn()));
         cleanupTaskDefinition(pluginSettings, task.taskDefinitionArn());
     }
 
     public void cleanupTaskDefinition(PluginSettings settings, String taskDefinitionArn) {
+        LOG.info(format("[cleanup-task-definition] Deregistering task def arn {0}.", taskDefinitionArn));
         settings.ecsClient().deregisterTaskDefinition(new DeregisterTaskDefinitionRequest().withTaskDefinition(taskDefinitionArn));
+        LOG.info(format("[cleanup-task-definition] Deleting task def arn {0}.", taskDefinitionArn));
         settings.ecsClient().deleteTaskDefinitions(new DeleteTaskDefinitionsRequest().withTaskDefinitions(taskDefinitionArn));
     }
 
@@ -277,9 +300,8 @@ public class TaskHelper {
     private boolean isStarted(StartTaskResult startTaskResult) {
         return startTaskResult.getFailures().isEmpty() && !startTaskResult.getTasks().isEmpty();
     }
-
-    private boolean isStarted(RunTaskResult runTaskResult) {
-        return runTaskResult.getFailures().isEmpty() && !runTaskResult.getTasks().isEmpty();
+    private boolean isStarted(RunTaskResult startTaskResult) {
+        return startTaskResult.getFailures().isEmpty() && !startTaskResult.getTasks().isEmpty();
     }
 
 }
