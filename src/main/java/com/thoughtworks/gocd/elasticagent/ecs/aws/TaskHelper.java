@@ -186,7 +186,9 @@ public class TaskHelper {
                 consoleLogAppender.accept(message);
 
                 LOG.info(format("[create-agent] Task {0} scheduled.", taskName));
-                return Optional.of(new ECSTask(runTaskResult.getTasks().get(0), taskDefinitionFromNewTask, elasticAgentProfileProperties, createAgentRequest.getJobIdentifier(), createAgentRequest.environment(), "FARGATE"));
+                String fargate_type = elasticAgentProfileProperties.runAsSpotInstance() ? "Fargate" : "FargateSpot";
+                final String fake_ec2_name = fargate_type + UUID.randomUUID().toString().replaceAll("-", "");
+                return Optional.of(new ECSTask(runTaskResult.getTasks().get(0), taskDefinitionFromNewTask, elasticAgentProfileProperties, createAgentRequest.getJobIdentifier(), createAgentRequest.environment(), fake_ec2_name));
             } else {
                 cleanupTaskDefinition(pluginSettings, taskDefinitionFromNewTask.getTaskDefinitionArn());
                 String errors = runTaskResult.getFailures().stream().map(failure -> "    " + failure.getArn() + " failed with reason :" + failure.getReason()).collect(Collectors.joining("\n"));
