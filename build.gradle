@@ -98,7 +98,7 @@ dependencies {
   testRuntimeOnly group: 'org.junit.platform', name: 'junit-platform-launcher'
 
   testImplementation project.deps.gocdPluginApi
-  testImplementation group: 'uk.org.webcompere', name: 'system-stubs-jupiter', version: '2.1.5'
+  testImplementation group: 'uk.org.webcompere', name: 'system-stubs-jupiter', version: '2.1.6'
   testImplementation group: 'org.assertj', name: 'assertj-core', version: '3.25.1'
   testImplementation group: 'org.mockito', name: 'mockito-core', version: '5.8.0'
   testImplementation group: 'org.skyscreamer', name: 'jsonassert', version: '1.5.1'
