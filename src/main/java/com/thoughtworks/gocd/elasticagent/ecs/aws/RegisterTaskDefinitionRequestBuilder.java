@@ -73,6 +73,11 @@ public class RegisterTaskDefinitionRequestBuilder {
             });
         }
 
+        if (isNotBlank(elasticAgentProfileProperties.getExecutionRoleArn())) {
+                LOG.info(format("[create-agent] Adding execution Role to task configuration: {0}", elasticAgentProfileProperties.getExecutionRoleArn()));
+                request.withExecutionRoleArn(elasticAgentProfileProperties.getExecutionRoleArn());
+        }
+
         return request;
     }
 }
