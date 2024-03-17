@@ -65,15 +65,16 @@ public class RunInstanceRequestBuilder {
         }
 
         request.withBlockDeviceMappings(
-                blockDeviceMapping(osDeviceName(), ec2Config.getOperatingSystemVolumeType(), Integer.parseInt(ec2Config.getOperationSystemVolumeSize()), ec2Config.getOperationSystemVolumeProvisionedIOPS())
+                blockDeviceMapping(osDeviceName(), ec2Config.getOperatingSystemVolumeType(), Integer.parseInt(ec2Config.getOperationSystemVolumeSize()), ec2Config.getOperationSystemVolumeProvisionedIOPS(), ec2Config.getOperatingSystemVolumeEncryption())
         );
     }
 
-    private BlockDeviceMapping blockDeviceMapping(String deviceName, String volumeType, int volumeSize, Integer provisionedIOPS) {
+    private BlockDeviceMapping blockDeviceMapping(String deviceName, String volumeType, int volumeSize, Integer provisionedIOPS, Boolean volumeEncryption) {
         EbsBlockDevice ebsBlockDevice = new EbsBlockDevice()
             .withDeleteOnTermination(true)
             .withVolumeType(volumeType)
-            .withVolumeSize(volumeSize);
+            .withVolumeSize(volumeSize)
+            .withEncrypted(volumeEncryption);
         return new BlockDeviceMapping()
             .withEbs(withIops(ebsBlockDevice, volumeType, provisionedIOPS))
             .withDeviceName(deviceName);
@@ -90,7 +91,7 @@ public class RunInstanceRequestBuilder {
         }
 
         request.withBlockDeviceMappings(
-                blockDeviceMapping(DEFAULT_LINUX_DOCKER_DEVICE_NAME, ec2Config.getDockerVolumeType(), Integer.parseInt(ec2Config.getDockerVolumeSize()), ec2Config.getDockerVolumeProvisionedIOPS())
+                blockDeviceMapping(DEFAULT_LINUX_DOCKER_DEVICE_NAME, ec2Config.getDockerVolumeType(), Integer.parseInt(ec2Config.getDockerVolumeSize()), ec2Config.getDockerVolumeProvisionedIOPS(), ec2Config.getDockerVolumeEncryption())
         );
     }
 

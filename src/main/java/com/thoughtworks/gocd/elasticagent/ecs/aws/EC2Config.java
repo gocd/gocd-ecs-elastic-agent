@@ -59,6 +59,8 @@ public class EC2Config {
     private boolean runAsSpotInstance;
     private String spotPrice;
     private Integer spotRequestExpiresAfter;
+    private Boolean dockerVolumeEncryption;
+    private Boolean operatingSystemVolumeEncryption;
 
     public String getAmi() {
         return ami;
@@ -148,6 +150,10 @@ public class EC2Config {
         return now().plusMinutes(spotRequestExpiresAfter).toDate();
     }
 
+    public Boolean getDockerVolumeEncryption() { return dockerVolumeEncryption; }
+
+    public Boolean getOperatingSystemVolumeEncryption() { return operatingSystemVolumeEncryption; }
+
     public static class Builder {
         static final String NAME = "Name";
         static final String CREATOR = "Creator";
@@ -211,10 +217,12 @@ public class EC2Config {
             ec2Config.operatingSystemVolumeType = pluginSettings.getLinuxOSVolumeType();
             ec2Config.operationSystemVolumeSize = pluginSettings.getLinuxOSVolumeSize();
             ec2Config.operationSystemVolumeProvisionedIOPS = pluginSettings.getLinuxOSVolumeProvisionedIOPS();
+            ec2Config.operatingSystemVolumeEncryption = pluginSettings.getLinuxOSVolumeEncryption();
 
             ec2Config.dockerVolumeType = pluginSettings.getLinuxVolumeType();
             ec2Config.dockerVolumeSize = pluginSettings.getLinuxVolumeSize();
             ec2Config.dockerVolumeProvisionedIOPS = pluginSettings.getLinuxVolumeProvisionedIOPS();
+            ec2Config.dockerVolumeEncryption = pluginSettings.getLinuxVolumeEncryption();
             ec2Config.registerTimeOut = pluginSettings.getLinuxRegisterTimeout();
             ec2Config.maxInstancesAllowed = pluginSettings.getMaxLinuxInstancesAllowed();
             ec2Config.minInstanceCount = pluginSettings.getMinLinuxInstanceCount();

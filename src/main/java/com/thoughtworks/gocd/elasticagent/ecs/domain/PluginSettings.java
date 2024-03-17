@@ -314,6 +314,16 @@ public class PluginSettings {
     @Metadata(key = "EfsDnsOrIP", required = false, secure = false)
     private String efsDnsOrIP;
 
+    @Expose
+    @SerializedName("LinuxVolumeEncryption")
+    @Metadata(key = "LinuxVolumeEncryption", required = false, secure = false)
+    private Boolean linuxVolumeEncryption;
+
+    @Expose
+    @SerializedName("LinuxDockerEncryption")
+    @Metadata(key = "LinuxDockerEncryption", required = false, secure = false)
+    private Boolean linuxDockerEncryption;
+
     public String getAccessKeyId() {
         return accessKeyId;
     }
@@ -412,6 +422,10 @@ public class PluginSettings {
     public Integer getLinuxVolumeProvisionedIOPS() {
         return getIntOrDefault(linuxVolumeProvisionedIOPS, null);
     }
+
+    public Boolean getLinuxOSVolumeEncryption() { return linuxVolumeEncryption; }
+
+    public Boolean getLinuxVolumeEncryption() { return linuxDockerEncryption; }
 
     public Period getLinuxRegisterTimeout() {
         return new Period().withMinutes(getIntOrDefault(this.linuxRegisterTimeout, 5));
@@ -626,12 +640,14 @@ public class PluginSettings {
                 Objects.equals(privateDockerRegistryEmail, that.privateDockerRegistryEmail) &&
                 Objects.equals(privateDockerRegistryUsername, that.privateDockerRegistryUsername) &&
                 Objects.equals(privateDockerRegistryPassword, that.privateDockerRegistryPassword) &&
-                Objects.equals(efsDnsOrIP, that.efsDnsOrIP);
+                Objects.equals(efsDnsOrIP, that.efsDnsOrIP) &&
+                Objects.equals(linuxVolumeEncryption, that.linuxVolumeEncryption) &&
+                Objects.equals(linuxDockerEncryption, that.linuxDockerEncryption);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(goServerUrl, clusterName, region, accessKeyId, secretAccessKey, environmentVariables, containerAutoregisterTimeout, maxContainerDataVolumeSize, keyPairName, iamInstanceProfile, subnetIds, securityGroupIds, logDriverName, logOptions, linuxAMI, linuxInstanceType, linuxRegisterTimeout, minLinuxInstanceCount, maxLinuxInstancesAllowed, maxLinuxSpotInstanceAllowed, linuxVolumeType, linuxVolumeSize, linuxVolumeProvisionedIOPS, linuxOSVolumeType, linuxOSVolumeSize, linuxOSVolumeProvisionedIOPS, linuxUserdataScript, linuxStopPolicy, stopLinuxInstanceAfter, terminateStoppedLinuxInstanceAfter, terminateIdleLinuxSpotInstanceAfter, windowsAMI, windowsInstanceType, windowsVolumeType, windowsVolumeSize, windowsOSVolumeProvisionedIOPS, windowsRegisterTimeout, minWindowsInstanceCount, maxWindowsInstancesAllowed, maxWindowsSpotInstanceAllowed, windowsUserdataScript, windowsStopPolicy, stopWindowsInstanceAfter, terminateStoppedWindowsInstanceAfter, terminateIdleWindowsSpotInstanceAfter, privateDockerRegistryAuthType, privateDockerRegistryAuthToken, privateDockerRegistryUrl, privateDockerRegistryEmail, privateDockerRegistryUsername, privateDockerRegistryPassword, efsDnsOrIP);
+        return Objects.hash(goServerUrl, clusterName, region, accessKeyId, secretAccessKey, environmentVariables, containerAutoregisterTimeout, maxContainerDataVolumeSize, keyPairName, iamInstanceProfile, subnetIds, securityGroupIds, logDriverName, logOptions, linuxAMI, linuxInstanceType, linuxRegisterTimeout, minLinuxInstanceCount, maxLinuxInstancesAllowed, maxLinuxSpotInstanceAllowed, linuxVolumeType, linuxVolumeSize, linuxVolumeProvisionedIOPS, linuxOSVolumeType, linuxOSVolumeSize, linuxOSVolumeProvisionedIOPS, linuxUserdataScript, linuxStopPolicy, stopLinuxInstanceAfter, terminateStoppedLinuxInstanceAfter, terminateIdleLinuxSpotInstanceAfter, windowsAMI, windowsInstanceType, windowsVolumeType, windowsVolumeSize, windowsOSVolumeProvisionedIOPS, windowsRegisterTimeout, minWindowsInstanceCount, maxWindowsInstancesAllowed, maxWindowsSpotInstanceAllowed, windowsUserdataScript, windowsStopPolicy, stopWindowsInstanceAfter, terminateStoppedWindowsInstanceAfter, terminateIdleWindowsSpotInstanceAfter, privateDockerRegistryAuthType, privateDockerRegistryAuthToken, privateDockerRegistryUrl, privateDockerRegistryEmail, privateDockerRegistryUsername, privateDockerRegistryPassword, efsDnsOrIP, linuxVolumeEncryption, linuxDockerEncryption);
     }
 
     public String uuid() {
