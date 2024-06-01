@@ -13,6 +13,8 @@ packages:
   - lvm2
   - nfs-utils
   - nfs-common
+cloud_final_modules:
+  - [scripts-user, always]
 
 --//
 Content-Type: text/x-shellscript; charset="us-ascii"
