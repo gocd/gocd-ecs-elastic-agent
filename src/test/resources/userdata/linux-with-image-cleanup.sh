@@ -9,13 +9,11 @@ Content-Disposition: attachment; filename="cloud-config"
 
 #cloud-config
 packages:
-- lvm2
-- nfs-utils
-- nfs-common
-
-#cloud-config
+  - lvm2
+  - nfs-utils
+  - nfs-common
 cloud_final_modules:
-- [per-once]
+  - [per-once]
 
 --//
 Content-Type: text/x-shellscript; charset="us-ascii"
