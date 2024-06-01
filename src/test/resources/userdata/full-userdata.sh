@@ -8,12 +8,11 @@ Content-Transfer-Encoding: 7bit
 Content-Disposition: attachment; filename="cloud-config"
 
 #cloud-config
+package_update: true
 packages:
   - lvm2
   - nfs-utils
   - nfs-common
-cloud_final_modules:
-  - [per-once]
 
 --//
 Content-Type: text/x-shellscript; charset="us-ascii"
@@ -42,11 +41,6 @@ service docker restart
 log "Finished executing GoCD's user data script, now executing custom user data script from use, if present."
 some-script
 log "Finished executing user specified user data script."
---//
-
-#cloud-config
-cloud_final_modules:
-- [scripts-user, always]
 
 --//
 Content-Type: text/x-shellscript; charset="us-ascii"
