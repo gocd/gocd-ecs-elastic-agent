@@ -20,6 +20,7 @@ import com.amazonaws.services.ecs.model.*;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.ElasticAgentProfileProperties;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.Platform;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
+import org.apache.commons.lang3.StringUtils;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
 import static java.text.MessageFormat.format;
@@ -31,7 +32,7 @@ public class RegisterTaskDefinitionRequestBuilder {
 
         final RegisterTaskDefinitionRequest request = new RegisterTaskDefinitionRequest()
                 .withContainerDefinitions(containerDefinition)
-                .withTaskRoleArn(elasticAgentProfileProperties.getTaskRoleArn());
+                .withTaskRoleArn(StringUtils.defaultIfBlank(elasticAgentProfileProperties.getTaskRoleArn(), null));
 
         if (elasticAgentProfileProperties.platform() == Platform.WINDOWS) {
             return request;
