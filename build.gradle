@@ -55,7 +55,7 @@ java {
 ext {
   deps = [
     gocdPluginApi: 'cd.go.plugin:go-plugin-api:24.3.0',
-    awsSdk       : 'com.amazonaws:aws-java-sdk:1.12.770',
+    awsSdk       : 'com.amazonaws:aws-java-sdk:1.12.771',
     lombok       : 'org.projectlombok:lombok:1.18.34',
   ]
 
