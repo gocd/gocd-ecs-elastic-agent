@@ -75,6 +75,7 @@ dependencies {
     exclude(module: 'error_prone_annotations')
     exclude(module: 'checker-qual')
     exclude(module: 'jsr305')
+    exclude(module: 'j2objc-annotations')
   }
   implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.17.0'
   implementation group: 'joda-time', name: 'joda-time', version: '2.13.0'
