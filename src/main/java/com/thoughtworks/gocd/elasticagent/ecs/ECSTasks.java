@@ -79,8 +79,14 @@ public class ECSTasks implements AgentInstances<ECSTask> {
         ECSTask task = tasks.get(agentId);
         try {
             if (task != null) {
+                LOG.info(format("Task {0} is not null. Ensuring it has been stopped and cleaned up.", task.name()));
                 taskHelper.stopAndCleanupTask(pluginSettings, task);
-                containerInstanceHelper.checkAndMarkEC2InstanceIdle(pluginSettings, task.getEC2InstanceId());
+                if (task.getEC2InstanceId() != null && !task.getEC2InstanceId().equalsIgnoreCase("FARGATE")) {
+                    LOG.info(format("Task {0} ran on an EC2 instance.", task.name()));
+                    containerInstanceHelper.checkAndMarkEC2InstanceIdle(pluginSettings, task.getEC2InstanceId());
+                } else {
+                    LOG.info(format("Task {0} is a FARGATE task. No EC2 to clean up.", task.name()));
+                }
                 LOG.info(format("Task {0} is terminated.", task.name()));
             } else {
                 LOG.warn(format("Requested to deregister task that does not exist {0}", agentId));
