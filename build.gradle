@@ -106,7 +106,7 @@ dependencies {
   testImplementation group: 'org.jsoup', name: 'jsoup', version: '1.18.3'
 }
 
-tasks.withType(JavaCompile) {
+tasks.withType(JavaCompile).configureEach {
   options.deprecation = true
   options.encoding = 'utf-8'
   options.warnings = true
@@ -124,12 +124,18 @@ jar {
   }
 }
 
+interface InjectedExecOps {
+  @Inject
+  ExecOperations getExecOps()
+}
+
 task bundleInstall {
   inputs.files(project.files('contrib/cloudformation-template/Gemfile', 'contrib/cloudformation-template/Gemfile.lock'))
   outputs.dir(project.file('.bundle'))
 
+  def injected = project.objects.newInstance(InjectedExecOps)
   doLast {
-    project.exec {
+    injected.execOps.exec {
       commandLine = ['bundle']
       workingDir = project.file('contrib/cloudformation-template')
       standardOutput = System.out
@@ -144,8 +150,9 @@ task stackfile {
   inputs.file(project.file('contrib/cloudformation-template/ecs_cloud_formation_template.rb'))
   outputs.file(project.file("${project.buildDir}/ecs_cloud_formation_template.json"))
 
+  def injected = project.objects.newInstance(InjectedExecOps)
   doLast {
-    project.exec {
+    injected.execOps.exec {
       commandLine = ['bundle', 'exec', 'ruby', 'ecs_cloud_formation_template.rb', 'expand']
       workingDir = project.file('contrib/cloudformation-template')
       standardOutput = new FileOutputStream(project.file("${project.buildDir}/ecs_cloud_formation_template.json"))
