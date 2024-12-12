@@ -21,7 +21,7 @@ group = 'com.thoughtworks.gocd'
 
 gocdPlugin {
   id = 'com.thoughtworks.gocd.elastic-agent.ecs'
-  pluginVersion = '8.0.0'
+  pluginVersion = '8.0.1'
   goCdVersion = '21.4.0'
   name = 'GoCD Elastic Agent Plugin for Amazon ECS'
   description = 'GoCD Elastic Agent Plugin for Amazon Elastic Container Service allow for more efficient use of instances'

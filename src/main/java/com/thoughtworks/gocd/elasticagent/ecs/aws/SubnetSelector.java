@@ -23,12 +23,15 @@ import com.amazonaws.services.ec2.model.SubnetState;
 import com.google.common.base.Joiner;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
 import com.thoughtworks.gocd.elasticagent.ecs.exceptions.SubnetNotAvailableException;
+import org.apache.commons.lang3.RandomUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
 import static java.text.MessageFormat.format;
+import static java.util.stream.Collectors.collectingAndThen;
+import static java.util.stream.Collectors.toList;
 
 public class SubnetSelector {
     public Subnet selectSubnetWithMinimumEC2Instances(PluginSettings pluginSettings, Collection<String> subnetIds, List<Instance> instances) {
@@ -40,7 +43,7 @@ public class SubnetSelector {
         final List<Subnet> subnets = availableSubnets(pluginSettings, subnetIds);
 
         if (instances.isEmpty()) {
-            return subnets.get(0);
+            return randomFrom(subnets);
         }
 
         return findSubnetWithMinimumInstances(subnets, instances);
@@ -52,13 +55,26 @@ public class SubnetSelector {
         // Can happen if all found instances happen to be from other elastic agent profiles (which may or may not
         // be sharing a profile with our plugin configuration
         if (instancePerSubnet.isEmpty()) {
-            return subnets.get(0);
+            return randomFrom(subnets);
         }
+
+        Long minCount = instancePerSubnet.values().stream().min(Long::compareTo).orElse(0L);
 
         return subnets.stream()
                 .filter(subnet -> !instancePerSubnet.containsKey(subnet))
-                .findFirst()
-                .orElse(Collections.min(instancePerSubnet.entrySet(), Comparator.comparingDouble(Map.Entry::getValue)).getKey());
+                .collect(collectingAndThen(toList(), this::optionallyRandomFrom))
+                .orElse(instancePerSubnet.entrySet().stream()
+                        .filter(e -> minCount.equals(e.getValue()))
+                        .map(Map.Entry::getKey)
+                        .collect(collectingAndThen(toList(), this::randomFrom)));
+    }
+
+    private Optional<Subnet> optionallyRandomFrom(List<Subnet> subnets) {
+        return subnets.isEmpty() ? Optional.empty() : Optional.of(randomFrom(subnets));
+    }
+
+    private Subnet randomFrom(List<Subnet> subnets) {
+        return subnets.get(RandomUtils.insecure().randomInt(0, subnets.size()));
     }
 
     private Map<Subnet, Long> instancePerSubnet(List<Subnet> subnets, List<Instance> instances) {
@@ -72,7 +88,7 @@ public class SubnetSelector {
     private List<Subnet> availableSubnets(PluginSettings pluginSettings, Collection<String> subnetIds) {
         final List<Subnet> subnets = allSubnets(pluginSettings, subnetIds).stream()
                 .filter(this::isSubnetAvailable)
-                .collect(Collectors.toList());
+                .collect(toList());
 
         if (subnets.isEmpty()) {
             throw new SubnetNotAvailableException(format("None of the subnet available to launch ec2 instance from list {0}", Joiner.on(",").join(subnetIds)));

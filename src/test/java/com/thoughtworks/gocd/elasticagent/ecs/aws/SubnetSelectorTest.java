@@ -30,8 +30,10 @@ import org.mockito.ArgumentCaptor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toSet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -64,7 +66,7 @@ class SubnetSelectorTest {
 
     @Test
     void shouldErrorOutIfNoSubnetAvailable() {
-        when(pluginSettings.getSubnetIds()).thenReturn(Arrays.asList("subnet-1"));
+        when(pluginSettings.getSubnetIds()).thenReturn(List.of("subnet-1"));
         when(ec2Client.describeSubnets(any(DescribeSubnetsRequest.class))).thenReturn(new DescribeSubnetsResult().withSubnets(
                 new Subnet().withSubnetId("subnet-1").withState("pending")
         ));
@@ -75,61 +77,66 @@ class SubnetSelectorTest {
     }
 
     @Test
-    void shouldReturnFirstAvailableSubnetIdIfNoContainerInstanceRunning() {
+    void shouldReturnRandomSubnetIdIfNoContainerInstanceRunningAndMultipleSubnetOptions() {
         final ArgumentCaptor<DescribeSubnetsRequest> argumentCaptor = ArgumentCaptor.forClass(DescribeSubnetsRequest.class);
 
-        when(pluginSettings.getSubnetIds()).thenReturn(Arrays.asList("subnet-1"));
+        when(pluginSettings.getSubnetIds()).thenReturn(List.of("subnet-1", "subnet-2"));
         when(ec2Client.describeSubnets(argumentCaptor.capture())).thenReturn(new DescribeSubnetsResult().withSubnets(
-                new Subnet().withSubnetId("subnet-1").withState("available")
+                new Subnet().withSubnetId("subnet-1").withState("available"),
+                new Subnet().withSubnetId("subnet-2").withState("available")
         ));
 
-        final Subnet subnet = subnetSelector.selectSubnetWithMinimumEC2Instances(pluginSettings, pluginSettings.getSubnetIds(), emptyList());
-
-        assertThat(subnet.getSubnetId()).isEqualTo("subnet-1");
-        assertThat(argumentCaptor.getValue().getSubnetIds()).isEqualTo(Arrays.asList("subnet-1"));
+        assertThat(IntStream.range(0, 10)
+                .mapToObj(i -> subnetSelector.selectSubnetWithMinimumEC2Instances(pluginSettings, pluginSettings.getSubnetIds(), emptyList()).getSubnetId())
+                .collect(toSet()))
+                .containsExactly("subnet-1", "subnet-2");
     }
 
     @Test
-    void shouldReturnFirstAvailableSubnetIdIfContainerInstanceRunningInUnrelatedSubnet() {
+    void shouldReturnRandomSubnetIdIfContainerInstanceRunningInUnrelatedSubnetAndMultipleSubnetOptions() {
         final ArgumentCaptor<DescribeSubnetsRequest> argumentCaptor = ArgumentCaptor.forClass(DescribeSubnetsRequest.class);
 
-        when(pluginSettings.getSubnetIds()).thenReturn(Arrays.asList("subnet-1"));
+        when(pluginSettings.getSubnetIds()).thenReturn(List.of("subnet-1", "subnet-2"));
         when(ec2Client.describeSubnets(argumentCaptor.capture())).thenReturn(new DescribeSubnetsResult().withSubnets(
-                new Subnet().withSubnetId("subnet-1").withState("available")
+                new Subnet().withSubnetId("subnet-1").withState("available"),
+                new Subnet().withSubnetId("subnet-2").withState("available")
         ));
 
         Instance instanceInOtherSubnet = new Instance().withSubnetId("some-other-subnet");
 
-        final Subnet subnet = subnetSelector.selectSubnetWithMinimumEC2Instances(pluginSettings, pluginSettings.getSubnetIds(), List.of(instanceInOtherSubnet));
-
-        assertThat(subnet.getSubnetId()).isEqualTo("subnet-1");
-        assertThat(argumentCaptor.getValue().getSubnetIds()).isEqualTo(Arrays.asList("subnet-1"));
+        assertThat(IntStream.range(0, 10)
+                .mapToObj(i -> subnetSelector.selectSubnetWithMinimumEC2Instances(pluginSettings, pluginSettings.getSubnetIds(), List.of(instanceInOtherSubnet)).getSubnetId())
+                .collect(toSet()))
+                .containsExactly("subnet-1", "subnet-2");
     }
 
     @Test
     void shouldReturnSubnetIdWhichIsHavingMinimumEC2InstanceRunning() {
         final ArgumentCaptor<DescribeSubnetsRequest> argumentCaptor = ArgumentCaptor.forClass(DescribeSubnetsRequest.class);
 
-        when(pluginSettings.getSubnetIds()).thenReturn(Arrays.asList("subnet-1"));
+        when(pluginSettings.getSubnetIds()).thenReturn(List.of("subnet-1", "subnet-2", "subnet-3", "subnet-4", "subnet-5"));
         when(ec2Client.describeSubnets(argumentCaptor.capture())).thenReturn(new DescribeSubnetsResult().withSubnets(
                 new Subnet().withSubnetId("subnet-1").withState("pending"),
                 new Subnet().withSubnetId("subnet-2").withState("available"),
                 new Subnet().withSubnetId("subnet-3").withState("available"),
-                new Subnet().withSubnetId("subnet-4").withState("available")
+                new Subnet().withSubnetId("subnet-4").withState("available"),
+                new Subnet().withSubnetId("subnet-5").withState("available")
         ));
 
-        final List<Instance> instances = Arrays.asList(
-                new Instance().withInstanceId("instance-1").withSubnetId("subnet-1"),
-                new Instance().withInstanceId("instance-2").withSubnetId("subnet-2"),
-                new Instance().withInstanceId("instance-3").withSubnetId("subnet-2"),
-                new Instance().withInstanceId("instance-4").withSubnetId("subnet-3"),
-                new Instance().withInstanceId("instance-5").withSubnetId("subnet-4"),
-                new Instance().withInstanceId("instance-6").withSubnetId("subnet-4"),
-                new Instance().withInstanceId("instance-7").withSubnetId("subnet-4")
+        final List<Instance> instances = List.of(
+                new Instance().withInstanceId("instance-1.1").withSubnetId("subnet-1"),
+                new Instance().withInstanceId("instance-2.1").withSubnetId("subnet-2"),
+                new Instance().withInstanceId("instance-2.2").withSubnetId("subnet-2"),
+                new Instance().withInstanceId("instance-3.1").withSubnetId("subnet-3"),
+                new Instance().withInstanceId("instance-4.1").withSubnetId("subnet-4"),
+                new Instance().withInstanceId("instance-4.2").withSubnetId("subnet-4"),
+                new Instance().withInstanceId("instance-4.3").withSubnetId("subnet-4"),
+                new Instance().withInstanceId("instance-5.1").withSubnetId("subnet-5")
         );
 
-        final Subnet subnet = subnetSelector.selectSubnetWithMinimumEC2Instances(pluginSettings, pluginSettings.getSubnetIds(), instances);
-
-        assertThat(subnet.getSubnetId()).isEqualTo("subnet-3");
+        assertThat(IntStream.range(0, 10)
+                .mapToObj(i -> subnetSelector.selectSubnetWithMinimumEC2Instances(pluginSettings, pluginSettings.getSubnetIds(), instances).getSubnetId())
+                .collect(toSet()))
+                .containsExactly("subnet-3", "subnet-5");
     }
 }
