@@ -83,7 +83,7 @@ dependencies {
 
   implementation group: 'com.amazonaws', name: 'aws-java-sdk-ecs', version: project.versions.awsSdk
   implementation group: 'com.amazonaws', name: 'aws-java-sdk-ec2', version: project.versions.awsSdk
-  implementation group: 'org.freemarker', name: 'freemarker', version: '2.3.33'
+  implementation group: 'org.freemarker', name: 'freemarker', version: '2.3.34'
 
   modules {
     module('commons-logging:commons-logging') {
