@@ -120,7 +120,10 @@ class GetProfileViewExecutorTest {
                 Arguments.of("InstanceType", "Instance type"),
                 Arguments.of("IAMInstanceProfile", "IAM Instance Profile"),
                 Arguments.of("SecurityGroupIds", "Security Group Id(s)"),
-                Arguments.of("SubnetIds", "Subnet id(s)")
+                Arguments.of("SubnetIds", "Subnet id(s)"),
+                Arguments.of("SecretName", "Secret name"),
+                Arguments.of("SecretValue", "Secret value"),
+                Arguments.of("ExecutionRoleArn", "Execution Role Arn")
         );
     }
 
