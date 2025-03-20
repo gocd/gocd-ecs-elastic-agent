@@ -14,3 +14,13 @@ updates:
   schedule:
     interval: monthly
   open-pull-requests-limit: 99
+
+- package-ecosystem: docker
+  directory: /contrib/scripts/bootstrap-via-installer
+  schedule:
+    interval: daily
+
+- package-ecosystem: docker
+  directory: /contrib/scripts/bootstrap-without-installed-agent
+  schedule:
+    interval: daily
