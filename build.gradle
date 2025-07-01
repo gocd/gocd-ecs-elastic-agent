@@ -55,7 +55,7 @@ java {
 ext {
   deps = [
     gocdPluginApi: 'cd.go.plugin:go-plugin-api:25.2.0',
-    awsSdk       : 'com.amazonaws:aws-java-sdk:1.12.783',
+    awsSdk       : 'com.amazonaws:aws-java-sdk:1.12.787',
     lombok       : 'org.projectlombok:lombok:1.18.38',
   ]
 
@@ -91,7 +91,7 @@ dependencies {
   }
   implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: '2.0.17'
 
-  testImplementation platform('org.junit:junit-bom:5.13.0')
+  testImplementation platform('org.junit:junit-bom:5.13.2')
   testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api'
   testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-params'
   testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine'
@@ -102,7 +102,7 @@ dependencies {
   testImplementation group: 'org.assertj', name: 'assertj-core', version: '3.27.3'
   testImplementation group: 'org.mockito', name: 'mockito-core', version: '5.18.0'
   testImplementation group: 'org.skyscreamer', name: 'jsonassert', version: '1.5.3'
-  testImplementation group: 'org.jsoup', name: 'jsoup', version: '1.20.1'
+  testImplementation group: 'org.jsoup', name: 'jsoup', version: '1.21.1'
 }
 
 tasks.withType(JavaCompile).configureEach {
