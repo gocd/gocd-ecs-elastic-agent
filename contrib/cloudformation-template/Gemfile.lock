@@ -1,8 +1,8 @@
 GEM
   remote: https://rubygems.org/
   specs:
-    aws-eventstream (1.3.0)
-    aws-partitions (1.1018.0)
+    aws-eventstream (1.4.0)
+    aws-partitions (1.1124.0)
     aws-sdk (3.2.0)
       aws-sdk-resources (~> 3)
     aws-sdk-accessanalyzer (1.64.0)
@@ -313,11 +313,13 @@ GEM
     aws-sdk-controltower (1.36.0)
       aws-sdk-core (~> 3, >= 3.210.0)
       aws-sigv4 (~> 1.5)
-    aws-sdk-core (3.214.0)
+    aws-sdk-core (3.226.2)
       aws-eventstream (~> 1, >= 1.3.0)
       aws-partitions (~> 1, >= 1.992.0)
       aws-sigv4 (~> 1.9)
+      base64
       jmespath (~> 1, >= 1.6.1)
+      logger
     aws-sdk-costandusagereportservice (1.68.0)
       aws-sdk-core (~> 3, >= 3.210.0)
       aws-sigv4 (~> 1.5)
@@ -555,7 +557,7 @@ GEM
     aws-sdk-iot (1.140.0)
       aws-sdk-core (~> 3, >= 3.210.0)
       aws-sigv4 (~> 1.5)
-    aws-sdk-iot1clickdevicesservice (1.62.0)
+    aws-sdk-iot1clickdevicesservice (1.63.0)
       aws-sdk-core (~> 3, >= 3.210.0)
       aws-sigv4 (~> 1.1)
     aws-sdk-iot1clickprojects (1.64.0)
@@ -1620,8 +1622,9 @@ GEM
       aws-sdk-core (~> 3, >= 3.210.0)
       aws-sigv4 (~> 1.5)
     aws-sigv2 (1.2.0)
-    aws-sigv4 (1.10.1)
+    aws-sigv4 (1.12.1)
       aws-eventstream (~> 1, >= 1.0.2)
+    base64 (0.3.0)
     cloudformation-ruby-dsl (1.5.0)
       aws-sdk (>= 2.5.1)
       bundler
@@ -1637,6 +1640,7 @@ GEM
     io-console (0.8.0)
     jmespath (1.6.2)
     json (2.9.0)
+    logger (1.7.0)
     rake (13.2.1)
     reline (0.5.12)
       io-console (~> 0.5)
