@@ -54,8 +54,8 @@ java {
 
 ext {
   deps = [
-    gocdPluginApi: 'cd.go.plugin:go-plugin-api:25.2.0',
-    awsSdk       : 'com.amazonaws:aws-java-sdk:1.12.787',
+    gocdPluginApi: 'cd.go.plugin:go-plugin-api:25.3.0',
+    awsSdk       : 'com.amazonaws:aws-java-sdk:1.12.788',
     lombok       : 'org.projectlombok:lombok:1.18.38',
   ]
 
@@ -91,7 +91,7 @@ dependencies {
   }
   implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: '2.0.17'
 
-  testImplementation platform('org.junit:junit-bom:5.13.2')
+  testImplementation platform('org.junit:junit-bom:5.13.4')
   testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api'
   testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-params'
   testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine'
