@@ -313,6 +313,45 @@
         </div>
       </div>
 
+      <div>
+        <label ng-class="{'is-invalid-label': GOINPUTNAME[SecretName].$error.server}">
+          Secret name
+        </label>
+        <input ng-class="{'is-invalid-input': GOINPUTNAME[SecretName].$error.server}" type="text" ng-model="SecretName"
+               ng-required="true" placeholder="e.g. subnet-xyz, subnet-abc"/>
+        <span class="form_error form-error" ng-class="{'is-visible': GOINPUTNAME[SecretName].$error.server}"
+              ng-show="GOINPUTNAME[SecretName].$error.server">{{GOINPUTNAME[SecretName].$error.server}}</span>
+        <div class="form-help-content-one-line">
+          The environment variable where the Secret value will be assigned to and accesible from the ECS task
+        </div>
+      </div>
+
+      <div>
+        <label ng-class="{'is-invalid-label': GOINPUTNAME[SecretValue].$error.server}">
+          Secret value (ARN)
+        </label>
+        <input ng-class="{'is-invalid-input': GOINPUTNAME[SecretValue].$error.server}" type="text" ng-model="SecretValue"
+               ng-required="true" placeholder="e.g. secret name"/>
+        <span class="form_error form-error" ng-class="{'is-visible': GOINPUTNAME[SecretValue].$error.server}"
+              ng-show="GOINPUTNAME[SecretValue].$error.server">{{GOINPUTNAME[SecretValue].$error.server}}</span>
+        <div class="form-help-content-one-line">
+          The secret to expose to the container. The supported values are either the full ARN of the AWS Secrets Manager secret or the full ARN of the parameter in the AWS Systems Manager Parameter Store.
+        </div>
+      </div>
+
+      <div>
+        <label ng-class="{'is-invalid-label': GOINPUTNAME[ExecutionRoleArn].$error.server}">
+          Execution Role Arn
+        </label>
+        <input ng-class="{'is-invalid-input': GOINPUTNAME[ExecutionRoleArn].$error.server}" type="text" ng-model="ExecutionRoleArn"
+               ng-required="true" placeholder="e.g. arn:aws:iam::account-id:role/executionRoleName"/>
+        <span class="form_error form-error" ng-class="{'is-visible': GOINPUTNAME[ExecutionRoleArn].$error.server}"
+              ng-show="GOINPUTNAME[ExecutionRoleArn].$error.server">{{GOINPUTNAME[ExecutionRoleArn].$error.server}}</span>
+        <div class="form-help-content-one-line">
+          The Amazon Resource Name (ARN) of the task execution role that grants the Amazon ECS container agent permission to make AWS API calls on your behalf.
+        </div>
+      </div>
+
       <div class="form_item_block">
         <input type="checkbox" ng-model="RunAsSpotInstance" ng-required="false" ng-true-value="true"
                ng-false-value="false"/>

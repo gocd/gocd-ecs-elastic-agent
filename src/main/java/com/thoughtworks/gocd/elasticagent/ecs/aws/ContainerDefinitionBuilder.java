@@ -18,6 +18,7 @@ package com.thoughtworks.gocd.elasticagent.ecs.aws;
 
 import com.amazonaws.services.ecs.model.ContainerDefinition;
 import com.amazonaws.services.ecs.model.KeyValuePair;
+import com.amazonaws.services.ecs.model.Secret;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.ElasticAgentProfileProperties;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
 import com.thoughtworks.gocd.elasticagent.ecs.requests.CreateAgentRequest;
@@ -26,12 +27,14 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.Constants.*;
 import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.Platform.LINUX;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.Platform.WINDOWS;
 import static java.text.MessageFormat.format;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 public class ContainerDefinitionBuilder {
     private String taskName;
@@ -48,6 +51,7 @@ public class ContainerDefinitionBuilder {
                 .withMemory(elasticAgentProfileProperties.getMaxMemory())
                 .withMemoryReservation(memoryReservation)
                 .withEnvironment(environmentFrom())
+                .withSecrets(secretsFrom(elasticAgentProfileProperties.getSecretName(), elasticAgentProfileProperties.getSecretValue()))
                 .withDockerLabels(labelsFrom())
                 .withCommand(elasticAgentProfileProperties.getCommand())
                 .withCpu(elasticAgentProfileProperties.getCpu())
@@ -73,6 +77,15 @@ public class ContainerDefinitionBuilder {
         env.addAll(request.autoRegisterPropertiesAsEnvironmentVars(taskName));
 
         return env;
+    }
+
+    private Collection<Secret> secretsFrom(String secretName, String secretValue) {
+        Collection<Secret> secrets = new HashSet<>();
+        if (isNotBlank(secretName) && isNotBlank(secretValue)) {
+            secrets.add(new Secret().withName(secretName).withValueFrom(secretValue));
+            LOG.info(format("Added new secret to container definition: {0} - {1}", secretName, secretValue));
+        }
+        return secrets;
     }
 
     private Collection<KeyValuePair> getKeyValuePairs(Collection<String> lines) {
