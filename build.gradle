@@ -21,8 +21,8 @@ group = 'com.thoughtworks.gocd'
 
 gocdPlugin {
   id = 'com.thoughtworks.gocd.elastic-agent.ecs'
-  pluginVersion = '8.0.1'
-  goCdVersion = '21.4.0'
+  pluginVersion = '9.0.0'
+  goCdVersion = '22.1.0'
   name = 'GoCD Elastic Agent Plugin for Amazon ECS'
   description = 'GoCD Elastic Agent Plugin for Amazon Elastic Container Service allow for more efficient use of instances'
   vendorName = 'Thoughtworks, Inc.'
@@ -47,8 +47,13 @@ repositories {
   mavenLocal()
 }
 
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
 tasks.withType(JavaCompile).configureEach {
-  options.release = 11
+    options.release = 17
 }
 
 ext {
