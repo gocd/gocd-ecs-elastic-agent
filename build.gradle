@@ -72,41 +72,41 @@ dependencies {
   compileOnly project.deps.lombok
   compileOnly project.deps.gocdPluginApi
 
-  implementation group: 'com.google.code.gson', name: 'gson', version: '2.13.2'
-  implementation(group: 'com.google.guava', name: 'guava', version: '33.5.0-jre') {
+  implementation 'com.google.code.gson:gson:2.13.2'
+  implementation('com.google.guava:guava:33.5.0-jre') {
     // see https://github.com/google/guava/pull/6606
     exclude(module: 'listenablefuture')
     exclude(module: 'jspecify')
     exclude(module: 'error_prone_annotations')
     exclude(module: 'j2objc-annotations')
   }
-  implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.19.0'
-  implementation group: 'joda-time', name: 'joda-time', version: '2.14.0'
-  implementation group: 'org.apache.commons', name: 'commons-collections4', version: '4.5.0'
+  implementation 'org.apache.commons:commons-lang3:3.19.0'
+  implementation 'joda-time:joda-time:2.14.0'
+  implementation 'org.apache.commons:commons-collections4:4.5.0'
 
-  implementation group: 'com.amazonaws', name: 'aws-java-sdk-ecs', version: project.versions.awsSdk
-  implementation group: 'com.amazonaws', name: 'aws-java-sdk-ec2', version: project.versions.awsSdk
-  implementation group: 'org.freemarker', name: 'freemarker', version: '2.3.34'
+  implementation "com.amazonaws:aws-java-sdk-ecs:${project.versions.awsSdk}"
+  implementation "com.amazonaws:aws-java-sdk-ec2:${project.versions.awsSdk}"
+  implementation 'org.freemarker:freemarker:2.3.34'
 
   modules {
     module('commons-logging:commons-logging') {
       replacedBy('org.slf4j:jcl-over-slf4j', "Everything should go via SLF4J")
     }
   }
-  implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: '2.0.17'
+  implementation 'org.slf4j:jcl-over-slf4j:2.0.17'
 
   testImplementation platform('org.junit:junit-bom:6.0.0')
-  testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api'
-  testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-params'
-  testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine'
-  testRuntimeOnly group: 'org.junit.platform', name: 'junit-platform-launcher'
+  testImplementation 'org.junit.jupiter:junit-jupiter-api'
+  testImplementation 'org.junit.jupiter:junit-jupiter-params'
+  testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
+  testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
   testImplementation project.deps.gocdPluginApi
-  testImplementation group: 'uk.org.webcompere', name: 'system-stubs-jupiter', version: '2.1.8'
-  testImplementation group: 'org.assertj', name: 'assertj-core', version: '3.27.6'
-  testImplementation group: 'org.mockito', name: 'mockito-core', version: '5.20.0'
-  testImplementation group: 'org.skyscreamer', name: 'jsonassert', version: '1.5.3'
-  testImplementation group: 'org.jsoup', name: 'jsoup', version: '1.21.2'
+  testImplementation 'uk.org.webcompere:system-stubs-jupiter:2.1.8'
+  testImplementation 'org.assertj:assertj-core:3.27.6'
+  testImplementation 'org.mockito:mockito-core:5.20.0'
+  testImplementation 'org.skyscreamer:jsonassert:1.5.3'
+  testImplementation 'org.jsoup:jsoup:1.21.2'
 }
 
 tasks.withType(JavaCompile).configureEach {
