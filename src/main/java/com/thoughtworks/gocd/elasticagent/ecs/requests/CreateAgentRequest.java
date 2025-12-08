@@ -106,7 +106,6 @@ public class CreateAgentRequest {
 
         properties.add(new KeyValuePair().withName("GO_EA_AUTO_REGISTER_ELASTIC_AGENT_ID").withValue(elasticAgentId));
         properties.add(new KeyValuePair().withName("GO_EA_AUTO_REGISTER_ELASTIC_PLUGIN_ID").withValue(Constants.PLUGIN_ID));
-        properties.add(new KeyValuePair().withName("GO_EA_GUID").withValue(UUID.randomUUID().toString()));
 
         return properties;
     }
