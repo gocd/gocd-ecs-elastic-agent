@@ -35,6 +35,7 @@ import com.thoughtworks.gocd.elasticagent.ecs.aws.StopPolicy;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.annotation.Metadata;
 import com.thoughtworks.gocd.elasticagent.ecs.utils.Util;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.joda.time.Period;
 
 import java.text.MessageFormat;
@@ -555,7 +556,7 @@ public class PluginSettings {
     private Map<String, String> getLogOptions() {
         Map<String, String> logOptionMap = new HashMap<>();
         splitIntoLinesAndTrimSpaces(logOptions).forEach(variable -> {
-            if (StringUtils.contains(variable, "=")) {
+            if (Strings.CS.contains(variable, "=")) {
                 String[] pair = variable.split("=", 2);
                 logOptionMap.put(pair[0], pair[1]);
             } else {

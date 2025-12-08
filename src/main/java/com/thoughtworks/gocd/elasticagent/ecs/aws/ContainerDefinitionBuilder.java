@@ -22,10 +22,12 @@ import com.thoughtworks.gocd.elasticagent.ecs.domain.ElasticAgentProfileProperti
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
 import com.thoughtworks.gocd.elasticagent.ecs.requests.CreateAgentRequest;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.Constants.*;
 import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
@@ -68,7 +70,6 @@ public class ContainerDefinitionBuilder {
     private Collection<KeyValuePair> environmentFrom() {
         Collection<KeyValuePair> env = getKeyValuePairs(pluginSettings.getEnvironmentVariables());
         env.addAll(getKeyValuePairs(request.elasticProfile().getEnvironment()));
-        env.add(new KeyValuePair().withName("GO_EA_MODE").withValue(mode()));
         env.add(new KeyValuePair().withName("GO_EA_SERVER_URL").withValue(pluginSettings.getGoServerUrl()));
         env.addAll(request.autoRegisterPropertiesAsEnvironmentVars(taskName));
 
@@ -78,7 +79,7 @@ public class ContainerDefinitionBuilder {
     private Collection<KeyValuePair> getKeyValuePairs(Collection<String> lines) {
         Collection<KeyValuePair> env = new HashSet<>();
         for (String variable : lines) {
-            if (StringUtils.contains(variable, "=")) {
+            if (Strings.CS.contains(variable, "=")) {
                 String[] pair = variable.split("=", 2);
                 env.add(new KeyValuePair().withName(pair[0]).withValue(pair[1]));
             } else {
@@ -99,13 +100,8 @@ public class ContainerDefinitionBuilder {
         return image;
     }
 
-    private String mode() {
-        final boolean isCompressedJS = Boolean.parseBoolean(System.getProperty("rails.use.compressed.js"));
-        return isCompressedJS ? "prod" : "dev";
-    }
-
-    private HashMap<String, String> labelsFrom() {
-        final HashMap<String, String> labels = new HashMap<>();
+    private Map<String, String> labelsFrom() {
+        final Map<String, String> labels = new HashMap<>();
         labels.put(CREATED_BY_LABEL_KEY, PLUGIN_ID);
         if (StringUtils.isNotBlank(request.environment())) {
             labels.put(ENVIRONMENT_LABEL_KEY, request.environment());

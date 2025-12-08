@@ -16,6 +16,7 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.size;
 
+import org.apache.commons.lang3.Strings;
 import org.apache.commons.lang3.math.NumberUtils;
 
 import java.util.regex.Matcher;
@@ -33,7 +34,7 @@ public class SizeValidator {
 
     public void validate(String size) {
         checkArgument(!NumberUtils.isCreatable(size), format(MUST_BE_INT_ERROR_MESSAGE, size));
-        checkArgument(!contains(size, "."), format(MUST_BE_INT_ERROR_MESSAGE, size));
+        checkArgument(!Strings.CS.contains(size, "."), format(MUST_BE_INT_ERROR_MESSAGE, size));
 
         final Matcher matcher = SIZE_PATTERN.matcher(size);
         checkArgument(matcher.matches(), format(INVALID_SIZE_ERROR_MESSAGE, size));

@@ -105,7 +105,6 @@ class ContainerDefinitionBuilderTest {
         assertThat(containerDefinition.getEnvironment()).contains(
                 new KeyValuePair().withName("TZ").withValue("PST"),
                 new KeyValuePair().withName("JAVA_HOME").withValue("/var/lib/java"),
-                new KeyValuePair().withName("GO_EA_MODE").withValue("dev"),
                 new KeyValuePair().withName("GO_EA_SERVER_URL").withValue("https://foo.server/go"),
                 new KeyValuePair().withName("GO_EA_AUTO_REGISTER_KEY").withValue("some-auto-register-key"),
                 new KeyValuePair().withName("GO_EA_AUTO_REGISTER_ENVIRONMENT").withValue("some-environment"),
