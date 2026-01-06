@@ -53,7 +53,7 @@ public class ContainerDefinitionBuilder {
                 .withDockerLabels(labelsFrom())
                 .withCommand(elasticAgentProfileProperties.getCommand())
                 .withCpu(elasticAgentProfileProperties.getCpu())
-                .withPrivileged(elasticAgentProfileProperties.platform() != WINDOWS && elasticAgentProfileProperties.isPrivileged())
+                .withPrivileged(elasticAgentProfileProperties.platform() != WINDOWS && elasticAgentProfileProperties.isPrivileged() && !elasticAgentProfileProperties.isFargate())
                 .withLogConfiguration(pluginSettings.logConfiguration());
     }
 

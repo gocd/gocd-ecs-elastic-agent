@@ -38,6 +38,14 @@ public class RegisterTaskDefinitionRequestBuilder {
             return request;
         }
 
+        if (elasticAgentProfileProperties.isFargate()) {
+                request.withRequiresCompatibilities(Compatibility.FARGATE);
+                request.setNetworkMode(NetworkMode.Awsvpc);
+                request.setExecutionRoleArn(elasticAgentProfileProperties.getExecutionRoleArn());
+                request.setCpu(String.valueOf(elasticAgentProfileProperties.getCpu()));
+                request.setMemory(String.valueOf(elasticAgentProfileProperties.getMaxMemory()));
+        }
+
         if (isNotBlank(pluginSettings.efsDnsOrIP())) {
             LOG.info(format("[create-agent] Adding EFS volume {0} to task configuration.", pluginSettings.efsDnsOrIP()));
             request.withVolumes(new Volume()
@@ -49,29 +57,31 @@ public class RegisterTaskDefinitionRequestBuilder {
                     .withContainerPath(pluginSettings.efsMountLocation()));
         }
 
-        if (elasticAgentProfileProperties.isMountDockerSocket()) {
-            LOG.info("[create-agent] Adding /var/run/docker.sock to task configuration.");
-            request.withVolumes(new Volume()
-                    .withName("DockerSocket")
-                    .withHost(new HostVolumeProperties().withSourcePath("/var/run/docker.sock")));
-
-            request.getContainerDefinitions().get(0)
-                    .withMountPoints(new MountPoint()
-                            .withSourceVolume("DockerSocket")
-                            .withContainerPath("/var/run/docker.sock")
-                    );
-        }
-
-        if (!elasticAgentProfileProperties.bindMounts().isEmpty()) {
-            elasticAgentProfileProperties.bindMounts().forEach(bindMount -> {
+        if (!elasticAgentProfileProperties.isFargate()) {
+                if (elasticAgentProfileProperties.isMountDockerSocket()) {
+                LOG.info("[create-agent] Adding /var/run/docker.sock to task configuration.");
                 request.withVolumes(new Volume()
-                        .withName(bindMount.getName())
-                        .withHost(new HostVolumeProperties().withSourcePath(bindMount.getSourcePath()))
-                );
-                request.getContainerDefinitions().get(0).withMountPoints(new MountPoint()
-                        .withSourceVolume(bindMount.getName())
-                        .withContainerPath(bindMount.getContainerPath()));
-            });
+                        .withName("DockerSocket")
+                        .withHost(new HostVolumeProperties().withSourcePath("/var/run/docker.sock")));
+
+                request.getContainerDefinitions().get(0)
+                        .withMountPoints(new MountPoint()
+                                .withSourceVolume("DockerSocket")
+                                .withContainerPath("/var/run/docker.sock")
+                        );
+                }
+
+                if (!elasticAgentProfileProperties.bindMounts().isEmpty()) {
+                elasticAgentProfileProperties.bindMounts().forEach(bindMount -> {
+                        request.withVolumes(new Volume()
+                                .withName(bindMount.getName())
+                                .withHost(new HostVolumeProperties().withSourcePath(bindMount.getSourcePath()))
+                        );
+                        request.getContainerDefinitions().get(0).withMountPoints(new MountPoint()
+                                .withSourceVolume(bindMount.getName())
+                                .withContainerPath(bindMount.getContainerPath()));
+                });
+                }
         }
 
         return request;

@@ -113,6 +113,7 @@ class GetProfileViewExecutorTest {
                 Arguments.of("CPU", "CPU"),
                 Arguments.of("MountDockerSocket", "Mount Docker Socket"),
                 Arguments.of("Privileged", "Privileged"),
+                Arguments.of("Fargate", "Fargate"),
                 Arguments.of("Command", "Docker Command"),
                 Arguments.of("Environment", "Environment Variables"),
 

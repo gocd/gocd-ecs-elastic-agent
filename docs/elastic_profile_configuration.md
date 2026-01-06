@@ -48,19 +48,46 @@ Specify the properties for docker container(s) which will be used to spawn ECS e
       }
       ```
 
-8. **Mount Docker Socket:** Mounts the host `/var/run/docker.sock` to docker container.
+8. **Execution role arn:** Name of the IAM role to associate with the agent container when using FARGATE. At the bare minimum your role must permit the following.
+    > Bare minimum role template
 
-9. **Privileged:** When this parameter is true, the container is given elevated privileges on the host container instance. This is useful to run the docker in docker workflow. This can have security implications (since all docker containers can access the host docker server).
+      ```json
+      {
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Effect": "Allow",
+            "Action": [
+              "ecr:GetAuthorizationToken",
+              "ecr:BatchCheckLayerAvailability",
+              "ecr:GetDownloadUrlForLayer",
+              "ecr:BatchGetImage",
+              "logs:CreateLogStream",
+              "logs:PutLogEvents"
+            ],
+            "Resource": "*"
+          }
+        ]
+      }      
+      ```
 
-10. **Docker Command:** Specify the command to run in the container. Enter one parameter per line. This allows you to override the `CMD` that is specified in the `Dockerfile`, or provide one in case the `Dockerfile` does not contain a `CMD`. Read more about [docker's CMD](https://docs.docker.com/engine/reference/builder/#cmd).
+9. **Mount Docker Socket:** Mounts the host `/var/run/docker.sock` to docker container.
 
-11. **Environment Variables:** Specify the environment variables. Enter one variable per line. This allows you to override the `ENV` that is specified in the `Dockerfile`, or provide new environment variables in case the `Dockerfile` does not contain any `ENV`. Read more about [docker's ENV](https://docs.docker.com/engine/reference/builder/#env).
+NOTE: This will be forced OFF when setting FARGATE to True. If you need to build docker containers while inside of Fargate tasks, please use `kaniko` or `buildah`.
+
+10. **Privileged:** When this parameter is true, the container is given elevated privileges on the host container instance. This is useful to run the docker in docker workflow. This can have security implications (since all docker containers can access the host docker server).
+
+11. **Fargate** When this parameter is true, the container runs on ECS Fargate and does not run on ECS+EC2. It also ignores `Privileged`, because ECS Fargate tasks cannot be set to run under privileged mode. If we are using FARGATE, you must set `Execution role arn`.
+
+12. **Docker Command:** Specify the command to run in the container. Enter one parameter per line. This allows you to override the `CMD` that is specified in the `Dockerfile`, or provide one in case the `Dockerfile` does not contain a `CMD`. Read more about [docker's CMD](https://docs.docker.com/engine/reference/builder/#cmd).
+
+13. **Environment Variables:** Specify the environment variables. Enter one variable per line. This allows you to override the `ENV` that is specified in the `Dockerfile`, or provide new environment variables in case the `Dockerfile` does not contain any `ENV`. Read more about [docker's ENV](https://docs.docker.com/engine/reference/builder/#env).
     - Environment variables are resolved in following order:
       1. **_Elastic Profile:_** This will override the variable value specified in the cluster profile and `Dockerfile`.
       2. **_Plugin Settings:_** This will override the variable value specified in `Dockerfile`.
       3. **_Dockerfile:_** Variables defined in the `Dockerfile` have low precedence over other two. For example, variable `Foo` defined in the cluster profile or elastic profile will override the variable with the same name defined in `Dockerfile`.
 
-12. **Bind Mount:** Use bind mounts to mount one or more files or directories from the host machine on to the container. The BindMount configuration requires the following information:
+14. **Bind Mount:** Use bind mounts to mount one or more files or directories from the host machine on to the container. The BindMount configuration requires the following information:
   - **_Name:_** Name of the volume.
   - **_SourcePath:_** The path from the host machine that needs to be mounted on the container.
   - **_ContainerPath:_** The path on the container to mount the volume at.
@@ -77,6 +104,7 @@ Specify the properties for docker container(s) which will be used to spawn ECS e
          ]
        ```
 
+NOTE: When using FARGATE, Bind Mount is disabled in this initial version. SourcePath is not a valid parameter, and the development time to make it work was not in the plans for right now.
 
 ## EC2 Instance Configuration
 

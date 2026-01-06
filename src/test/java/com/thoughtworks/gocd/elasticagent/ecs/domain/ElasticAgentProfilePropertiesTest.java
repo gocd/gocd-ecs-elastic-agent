@@ -86,6 +86,20 @@ class ElasticAgentProfilePropertiesTest {
                 "    }\n" +
                 "  },\n" +
                 "  {\n" +
+                "    \"key\": \"Fargate\",\n" +
+                "    \"metadata\": {\n" +
+                "      \"required\": false,\n" +
+                "      \"secure\": false\n" +
+                "    }\n" +
+                "  },\n" +
+                "  {\n" +
+                "    \"key\": \"ExecutionRoleArn\",\n" +
+                "    \"metadata\": {\n" +
+                "      \"required\": false,\n" +
+                "      \"secure\": false\n" +
+                "    }\n" +
+                "  },\n" +
+                "  {\n" +
                 "    \"key\": \"TaskRoleArn\",\n" +
                 "    \"metadata\": {\n" +
                 "      \"required\": false,\n" +

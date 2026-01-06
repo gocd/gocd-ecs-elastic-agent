@@ -112,6 +112,48 @@
         </div>
       </div>
 
+      <div>
+        <label ng-class="{'is-invalid-label': GOINPUTNAME[ExecutionRoleArn].$error.server}">Execution role arn</label>
+        <input ng-class="{'is-invalid-input': GOINPUTNAME[ExecutionRoleArn].$error.server}" type="text"
+               ng-model="ExecutionRoleArn"
+               ng-required="true" placeholder="e.g. arn:aws:iam::369170619674:role/AccessToS3"/>
+        <span class="form_error form-error"
+              ng-class="{'is-visible': GOINPUTNAME[ExecutionRoleArn].$error.server}"
+              ng-show="GOINPUTNAME[ExecutionRoleArn].$error.server">{{GOINPUTNAME[ExecutionRoleArn].$error.server}}</span>
+
+        <div class="help" ng-init="HelpToggleForExecutionRole = false">
+          <div class="help_header" ng-class="{'expanded': HelpToggleForExecutionRole}"
+               ng-click="HelpToggleForExecutionRole = !HelpToggleForExecutionRole">Help
+          </div>
+          <div class="help_body" ng-show="HelpToggleForExecutionRole">
+            Name of the IAM role to associate with the agent container for a FARGATE task. At the bare minimum your 
+            role must permit actions to allow writing to cloudwatch logs and pulling containers from ECR.
+            <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_execution_IAM_role.html" target="_blank"
+               rel="nofollow noreferrer">Read more about ECS Execution Role</a>
+            <div class="code"
+                 ng-init='template={
+                  "Version": "2012-10-17",
+                  "Statement": [
+                    {
+                      "Effect": "Allow",
+                      "Action": [
+                        "ecr:GetAuthorizationToken",
+                        "ecr:BatchCheckLayerAvailability",
+                        "ecr:GetDownloadUrlForLayer",
+                        "ecr:BatchGetImage",
+                        "logs:CreateLogStream",
+                        "logs:PutLogEvents"
+                      ],
+                      "Resource": "*"
+                    }
+                  ]
+                }'>
+              <pre>{{ template | json}}</pre>
+            </div>
+          </div>
+        </div>
+      </div>      
+      
       <div class="col-2" ng-show="Platform == 'linux'">
         <div class="col">
           <input ng-class="{'is-invalid-input': GOINPUTNAME[MountDockerSocket].$error.server}" type="checkbox"
@@ -140,6 +182,21 @@
             When selected, the container is given elevated privileges on the host container instance.
           </div>
         </div>
+      </div>
+      <div class="col-2" ng-show="Platform == 'linux'">
+        <div class="col">
+          <input ng-class="{'is-invalid-input': GOINPUTNAME[Fargate].$error.server}" type="checkbox"
+                 ng-model="Fargate"
+                 ng-required="true" ng-true-value="true" ng-false-value="false" id="Fargate"/>
+          <label ng-class="{'is-invalid-label': GOINPUTNAME[Fargate].$error.server}"
+                 for="Fargate">Fargate</label>
+          <span class="form_error form-error" ng-class="{'is-visible': GOINPUTNAME[Fargate].$error.server}"
+                ng-show="GOINPUTNAME[Fargate].$error.server">{{GOINPUTNAME[Fargate].$error.server}}</span>
+          <div class="form-help-content-one-line">
+            When selected, the container is started as a Fargate task instead of an ECS+EC2 task.
+          </div>
+        </div>
+
       </div>
 
       <div>
