@@ -75,7 +75,9 @@ dependencies {
   compileOnly project.deps.lombok
   compileOnly project.deps.gocdPluginApi
 
-  implementation 'com.google.code.gson:gson:2.13.2'
+  implementation('com.google.code.gson:gson:2.13.2') {
+    exclude(module: 'error_prone_annotations') // Not needed at runtime
+  }
   implementation('com.google.guava:guava:33.5.0-jre') {
     // see https://github.com/google/guava/pull/6606
     exclude(module: 'listenablefuture')
