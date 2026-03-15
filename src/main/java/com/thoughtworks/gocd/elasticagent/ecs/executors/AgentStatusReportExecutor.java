@@ -85,7 +85,7 @@ public class AgentStatusReportExecutor {
 
         if (ecsTask != null) {
             final Optional<Task> task = taskHelper.refreshTask(request.clusterProfileProperties(), ecsTask.taskArn());
-            return new ECSContainer(task.isPresent() ? task.get() : ecsTask.task(), ecsTask.taskDefinition());
+            return new ECSContainer(task.orElseGet(ecsTask::task), ecsTask.taskDefinition());
         }
 
         throw StatusReportGenerationException.noRunningTask(elasticAgentId);
@@ -96,7 +96,7 @@ public class AgentStatusReportExecutor {
 
         if (ecsTask != null) {
             final Optional<Task> task = taskHelper.refreshTask(request.clusterProfileProperties(), ecsTask.taskArn());
-            return new ECSContainer(task.isPresent() ? task.get() : ecsTask.task(), ecsTask.taskDefinition());
+            return new ECSContainer(task.orElseGet(ecsTask::task), ecsTask.taskDefinition());
         }
 
         throw StatusReportGenerationException.noRunningTask(jobIdentifier);

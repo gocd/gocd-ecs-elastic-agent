@@ -66,20 +66,12 @@ public class StopIdleInstanceSelectionStrategy extends InstanceSelectionStrategy
     }
 
     private Predicate<Instance> isIdlePeriodIsMoreThan(Period timeInstanceCanStayIdle) {
-        return instance -> {
-            final Optional<String> lastSeenIdle = instance.getTags().stream()
-                    .filter(tag -> tag.getKey().equals(LAST_SEEN_IDLE))
-                    .findFirst()
-                    .map(Tag::getValue);
-
-            if (lastSeenIdle.isPresent()) {
-                final DateTime lastSeenIdleTime = new DateTime(Long.parseLong(lastSeenIdle.get()));
-                if (clock.now().isAfter(lastSeenIdleTime.plus(timeInstanceCanStayIdle))) {
-                    return true;
-                }
-            }
-            return false;
-        };
+        return instance -> instance.getTags().stream()
+                .filter(tag -> tag.getKey().equals(LAST_SEEN_IDLE))
+                .findFirst()
+                .map(tag -> new DateTime(Long.parseLong(tag.getValue())))
+                .map(lastSeenIdle -> clock.now().isAfter(lastSeenIdle.plus(timeInstanceCanStayIdle)))
+                .orElse(false);
     }
 
 }

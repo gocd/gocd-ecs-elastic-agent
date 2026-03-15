@@ -52,7 +52,7 @@ public class SpotInstanceEligibleForTerminationPredicate implements Predicate<In
                 .findFirst()
                 .map(Tag::getValue);
 
-        if (!idleSince.isPresent()) {
+        if (idleSince.isEmpty()) {
             LOG.info(format("Spot Instance {0} does not have LAST_SEEN_IDLE tag. Instance without this tag is not eligible for termination.", instance.getInstanceId()));
             return false;
         }

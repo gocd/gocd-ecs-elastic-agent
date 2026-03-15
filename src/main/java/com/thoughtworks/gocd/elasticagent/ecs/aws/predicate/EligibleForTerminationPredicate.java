@@ -57,7 +57,7 @@ public class EligibleForTerminationPredicate implements Predicate<Instance> {
                 .findFirst()
                 .map(Tag::getValue);
 
-        if (!stoppedAt.isPresent()) {
+        if (stoppedAt.isEmpty()) {
             LOG.info(format("Instance {0} does not have STOPPED_AT tag. Instance without tag is eligible for termination.", instance.getInstanceId()));
             return true;
         }
