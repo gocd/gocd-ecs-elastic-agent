@@ -721,10 +721,9 @@ class ContainerInstanceHelperTest {
                             stoppedContainerInstance2.clone().withAgentConnected(true)
                     ));
 
-            final Optional<List<ContainerInstance>> containerInstances = containerInstanceHelper.startOrCreateInstance(pluginSettings, ElasticAgentProfileProperties.empty(LINUX), 2, consoleLogAppender);
+            final List<ContainerInstance> containerInstances = containerInstanceHelper.startOrCreateInstance(pluginSettings, ElasticAgentProfileProperties.empty(LINUX), 2, consoleLogAppender);
 
-            assertThat(containerInstances.isPresent()).isTrue();
-            assertThat(containerInstances.get())
+            assertThat(containerInstances)
                     .hasSize(2)
                     .contains(stoppedContainerInstance1.clone().withAgentConnected(true), stoppedContainerInstance2.clone().withAgentConnected(true));
 
@@ -750,10 +749,9 @@ class ContainerInstanceHelperTest {
                     .thenReturn(describeContainerInstancesResult(stoppedContainerInstance))
                     .thenReturn(describeContainerInstancesResult(newlyLaunchedContainerInstance, stoppedContainerInstance.withAgentConnected(true)));
 
-            final Optional<List<ContainerInstance>> containerInstances = containerInstanceHelper.startOrCreateInstance(pluginSettings, ElasticAgentProfileProperties.empty(LINUX), 2, consoleLogAppender);
+            final List<ContainerInstance> containerInstances = containerInstanceHelper.startOrCreateInstance(pluginSettings, ElasticAgentProfileProperties.empty(LINUX), 2, consoleLogAppender);
 
-            assertThat(containerInstances.isPresent()).isTrue();
-            assertThat(containerInstances.get())
+            assertThat(containerInstances)
                     .hasSize(2)
                     .contains(stoppedContainerInstance, newlyLaunchedContainerInstance);
 

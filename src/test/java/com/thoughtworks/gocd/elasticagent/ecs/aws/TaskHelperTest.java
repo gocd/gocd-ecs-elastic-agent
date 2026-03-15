@@ -135,7 +135,7 @@ class TaskHelperTest {
                 new RegisterTaskDefinitionResult().withTaskDefinition(taskDefinition)
         );
         when(registerTaskDefinitionRequestBuilder.build(eq(pluginSettings), eq(elasticAgentProfileProperties), any(ContainerDefinition.class))).thenReturn(registerTaskDefinitionRequest);
-        when(containerInstanceHelper.startOrCreateOneInstance(pluginSettings, elasticAgentProfileProperties, consoleLogAppender)).thenReturn(Optional.of(containerInstance));
+        when(containerInstanceHelper.startOrCreateOneInstance(pluginSettings, elasticAgentProfileProperties, consoleLogAppender)).thenReturn(containerInstance);
         when(ecsClient.startTask(any(StartTaskRequest.class))).thenReturn(new StartTaskResult().withTasks(task));
         when(instanceSelectionStrategyFactory.strategyFor(any()))
                 .thenReturn(instanceSelectionStrategy);
@@ -176,7 +176,7 @@ class TaskHelperTest {
                 new RegisterTaskDefinitionResult().withTaskDefinition(taskDefinition)
         );
         when(registerTaskDefinitionRequestBuilder.build(eq(pluginSettings), eq(elasticAgentProfileProperties), any(ContainerDefinition.class))).thenReturn(registerTaskDefinitionRequest);
-        when(containerInstanceHelper.startOrCreateOneInstance(pluginSettings, elasticAgentProfileProperties, consoleLogAppender)).thenReturn(Optional.of(containerInstance));
+        when(containerInstanceHelper.startOrCreateOneInstance(pluginSettings, elasticAgentProfileProperties, consoleLogAppender)).thenReturn(containerInstance);
         when(ecsClient.startTask(any(StartTaskRequest.class))).thenReturn(new StartTaskResult().withTasks(task));
         when(instanceSelectionStrategyFactory.strategyFor(any()))
                 .thenReturn(instanceSelectionStrategy);
