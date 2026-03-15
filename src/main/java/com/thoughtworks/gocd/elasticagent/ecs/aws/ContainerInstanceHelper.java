@@ -33,6 +33,7 @@ import com.thoughtworks.gocd.elasticagent.ecs.domain.Platform;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
 import com.thoughtworks.gocd.elasticagent.ecs.exceptions.ContainerInstanceFailedToRegisterException;
 import com.thoughtworks.gocd.elasticagent.ecs.exceptions.LimitExceededException;
+import lombok.NonNull;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 
@@ -98,7 +99,7 @@ public class ContainerInstanceHelper {
         List<ContainerInstance> containerInstances = getContainerInstances(pluginSettings);
         List<Instance> onDemandInstances = getOnDemandInstances(pluginSettings, containerInstances);
 
-        List<String> ids = onDemandInstances.stream().map(onDemandEc2Instance -> onDemandEc2Instance.getInstanceId()).collect(toList());
+        List<String> ids = onDemandInstances.stream().map(Instance::getInstanceId).toList();
 
         return containerInstances.stream()
                 .filter(containerInstance -> ids.contains(containerInstance.getEc2InstanceId()))
@@ -109,7 +110,7 @@ public class ContainerInstanceHelper {
         List<ContainerInstance> containerInstances = getContainerInstances(pluginSettings);
         List<Instance> spotInstances = getSpotInstances(pluginSettings, containerInstances);
 
-        List<String> ids = spotInstances.stream().map(spotInstance -> spotInstance.getInstanceId()).collect(toList());
+        List<String> ids = spotInstances.stream().map(Instance::getInstanceId).toList();
 
         return containerInstances.stream()
                 .filter(containerInstance -> ids.contains(containerInstance.getEc2InstanceId()))
@@ -217,13 +218,11 @@ public class ContainerInstanceHelper {
         pluginSettings.ec2Client().deleteTags(deleteTagsRequest);
     }
 
-    public Optional<ContainerInstance> startOrCreateOneInstance(PluginSettings pluginSettings, ElasticAgentProfileProperties elasticAgentProfileProperties, ConsoleLogAppender consoleLogAppender) throws LimitExceededException {
-        final Optional<List<ContainerInstance>> optionalContainerInstanceList = startOrCreateInstance(pluginSettings, elasticAgentProfileProperties, 1, consoleLogAppender);
-
-        return optionalContainerInstanceList.map(containerInstances -> containerInstances.get(0));
+    public @NonNull ContainerInstance startOrCreateOneInstance(PluginSettings pluginSettings, ElasticAgentProfileProperties elasticAgentProfileProperties, ConsoleLogAppender consoleLogAppender) throws LimitExceededException {
+        return startOrCreateInstance(pluginSettings, elasticAgentProfileProperties, 1, consoleLogAppender).getFirst();
     }
 
-    public Optional<List<ContainerInstance>> startOrCreateInstance(PluginSettings pluginSettings, ElasticAgentProfileProperties elasticAgentProfileProperties, int numberOfInstanceToStartOrCreate, ConsoleLogAppender consoleLogAppender) throws LimitExceededException {
+    public List<ContainerInstance> startOrCreateInstance(PluginSettings pluginSettings, ElasticAgentProfileProperties elasticAgentProfileProperties, int numberOfInstanceToStartOrCreate, ConsoleLogAppender consoleLogAppender) throws LimitExceededException {
         final Optional<List<ContainerInstance>> optionalStartedInstances = startInstances(pluginSettings, elasticAgentProfileProperties, numberOfInstanceToStartOrCreate, consoleLogAppender);
         final List<ContainerInstance> startedContainerInstances = optionalStartedInstances.orElse(new ArrayList<>());
 
@@ -233,7 +232,7 @@ public class ContainerInstanceHelper {
             createdInstances.ifPresent(startedContainerInstances::addAll);
         }
 
-        return Optional.of(startedContainerInstances);
+        return startedContainerInstances;
     }
 
     public Optional<List<ContainerInstance>> startInstances(PluginSettings pluginSettings, ElasticAgentProfileProperties elasticAgentProfileProperties, int numberOfInstanceToStartOrCreate, ConsoleLogAppender consoleLogAppender) {
@@ -243,7 +242,7 @@ public class ContainerInstanceHelper {
             final List<Instance> allStoppedInstances = filterBy(filterByState(getAllOnDemandInstances(pluginSettings), STOPPED), hasTag("Name", instanceName))
                     .stream()
                     .filter(platformPredicate(elasticAgentProfileProperties.platform()))
-                    .collect(toList());
+                    .toList();
 
             if (allStoppedInstances.isEmpty()) {
                 LOG.info("No stopped instances found.");

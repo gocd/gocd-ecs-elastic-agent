@@ -18,6 +18,7 @@ package com.thoughtworks.gocd.elasticagent.ecs.aws;
 
 import com.amazonaws.services.ecs.AmazonECS;
 import com.amazonaws.services.ecs.model.*;
+import com.thoughtworks.gocd.elasticagent.ecs.Constants;
 import com.thoughtworks.gocd.elasticagent.ecs.ECSTask;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.strategy.InstanceSelectionStrategyFactory;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.*;
@@ -25,6 +26,7 @@ import com.thoughtworks.gocd.elasticagent.ecs.exceptions.ContainerFailedToRegist
 import com.thoughtworks.gocd.elasticagent.ecs.exceptions.ContainerInstanceFailedToRegisterException;
 import com.thoughtworks.gocd.elasticagent.ecs.exceptions.LimitExceededException;
 import com.thoughtworks.gocd.elasticagent.ecs.requests.CreateAgentRequest;
+import org.apache.commons.lang3.Strings;
 
 import java.text.MessageFormat;
 import java.util.*;
@@ -36,13 +38,12 @@ import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.getServerI
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.Platform.LINUX;
 import static java.text.MessageFormat.format;
 import static java.util.Optional.empty;
-import static org.apache.commons.lang3.StringUtils.equalsIgnoreCase;
 
 public class TaskHelper {
     private final ContainerInstanceHelper containerInstanceHelper;
     private final RegisterTaskDefinitionRequestBuilder registerTaskDefinitionRequestBuilder;
     private final InstanceSelectionStrategyFactory instanceSelectionStrategyFactory;
-    private SpotInstanceService spotInstanceService;
+    private final SpotInstanceService spotInstanceService;
 
     public TaskHelper() {
         this(new ContainerInstanceHelper(), new RegisterTaskDefinitionRequestBuilder(), new InstanceSelectionStrategyFactory(), SpotInstanceService.instance());
@@ -73,17 +74,19 @@ public class TaskHelper {
                 .strategyFor(stopPolicy)
                 .instanceForScheduling(pluginSettings, elasticAgentProfileProperties, containerDefinition);
 
-        if (!containerInstance.isPresent()) {
+        if (containerInstance.isEmpty()) {
             consoleLogAppender.accept("No running instance(s) found to build the ECS Task to perform current job.");
             LOG.info(format("[create-agent] No running instances found to build container with profile {0}", createAgentRequest.elasticProfile().toJson()));
             if (elasticAgentProfileProperties.runAsSpotInstance()) {
                 spotInstanceService.create(pluginSettings, elasticAgentProfileProperties, consoleLogAppender);
-                return Optional.empty();
             } else {
-                containerInstance = containerInstanceHelper.startOrCreateOneInstance(pluginSettings, elasticAgentProfileProperties, consoleLogAppender);
+                containerInstance = Optional.of(containerInstanceHelper.startOrCreateOneInstance(pluginSettings, elasticAgentProfileProperties, consoleLogAppender));
             }
         } else {
             consoleLogAppender.accept("Found existing running container instance platform matching ECS Task instance configuration. Not starting a new EC2 instance...");
+        }
+        if (containerInstance.isEmpty()) {
+            return empty();
         }
 
         final RegisterTaskDefinitionRequest registerTaskDefinitionRequest = registerTaskDefinitionRequestBuilder
@@ -206,7 +209,7 @@ public class TaskHelper {
         List<ContainerDefinition> containerDefinitions = taskDefinition.getContainerDefinitions();
         Map<String, String> labels = containerDefinitions.get(0).getDockerLabels();
 
-        if (!equalsIgnoreCase(labels.getOrDefault(LABEL_SERVER_ID, serverId), serverId)) {
+        if (!Strings.CI.equals(labels.getOrDefault(Constants.LABEL_SERVER_ID, serverId), serverId)) {
             LOG.debug(MessageFormat.format("Ignoring task {0} as server id({1}) doest not match with {2}", task.getTaskArn(), labels.get(LABEL_SERVER_ID), serverId));
             return empty();
         }
