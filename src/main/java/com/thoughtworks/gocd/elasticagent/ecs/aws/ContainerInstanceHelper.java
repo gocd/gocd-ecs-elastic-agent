@@ -219,7 +219,8 @@ public class ContainerInstanceHelper {
     }
 
     public @NonNull ContainerInstance startOrCreateOneInstance(PluginSettings pluginSettings, ElasticAgentProfileProperties elasticAgentProfileProperties, ConsoleLogAppender consoleLogAppender) throws LimitExceededException {
-        return startOrCreateInstance(pluginSettings, elasticAgentProfileProperties, 1, consoleLogAppender).getFirst();
+        return startOrCreateInstance(pluginSettings, elasticAgentProfileProperties, 1, consoleLogAppender)
+                .get(0);
     }
 
     public List<ContainerInstance> startOrCreateInstance(PluginSettings pluginSettings, ElasticAgentProfileProperties elasticAgentProfileProperties, int numberOfInstanceToStartOrCreate, ConsoleLogAppender consoleLogAppender) throws LimitExceededException {
