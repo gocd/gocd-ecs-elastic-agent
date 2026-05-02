@@ -63,7 +63,7 @@ ext {
   deps = [
     gocdPluginApi: 'cd.go.plugin:go-plugin-api:25.4.0',
     awsSdk       : 'com.amazonaws:aws-java-sdk:1.12.797',
-    lombok       : 'org.projectlombok:lombok:1.18.44',
+    lombok       : 'org.projectlombok:lombok:1.18.46',
   ]
 
   versions = project.ext.deps.collectEntries { lib, libGav -> [lib, libGav.split(':').last()] }
@@ -75,10 +75,10 @@ dependencies {
   compileOnly project.deps.lombok
   compileOnly project.deps.gocdPluginApi
 
-  implementation('com.google.code.gson:gson:2.13.2') {
+  implementation('com.google.code.gson:gson:2.14.0') {
     exclude(module: 'error_prone_annotations') // Not needed at runtime
   }
-  implementation('com.google.guava:guava:33.5.0-jre') {
+  implementation('com.google.guava:guava:33.6.0-jre') {
     // see https://github.com/google/guava/pull/6606
     exclude(module: 'listenablefuture')
     exclude(module: 'jspecify')
@@ -86,7 +86,7 @@ dependencies {
     exclude(module: 'j2objc-annotations')
   }
   implementation 'org.apache.commons:commons-lang3:3.20.0'
-  implementation 'joda-time:joda-time:2.14.1'
+  implementation 'joda-time:joda-time:2.14.2'
   implementation 'org.apache.commons:commons-collections4:4.5.0'
 
   implementation "com.amazonaws:aws-java-sdk-ecs:${project.versions.awsSdk}"
@@ -111,7 +111,7 @@ dependencies {
   testImplementation 'org.assertj:assertj-core:3.27.7'
   testImplementation 'org.mockito:mockito-core:5.23.0'
   testImplementation 'org.skyscreamer:jsonassert:1.5.3'
-  testImplementation 'org.jsoup:jsoup:1.22.1'
+  testImplementation 'org.jsoup:jsoup:1.22.2'
 }
 
 tasks.withType(JavaCompile).configureEach {
