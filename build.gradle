@@ -98,9 +98,9 @@ dependencies {
       replacedBy('org.slf4j:jcl-over-slf4j', "Everything should go via SLF4J")
     }
   }
-  implementation 'org.slf4j:jcl-over-slf4j:2.0.17'
+  implementation 'org.slf4j:jcl-over-slf4j:2.0.18'
 
-  testImplementation platform('org.junit:junit-bom:6.0.3')
+  testImplementation platform('org.junit:junit-bom:6.1.0')
   testImplementation 'org.junit.jupiter:junit-jupiter-api'
   testImplementation 'org.junit.jupiter:junit-jupiter-params'
   testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
