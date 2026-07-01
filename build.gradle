@@ -83,7 +83,7 @@ dependencies {
 
   implementation "com.amazonaws:aws-java-sdk-ecs:${project.versions.awsSdk}"
   implementation "com.amazonaws:aws-java-sdk-ec2:${project.versions.awsSdk}"
-  implementation platform('com.fasterxml.jackson:jackson-bom:2.18.8') // Use latest close LTS version within aws-java-sdk
+  implementation platform('com.fasterxml.jackson:jackson-bom:2.22.0') // Use latest close LTS version within aws-java-sdk
 
   implementation 'org.freemarker:freemarker:2.3.34'
 
