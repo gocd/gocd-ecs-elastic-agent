@@ -43,7 +43,7 @@ import java.util.Map;
 
 @Extension
 public class ECSElasticPlugin implements GoPlugin {
-    public static final Logger LOG = Logger.getLoggerFor(ECSElasticPlugin.class);
+    private static final Logger LOG = Logger.getLoggerFor(ECSElasticPlugin.class);
 
     private PluginRequest pluginRequest;
     private static String serverId;

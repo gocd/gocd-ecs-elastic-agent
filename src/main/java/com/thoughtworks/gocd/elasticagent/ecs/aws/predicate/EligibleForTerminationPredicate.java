@@ -18,6 +18,7 @@ package com.thoughtworks.gocd.elasticagent.ecs.aws.predicate;
 
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Tag;
+import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.gocd.elasticagent.ecs.Clock;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.Platform;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
@@ -28,14 +29,14 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.Constants.STOPPED_AT;
-import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.EC2InstanceState.STOPPED;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.Platform.LINUX;
 import static java.text.MessageFormat.format;
 
 public class EligibleForTerminationPredicate implements Predicate<Instance> {
+    private static final Logger LOG = Logger.getLoggerFor(EligibleForTerminationPredicate.class);
     private final PluginSettings pluginSettings;
-    private Clock clock;
+    private final Clock clock;
 
     public EligibleForTerminationPredicate(PluginSettings pluginSettings) {
         this(pluginSettings, Clock.DEFAULT);

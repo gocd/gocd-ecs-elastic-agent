@@ -18,18 +18,20 @@ package com.thoughtworks.gocd.elasticagent.ecs.aws.matcher;
 
 import com.amazonaws.services.ec2.model.GroupIdentifier;
 import com.amazonaws.services.ec2.model.Instance;
+import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.EC2Config;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.Platform;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 public class InstanceMatcher {
+    private static final Logger LOG = Logger.getLoggerFor(InstanceMatcher.class);
+
     private static final String ERROR_MESSAGE_FOR_OBJECT = "Instance {0}({1}) of the instance({2}) does not match {3}.";
     private static final String ERROR_MESSAGE_FOR_LIST = "Instance {0}({1}) of the instance({2}) is not in {3}.";
 
@@ -44,12 +46,12 @@ public class InstanceMatcher {
             return false;
         }
 
-        if (!StringUtils.equals(instance.getImageId(), ec2Config.getAmi())) {
+        if (!Objects.equals(instance.getImageId(), ec2Config.getAmi())) {
             LOG.debug(ERROR_MESSAGE_FOR_OBJECT, "AMI", instance.getImageId(), instance.getInstanceId(), ec2Config.getAmi());
             return false;
         }
 
-        if (!StringUtils.equals(ec2Config.getInstanceType(), instance.getInstanceType())) {
+        if (!Objects.equals(ec2Config.getInstanceType(), instance.getInstanceType())) {
             LOG.debug(ERROR_MESSAGE_FOR_OBJECT, "InstanceType", instance.getInstanceType(), instance.getInstanceId(), ec2Config.getInstanceType());
             return false;
         }
@@ -64,11 +66,7 @@ public class InstanceMatcher {
             return false;
         }
 
-        if (ec2Config.runAsSpotInstance() != isSpotInstance(instance)) {
-            return false;
-        }
-
-        return true;
+        return ec2Config.runAsSpotInstance() == isSpotInstance(instance);
     }
 
     private boolean isSpotInstance(Instance instance) {

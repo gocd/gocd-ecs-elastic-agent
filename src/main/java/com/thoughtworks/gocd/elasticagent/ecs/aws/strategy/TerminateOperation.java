@@ -19,16 +19,18 @@ package com.thoughtworks.gocd.elasticagent.ecs.aws.strategy;
 import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
 import com.amazonaws.services.ecs.model.ContainerInstance;
 import com.amazonaws.services.ecs.model.DeregisterContainerInstanceRequest;
+import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
 
 import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
 import static java.text.MessageFormat.format;
 
 public class TerminateOperation implements Operation<ContainerInstance> {
+    private static final Logger LOG = Logger.getLoggerFor(TerminateOperation.class);
+
     @Override
     public void execute(PluginSettings pluginSettings, Collection<ContainerInstance> containerInstanceToTerminate) {
         if (containerInstanceToTerminate.isEmpty()) {

@@ -17,17 +17,19 @@
 package com.thoughtworks.gocd.elasticagent.ecs.aws;
 
 import com.amazonaws.auth.*;
+import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.gocd.elasticagent.ecs.exceptions.AWSCredentialsException;
 
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
 import static org.apache.commons.lang3.StringUtils.*;
 
 public class AWSCredentialsProviderChain {
-    private final List<AWSCredentialsProvider> credentialsProviders = new LinkedList<AWSCredentialsProvider>();
+    private static final Logger LOG = Logger.getLoggerFor(AWSCredentialsProviderChain.class);
+
+    private final List<AWSCredentialsProvider> credentialsProviders = new LinkedList<>();
 
     public AWSCredentialsProviderChain() {
         this(new EnvironmentVariableCredentialsProvider(), new SystemPropertiesCredentialsProvider(), new InstanceProfileCredentialsProvider(false));
@@ -56,7 +58,7 @@ public class AWSCredentialsProviderChain {
     public AWSCredentialsProvider getAWSCredentialsProvider(String accessKey, String secretKey) {
         final AWSStaticCredentialsProvider staticCredentialProvider = staticCredentialProvider(accessKey, secretKey);
         if (staticCredentialProvider != null) {
-            credentialsProviders.add(0, staticCredentialProvider);
+            credentialsProviders.addFirst(staticCredentialProvider);
         }
 
         for (AWSCredentialsProvider provider : credentialsProviders) {

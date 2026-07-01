@@ -70,7 +70,7 @@ public class ECSContainer {
         this.taskName = taskArnParts[taskArnParts.length - 1];
 
         if (!taskDefinition.getContainerDefinitions().isEmpty()) {
-            final ContainerDefinition containerDefinition = taskDefinition.getContainerDefinitions().get(0);
+            final ContainerDefinition containerDefinition = taskDefinition.getContainerDefinitions().getFirst();
 
             this.cpu = containerDefinition.getCpu();
             this.memory = containerDefinition.getMemory();
@@ -89,7 +89,7 @@ public class ECSContainer {
         }
 
         if (!task.getContainers().isEmpty()) {
-            final Container container = task.getContainers().get(0);
+            final Container container = task.getContainers().getFirst();
             this.reason = container.getReason();
             this.exitCode = container.getExitCode();
             this.containerName = container.getName();
@@ -111,9 +111,9 @@ public class ECSContainer {
 
         }
         Map<String, String> volumeMount = new HashMap<>();
-        final ContainerDefinition containerDefinition = taskDefinition.getContainerDefinitions().get(0);
+        final ContainerDefinition containerDefinition = taskDefinition.getContainerDefinitions().getFirst();
 
-        volumes.stream().forEach(volume -> {
+        volumes.forEach(volume -> {
             final MountPoint mountPoint = containerDefinition.getMountPoints().stream().filter(mount -> mount.getSourceVolume().equals(volume.getName())).findFirst().orElse(null);
             volumeMount.put(volume.getHost().getSourcePath(), mountPoint == null ? "" : mountPoint.getContainerPath());
         });

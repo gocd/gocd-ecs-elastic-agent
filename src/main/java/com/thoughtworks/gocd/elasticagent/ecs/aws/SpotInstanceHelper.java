@@ -18,6 +18,7 @@ package com.thoughtworks.gocd.elasticagent.ecs.aws;
 
 import com.amazonaws.services.ec2.model.*;
 import com.amazonaws.services.ecs.model.ContainerInstance;
+import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.predicate.SpotInstanceEligibleForTerminationPredicate;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.wait.Poller;
@@ -29,12 +30,12 @@ import org.joda.time.Period;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.Constants.*;
-import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
 import static com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerInstanceHelper.*;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.EC2InstanceState.PENDING;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.EC2InstanceState.RUNNING;
@@ -50,13 +51,15 @@ import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 public class SpotInstanceHelper {
+    public static final String SPOT_INSTANCE_NAME_FORMAT = "%s_%s_SPOT_INSTANCE";
+    private static final Logger LOG = Logger.getLoggerFor(SpotInstanceHelper.class);
+    private static final Set<String> ACCEPTABLE_STATES = Stream.of(PENDING, RUNNING).collect(toSet());
+
     private final SpotInstanceRequestBuilder spotInstanceRequestBuilder;
     private final SubnetSelector subnetSelector;
     private final Supplier<String> serverIdSupplier;
     private final ContainerInstanceHelper containerInstanceHelper;
-    public static final String SPOT_INSTANCE_NAME_FORMAT = "%s_%s_SPOT_INSTANCE";
-    private static final Set<String> ACCEPTABLE_STATES = Stream.of(PENDING, RUNNING).collect(toSet());
-    private Period spotRequestVisibilityTimeout;
+    private final Period spotRequestVisibilityTimeout;
 
     public SpotInstanceHelper() {
         this(new ContainerInstanceHelper(), new SpotInstanceRequestBuilder(), new SubnetSelector(), ECSElasticPlugin::getServerId, Period.seconds(25));
@@ -185,7 +188,7 @@ public class SpotInstanceHelper {
     public boolean waitTillSpotRequestCanBeLookedUpById(PluginSettings pluginSettings, String spotInstanceRequestId) {
         final Result<DescribeSpotInstanceRequestsResult> result = new Poller<DescribeSpotInstanceRequestsResult>()
                 .timeout(spotRequestVisibilityTimeout)
-                .stopWhen(describeSpotInstanceRequestsResult -> describeSpotInstanceRequestsResult != null)
+                .stopWhen(Objects::nonNull)
                 .poll(getSpotRequest(pluginSettings, spotInstanceRequestId))
                 .start();
 

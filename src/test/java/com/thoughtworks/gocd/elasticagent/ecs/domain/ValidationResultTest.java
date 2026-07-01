@@ -88,12 +88,13 @@ class ValidationResultTest {
     void shouldSerializeToJSON() throws Exception {
         final ValidationResult validationResult = new ValidationResult(Collections.singleton(new ValidationError("Image", "some-error")));
 
-        final String expectedJSON = "[\n" +
-                "  {\n" +
-                "    \"key\": \"Image\",\n" +
-                "    \"message\": \"some-error\"\n" +
-                "  }\n" +
-                "]";
+        final String expectedJSON = """
+                [
+                  {
+                    "key": "Image",
+                    "message": "some-error"
+                  }
+                ]""";
 
         JSONAssert.assertEquals(expectedJSON, validationResult.toJSON(), true);
     }

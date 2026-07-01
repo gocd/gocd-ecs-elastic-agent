@@ -16,21 +16,18 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.utils;
 
-import com.google.common.collect.Collections2;
-import com.google.common.io.ByteStreams;
-import com.google.common.io.CharStreams;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Function;
+
+import static java.util.Objects.requireNonNull;
 
 public class Util {
     public static final Gson GSON = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
@@ -44,28 +41,28 @@ public class Util {
             .appendMinutes().appendSuffix(" min", " mins")
             .toFormatter();
 
-    public static String readResource(String resourceFile) {
-        try (InputStreamReader reader = new InputStreamReader(Util.class.getResourceAsStream(resourceFile), StandardCharsets.UTF_8)) {
-            return CharStreams.toString(reader);
-        } catch (IOException e) {
-            throw new RuntimeException("Could not find resource " + resourceFile, e);
+    public static void checkArgument(boolean expression, Object errorMessage) {
+        if (!expression) {
+            throw new IllegalArgumentException(String.valueOf(errorMessage));
         }
     }
 
+    public static String readResource(String resourceFile) {
+        return new String(readResourceBytes(resourceFile), StandardCharsets.UTF_8);
+    }
+
     public static byte[] readResourceBytes(String resourceFile) {
-        try (InputStream in = Util.class.getResourceAsStream(resourceFile)) {
-            return ByteStreams.toByteArray(in);
-        } catch (IOException e) {
+        try (InputStream in = requireNonNull(Util.class.getResourceAsStream(resourceFile))) {
+            return in.readAllBytes();
+        } catch (Exception e) {
             throw new RuntimeException("Could not find resource " + resourceFile, e);
         }
     }
 
     public static Collection<String> splitIntoLinesAndTrimSpaces(String lines) {
-        if (StringUtils.isBlank(lines)) {
-            return Collections.emptyList();
-        }
-
-        return Collections2.transform(Arrays.asList(lines.split("[\r\n]+")), StringUtils::trim);
+        return lines == null || lines.isBlank()
+                ? Collections.emptyList()
+                : lines.lines().map(String::trim).filter(s -> !s.isBlank()).toList();
     }
 
     public static List<String> listFromCommaSeparatedString(String str) {

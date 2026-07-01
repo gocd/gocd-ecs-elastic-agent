@@ -19,11 +19,10 @@ package com.thoughtworks.gocd.elasticagent.ecs.domain;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.annotation.Metadata;
-import org.apache.commons.collections4.map.HashedMap;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static java.util.stream.Collectors.joining;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 
 public class BindMount {
@@ -42,7 +41,7 @@ public class BindMount {
     @Metadata(key = "ContainerPath", required = true, secure = false)
     public String containerPath;
 
-    private Map<String, String> errors = new HashedMap<>();
+    private final Map<String, String> errors = new LinkedHashMap<>();
 
     public BindMount() {
     }
@@ -62,7 +61,7 @@ public class BindMount {
     }
 
     public String errors() {
-        return errors.values().stream().collect(joining(" , "));
+        return String.join(", ", errors.values());
     }
 
     private void validateName() {

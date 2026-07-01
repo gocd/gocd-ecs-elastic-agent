@@ -19,6 +19,7 @@ package com.thoughtworks.gocd.elasticagent.ecs.aws.strategy;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ecs.model.ContainerDefinition;
 import com.amazonaws.services.ecs.model.ContainerInstance;
+import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerInstanceHelper;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.EC2Config;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.matcher.ContainerInstanceMatcher;
@@ -28,25 +29,21 @@ import com.thoughtworks.gocd.elasticagent.ecs.domain.Platform;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
 import com.thoughtworks.gocd.elasticagent.ecs.utils.Util;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.EC2InstanceState.PENDING;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.EC2InstanceState.RUNNING;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.Platform.WINDOWS;
 import static com.thoughtworks.gocd.elasticagent.ecs.utils.Util.toMap;
 import static java.text.MessageFormat.format;
-import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 public abstract class InstanceSelectionStrategy {
-    private static final Set<String> ACCEPTABLE_STATES = Stream.of(PENDING, RUNNING).collect(Collectors.toSet());
+    private static final Logger LOG = Logger.getLoggerFor(InstanceSelectionStrategy.class);
+    private static final Set<String> ACCEPTABLE_STATES = Set.of(PENDING, RUNNING);
+
     protected final ContainerInstanceHelper containerInstanceHelper;
     final InstanceMatcher instanceMatcher;
     final ContainerInstanceMatcher containerInstanceMatcher;
@@ -89,7 +86,7 @@ public abstract class InstanceSelectionStrategy {
             final ContainerInstance containerInstance = instanceMap.get(instance.getInstanceId());
             if (instanceMatcher.matches(ec2Config, instance) && containerInstanceMatcher.matches(containerInstance, containerDefinition)) {
                 if (isSpotInstance(instance)) {
-                    containerInstanceHelper.removeLastSeenIdleTag(pluginSettings, asList(instance.getInstanceId()));
+                    containerInstanceHelper.removeLastSeenIdleTag(pluginSettings, Collections.singletonList(instance.getInstanceId()));
                 }
                 return Optional.of(containerInstance);
             } else {

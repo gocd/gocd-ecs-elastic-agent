@@ -43,11 +43,12 @@ class PluginRequestTest {
     @Test
     void shouldGetServerInfoFromServer() {
         ArgumentCaptor<DefaultGoApiRequest> requestArgumentCaptor = ArgumentCaptor.forClass(DefaultGoApiRequest.class);
-        when(accessor.submit(requestArgumentCaptor.capture())).thenReturn(DefaultGoApiResponse.success("{\n" +
-                "  \"server_id\": \"foobar\",\n" +
-                "  \"site_url\": \"http://your.server.url\",\n" +
-                "  \"secure_site_url\": \"https://your.server.url\"" +
-                "}"));
+        when(accessor.submit(requestArgumentCaptor.capture())).thenReturn(DefaultGoApiResponse.success("""
+                {
+                  "server_id": "foobar",
+                  "site_url": "http://your.server.url",
+                  "secure_site_url": "https://your.server.url"\
+                }"""));
 
         final ServerInfo severInfo = pluginRequest.getSeverInfo();
 

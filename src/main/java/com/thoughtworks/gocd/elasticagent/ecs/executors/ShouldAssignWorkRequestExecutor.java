@@ -16,6 +16,7 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.executors;
 
+import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.go.plugin.api.response.DefaultGoPluginApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import com.thoughtworks.gocd.elasticagent.ecs.AgentInstances;
@@ -23,10 +24,11 @@ import com.thoughtworks.gocd.elasticagent.ecs.ECSTask;
 import com.thoughtworks.gocd.elasticagent.ecs.RequestExecutor;
 import com.thoughtworks.gocd.elasticagent.ecs.requests.ShouldAssignWorkRequest;
 
-import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
 import static java.text.MessageFormat.format;
 
 public class ShouldAssignWorkRequestExecutor implements RequestExecutor {
+    private static final Logger LOG = Logger.getLoggerFor(ShouldAssignWorkRequestExecutor.class);
+
     private final AgentInstances<ECSTask> agentInstances;
     private final ShouldAssignWorkRequest request;
 

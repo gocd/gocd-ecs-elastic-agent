@@ -166,14 +166,10 @@ public class EC2Config {
         }
 
         public EC2Config build() {
-            switch (elasticAgentProfileProperties.platform()) {
-                case LINUX:
-                    return createLinuxConfig();
-                case WINDOWS:
-                    return createWindowsConfig();
-            }
-
-            throw new RuntimeException("Platform must be specified at elastic profile level.");
+            return switch (elasticAgentProfileProperties.platform()) {
+                case LINUX -> createLinuxConfig();
+                case WINDOWS -> createWindowsConfig();
+            };
         }
 
         private EC2Config createWindowsConfig() {

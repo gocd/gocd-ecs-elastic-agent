@@ -17,14 +17,16 @@
 package com.thoughtworks.gocd.elasticagent.ecs.aws;
 
 import com.amazonaws.services.ec2.model.*;
+import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.Platform;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.Constants.LABEL_SERVER_ID;
-import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
 import static com.thoughtworks.gocd.elasticagent.ecs.validators.VolumeSettingsValidator.VOLUME_TYPE_IO_1;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 public class RunInstanceRequestBuilder {
+    private static final Logger LOG = Logger.getLoggerFor(RunInstanceRequestBuilder.class);
+
     private static final String DEFAULT_LINUX_OS_DEVICE_NAME = "/dev/xvda";
     private static final String DEFAULT_WINDOWS_OS_DEVICE_NAME = "/dev/sda1";
     private static final String DEFAULT_LINUX_DOCKER_DEVICE_NAME = "/dev/xvdcz";

@@ -21,7 +21,7 @@ import org.json.JSONException;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
 
-import java.util.Arrays;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -73,8 +73,8 @@ class MigrateConfigurationRequestTest {
         elasticAgentProfile.setProperties(elasticAgentProfileProperties);
 
         assertThat(pluginSettings).isEqualTo(request.getPluginSettings());
-        assertThat(Arrays.asList(clusterProfile)).isEqualTo(request.getClusterProfiles());
-        assertThat(Arrays.asList(elasticAgentProfile)).isEqualTo(request.getElasticAgentProfiles());
+        assertThat(List.of(clusterProfile)).isEqualTo(request.getClusterProfiles());
+        assertThat(List.of(elasticAgentProfile)).isEqualTo(request.getElasticAgentProfiles());
     }
 
     @Test
@@ -88,8 +88,8 @@ class MigrateConfigurationRequestTest {
         MigrateConfigurationRequest request = MigrateConfigurationRequest.fromJSON(requestBody);
 
         assertThat(new PluginSettings()).isEqualTo(request.getPluginSettings());
-        assertThat(Arrays.asList()).isEqualTo(request.getClusterProfiles());
-        assertThat(Arrays.asList()).isEqualTo(request.getElasticAgentProfiles());
+        assertThat(List.of()).isEqualTo(request.getClusterProfiles());
+        assertThat(List.of()).isEqualTo(request.getElasticAgentProfiles());
     }
 
     @Test
@@ -111,7 +111,7 @@ class MigrateConfigurationRequestTest {
         elasticAgentProfileProperties.image = "nginx";
         elasticAgentProfile.setProperties(elasticAgentProfileProperties);
 
-        MigrateConfigurationRequest request = new MigrateConfigurationRequest(pluginSettings, Arrays.asList(clusterProfile), Arrays.asList(elasticAgentProfile));
+        MigrateConfigurationRequest request = new MigrateConfigurationRequest(pluginSettings, List.of(clusterProfile), List.of(elasticAgentProfile));
 
         String actual = request.toJSON();
 

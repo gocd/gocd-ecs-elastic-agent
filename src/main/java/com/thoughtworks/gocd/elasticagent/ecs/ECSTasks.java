@@ -17,6 +17,7 @@
 package com.thoughtworks.gocd.elasticagent.ecs;
 
 import com.amazonaws.services.ecs.model.*;
+import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerInstanceHelper;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.TaskHelper;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.Agent;
@@ -38,11 +39,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
 import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.getServerId;
 import static java.text.MessageFormat.format;
 
 public class ECSTasks implements AgentInstances<ECSTask> {
+    private static final Logger LOG = Logger.getLoggerFor(ECSTasks.class);
+
     private final Map<String, ECSTask> tasks = new ConcurrentHashMap<>();
     private final TaskHelper taskHelper;
     private final EventStream eventStream;
@@ -95,7 +97,7 @@ public class ECSTasks implements AgentInstances<ECSTask> {
     }
 
     @Override
-    public void terminateUnregisteredInstances(PluginSettings settings, Agents agents) throws Exception {
+    public void terminateUnregisteredInstances(PluginSettings settings, Agents agents) {
         ECSTasks toTerminate = unregisteredAfterTimeout(settings, agents);
 
         if (toTerminate.tasks.isEmpty()) {

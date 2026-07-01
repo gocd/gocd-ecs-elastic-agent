@@ -19,6 +19,7 @@ package com.thoughtworks.gocd.elasticagent.ecs.domain;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
+import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.annotation.Metadata;
 import com.thoughtworks.gocd.elasticagent.ecs.size.Size;
 import lombok.EqualsAndHashCode;
@@ -27,7 +28,6 @@ import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.List;
 
-import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.annotation.FieldType.MEMORY;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.annotation.FieldType.NUMBER;
 import static com.thoughtworks.gocd.elasticagent.ecs.utils.Util.*;
@@ -38,6 +38,7 @@ import static org.apache.commons.lang3.StringUtils.stripToEmpty;
 
 @EqualsAndHashCode
 public class ElasticAgentProfileProperties {
+    private static final Logger LOG = Logger.getLoggerFor(ElasticAgentProfileProperties.class);
     public static final String KEY_MAX_MEMORY = "MaxMemory";
     public static final String KEY_RESERVED_MEMORY = "ReservedMemory";
     public static final String AMI = "AMI";

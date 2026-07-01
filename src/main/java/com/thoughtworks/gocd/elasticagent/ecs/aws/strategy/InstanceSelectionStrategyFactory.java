@@ -18,18 +18,13 @@ package com.thoughtworks.gocd.elasticagent.ecs.aws.strategy;
 
 import com.thoughtworks.gocd.elasticagent.ecs.aws.StopPolicy;
 
-import static java.text.MessageFormat.format;
-
 public class InstanceSelectionStrategyFactory {
 
     public InstanceSelectionStrategy strategyFor(StopPolicy stopPolicy) {
-        switch (stopPolicy) {
-            case StopOldestInstance:
-                return new OldestInstanceSelectionStrategy();
-            case StopIdleInstance:
-                return new StopIdleInstanceSelectionStrategy();
-        }
+        return switch (stopPolicy) {
+            case StopOldestInstance -> new OldestInstanceSelectionStrategy();
+            case StopIdleInstance -> new StopIdleInstanceSelectionStrategy();
+        };
 
-        throw new RuntimeException(format("No strategy available for stop policy {0}.", stopPolicy));
     }
 }

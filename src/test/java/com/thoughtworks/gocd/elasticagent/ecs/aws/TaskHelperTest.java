@@ -334,7 +334,7 @@ class TaskHelperTest {
         final Task task = mock(Task.class);
         final TaskDefinition taskDefinition = mock(TaskDefinition.class);
         final ContainerDefinition containerDefinition = mock(ContainerDefinition.class);
-        final Map<String, String> dockerLabels = new HashMap<String, String>() {{
+        final Map<String, String> dockerLabels = new HashMap<>() {{
             put(CONFIGURATION_LABEL_KEY, "{\"Image\":\"alpine\"}");
             put(CREATED_BY_LABEL_KEY, PLUGIN_ID);
             put(ENVIRONMENT_LABEL_KEY, "environment");
@@ -361,7 +361,7 @@ class TaskHelperTest {
         final Task task = mock(Task.class);
         final TaskDefinition taskDefinition = mock(TaskDefinition.class);
         final ContainerDefinition containerDefinition = mock(ContainerDefinition.class);
-        final Map<String, String> dockerLabels = new HashMap<String, String>() {{
+        final Map<String, String> dockerLabels = new HashMap<>() {{
             put(CONFIGURATION_LABEL_KEY, "{\"Image\":\"alpine\"}");
             put(CREATED_BY_LABEL_KEY, PLUGIN_ID);
             put(ENVIRONMENT_LABEL_KEY, "environment");
@@ -387,7 +387,7 @@ class TaskHelperTest {
         final Task task = mock(Task.class);
         final TaskDefinition taskDefinition = mock(TaskDefinition.class);
         final ContainerDefinition containerDefinition = mock(ContainerDefinition.class);
-        final Map<String, String> dockerLabels = new HashMap<String, String>() {{
+        final Map<String, String> dockerLabels = new HashMap<>() {{
             put(CONFIGURATION_LABEL_KEY, "{\"Image\":\"alpine\"}");
             put(CREATED_BY_LABEL_KEY, PLUGIN_ID);
             put(ENVIRONMENT_LABEL_KEY, "environment");

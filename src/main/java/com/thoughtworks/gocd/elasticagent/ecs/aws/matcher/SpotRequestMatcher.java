@@ -22,9 +22,9 @@ import com.amazonaws.services.ec2.model.SpotInstanceRequest;
 import com.amazonaws.services.ec2.model.Tag;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.EC2Config;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.Platform;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.Collection;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -41,11 +41,11 @@ public class SpotRequestMatcher {
             return false;
         }
 
-        if (!StringUtils.equals(launchSpecification.getImageId(), ec2Config.getAmi())) {
+        if (!Objects.equals(launchSpecification.getImageId(), ec2Config.getAmi())) {
             return false;
         }
 
-        if (!StringUtils.equals(ec2Config.getInstanceType(), launchSpecification.getInstanceType())) {
+        if (!Objects.equals(ec2Config.getInstanceType(), launchSpecification.getInstanceType())) {
             return false;
         }
 

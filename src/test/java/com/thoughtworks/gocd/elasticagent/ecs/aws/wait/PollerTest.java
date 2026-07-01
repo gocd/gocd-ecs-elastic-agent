@@ -58,7 +58,7 @@ class PollerTest {
         assertThat(result.getException().getCause().getMessage()).isSameAs("Boom!!");
     }
 
-    class Api {
+    static class Api {
         public int get() {
             return 0;
         }

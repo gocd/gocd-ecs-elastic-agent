@@ -26,11 +26,12 @@ class GetCapabilitiesExecutorTest {
     void shouldAbleSupportPasswordAndSearchCapabilities() throws Exception {
         GoPluginApiResponse response = new GetCapabilitiesExecutor().execute();
 
-        String expectedJSON = "{\n" +
-                "    \"supports_plugin_status_report\":false,\n" +
-                "    \"supports_cluster_status_report\":true,\n" +
-                "    \"supports_agent_status_report\":true\n" +
-                "}";
+        String expectedJSON = """
+                {
+                    "supports_plugin_status_report":false,
+                    "supports_cluster_status_report":true,
+                    "supports_agent_status_report":true
+                }""";
 
         JSONAssert.assertEquals(expectedJSON, response.responseBody(), true);
     }

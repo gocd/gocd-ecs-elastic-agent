@@ -32,6 +32,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -186,8 +187,8 @@ public class SpotInstanceHelperTest {
         void shouldRequestForASpotInstanceWithSubnet() {
             RequestSpotInstancesRequest spotInstancesRequest = mock(RequestSpotInstancesRequest.class);
             RequestSpotInstancesResult spotRequestResult = mock(RequestSpotInstancesResult.class);
-            List<Instance> allInstances = asList(new Instance().withSpotInstanceRequestId("req_id"));
-            List<String> subnetIds = asList("sub_net_id");
+            List<Instance> allInstances = Collections.singletonList(new Instance().withSpotInstanceRequestId("req_id"));
+            List<String> subnetIds = List.of("sub_net_id");
             Subnet subnet = mock(Subnet.class);
 
             when(containerInstanceHelper.getAllInstances(pluginSettings)).thenReturn(allInstances);
@@ -254,7 +255,7 @@ public class SpotInstanceHelperTest {
             when(pluginSettings.ec2Client()).thenReturn(ec2Client);
             when(serverIdSupplier.get()).thenReturn(SERVER_ID);
 
-            spotInstanceHelper.tagSpotResources(pluginSettings, asList("spot_req_id"), LINUX);
+            spotInstanceHelper.tagSpotResources(pluginSettings, List.of("spot_req_id"), LINUX);
 
             verify(ec2Client).createTags(argumentCaptor.capture());
 
@@ -269,7 +270,7 @@ public class SpotInstanceHelperTest {
 
             when(pluginSettings.ec2Client()).thenReturn(ec2Client);
 
-            spotInstanceHelper.tagSpotResources(pluginSettings, asList("spot_req_id"), LINUX);
+            spotInstanceHelper.tagSpotResources(pluginSettings, List.of("spot_req_id"), LINUX);
 
             verify(ec2Client).createTags(argumentCaptor.capture());
 
@@ -284,7 +285,7 @@ public class SpotInstanceHelperTest {
             when(pluginSettings.ec2Client()).thenReturn(ec2Client);
             when(pluginSettings.getClusterName()).thenReturn("gocd");
 
-            spotInstanceHelper.tagSpotResources(pluginSettings, asList("spot_req_id"), LINUX);
+            spotInstanceHelper.tagSpotResources(pluginSettings, List.of("spot_req_id"), LINUX);
 
             verify(ec2Client).createTags(argumentCaptor.capture());
 
@@ -299,7 +300,7 @@ public class SpotInstanceHelperTest {
 
             when(pluginSettings.ec2Client()).thenReturn(ec2Client);
 
-            spotInstanceHelper.tagSpotResources(pluginSettings, asList("spot_req_id"), platform);
+            spotInstanceHelper.tagSpotResources(pluginSettings, List.of("spot_req_id"), platform);
 
             verify(ec2Client).createTags(argumentCaptor.capture());
 
@@ -315,7 +316,7 @@ public class SpotInstanceHelperTest {
             when(pluginSettings.ec2Client()).thenReturn(ec2Client);
             when(pluginSettings.getClusterName()).thenReturn("gocd");
 
-            spotInstanceHelper.tagSpotResources(pluginSettings, asList("spot_req_id"), platform);
+            spotInstanceHelper.tagSpotResources(pluginSettings, List.of("spot_req_id"), platform);
 
             verify(ec2Client).createTags(argumentCaptor.capture());
 
@@ -406,7 +407,7 @@ public class SpotInstanceHelperTest {
             List<Instance> idleSpotInstances = spotInstanceHelper.getAllIdleSpotInstances(pluginSettings, "gocd");
 
             assertThat(idleSpotInstances.size()).isEqualTo(1);
-            assertThat(idleSpotInstances.get(0)).isEqualTo(idleSpotInstance);
+            assertThat(idleSpotInstances.getFirst()).isEqualTo(idleSpotInstance);
         }
 
         @Test
@@ -416,7 +417,7 @@ public class SpotInstanceHelperTest {
             ContainerInstance spotContainerInstance = new ContainerInstance().withEc2InstanceId("spot_1").withRunningTasksCount(1).withPendingTasksCount(0);
 
             when(containerInstanceHelper.getAllInstances(pluginSettings)).thenReturn(asList(spotInstance, unregisterdIdleSpotInstance));
-            when(containerInstanceHelper.spotContainerInstances(pluginSettings)).thenReturn(asList(spotContainerInstance));
+            when(containerInstanceHelper.spotContainerInstances(pluginSettings)).thenReturn(Collections.singletonList(spotContainerInstance));
 
             List<Instance> idleSpotInstances = spotInstanceHelper.getAllIdleSpotInstances(pluginSettings, "gocd");
 
@@ -439,7 +440,7 @@ public class SpotInstanceHelperTest {
             final CreateTagsRequest createTagsRequest = argumentCaptor.getValue();
             assertThat(createTagsRequest.getResources()).hasSize(2).contains("spot_id1").contains("spot_id2");
             assertThat(createTagsRequest.getTags()).hasSize(1);
-            assertThat(createTagsRequest.getTags().get(0).getKey()).isEqualTo(LAST_SEEN_IDLE);
+            assertThat(createTagsRequest.getTags().getFirst().getKey()).isEqualTo(LAST_SEEN_IDLE);
         }
     }
 
@@ -470,7 +471,7 @@ public class SpotInstanceHelperTest {
             List<Instance> idleSpotInstances = spotInstanceHelper.getIdleInstancesEligibleForTermination(pluginSettings, "gocd");
 
             assertThat(idleSpotInstances.size()).isEqualTo(1);
-            assertThat(idleSpotInstances.get(0)).isEqualTo(idleForLong);
+            assertThat(idleSpotInstances.getFirst()).isEqualTo(idleForLong);
         }
 
         @Test
@@ -482,8 +483,8 @@ public class SpotInstanceHelperTest {
 
             ContainerInstance spotContainerInstance1 = new ContainerInstance().withEc2InstanceId("spot_1").withRunningTasksCount(0).withPendingTasksCount(0);
 
-            when(containerInstanceHelper.getAllInstances(pluginSettings)).thenReturn(asList(idleForLong));
-            when(containerInstanceHelper.spotContainerInstances(pluginSettings)).thenReturn(asList(spotContainerInstance1));
+            when(containerInstanceHelper.getAllInstances(pluginSettings)).thenReturn(Collections.singletonList(idleForLong));
+            when(containerInstanceHelper.spotContainerInstances(pluginSettings)).thenReturn(Collections.singletonList(spotContainerInstance1));
             when(pluginSettings.terminateIdleLinuxSpotInstanceAfter()).thenReturn(Period.minutes(20));
             when(pluginSettings.terminateIdleWindowsSpotInstanceAfter()).thenReturn(Period.minutes(20));
 

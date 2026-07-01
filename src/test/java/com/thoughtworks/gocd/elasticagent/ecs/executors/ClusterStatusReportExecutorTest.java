@@ -123,9 +123,10 @@ class ClusterStatusReportExecutorTest {
 
         final GoPluginApiResponse response = clusterStatusReportExecutor.execute();
 
-        final String expectedJSON = "{\n" +
-                "\"view\" : \"plugin_health_html\"\n" +
-                "}";
+        final String expectedJSON = """
+                {
+                "view" : "plugin_health_html"
+                }""";
 
         assertThat(response.responseCode()).isEqualTo(200);
         JSONAssert.assertEquals(expectedJSON, response.responseBody(), true);

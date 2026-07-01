@@ -38,7 +38,6 @@ import static com.thoughtworks.gocd.elasticagent.ecs.domain.EC2InstanceState.*;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 class InstanceSelectionStrategyTest {
@@ -167,7 +166,7 @@ class InstanceSelectionStrategyTest {
 
             assertThat(containerInstance.isPresent()).isTrue();
             assertThat(containerInstance.get().getEc2InstanceId()).isEqualTo("i-linux");
-            verify(containerInstanceHelper).removeLastSeenIdleTag(pluginSettings, asList("i-linux"));
+            verify(containerInstanceHelper).removeLastSeenIdleTag(pluginSettings, List.of("i-linux"));
         }
     }
     @Nested
@@ -247,11 +246,11 @@ class InstanceSelectionStrategyTest {
             final Optional<List<ContainerInstance>> containerInstance = idleInstanceSelectionStrategy.instancesToStop(pluginSettings, Platform.LINUX);
 
             assertThat(containerInstance.isPresent()).isTrue();
-            assertThat(containerInstance.get().get(0).getEc2InstanceId()).isEqualTo("i-linux3");
+            assertThat(containerInstance.get().getFirst().getEc2InstanceId()).isEqualTo("i-linux3");
         }
     }
 
-    class StubInstanceSelectionStrategy extends InstanceSelectionStrategy {
+    static class StubInstanceSelectionStrategy extends InstanceSelectionStrategy {
 
         StubInstanceSelectionStrategy(ContainerInstanceHelper containerInstanceHelper, InstanceMatcher instanceMatcher, ContainerInstanceMatcher containerInstanceMatcher) {
             super(containerInstanceHelper, instanceMatcher, containerInstanceMatcher);
@@ -259,7 +258,7 @@ class InstanceSelectionStrategyTest {
 
         @Override
         protected List<ContainerInstance> findInstancesToStop(PluginSettings pluginSettings, Platform platform, Map<String, ContainerInstance> instanceIdToContainerInstance, List<Instance> idleInstances) {
-            return singletonList(instanceIdToContainerInstance.get(idleInstances.get(0).getInstanceId()));
+            return singletonList(instanceIdToContainerInstance.get(idleInstances.getFirst().getInstanceId()));
         }
 
         @Override

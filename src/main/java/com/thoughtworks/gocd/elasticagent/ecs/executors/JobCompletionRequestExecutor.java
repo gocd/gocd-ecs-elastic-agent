@@ -16,6 +16,7 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.executors;
 
+import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.go.plugin.api.response.DefaultGoPluginApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import com.thoughtworks.gocd.elasticagent.ecs.Agents;
@@ -28,10 +29,9 @@ import com.thoughtworks.gocd.elasticagent.ecs.requests.JobCompletionRequest;
 
 import java.util.Collections;
 
-import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
-
-
 public class JobCompletionRequestExecutor implements RequestExecutor {
+    private static final Logger LOG = Logger.getLoggerFor(JobCompletionRequestExecutor.class);
+
     private final JobCompletionRequest jobCompletionRequest;
     private final ECSTasks agentInstances;
     private final PluginRequest pluginRequest;
@@ -43,7 +43,7 @@ public class JobCompletionRequestExecutor implements RequestExecutor {
     }
 
     @Override
-    public GoPluginApiResponse execute() throws Exception {
+    public GoPluginApiResponse execute() {
         PluginSettings clusterProfileProperties = jobCompletionRequest.clusterProfileProperties();
         String elasticAgentId = jobCompletionRequest.getElasticAgentId();
         Agents agents = pluginRequest.listAgents();

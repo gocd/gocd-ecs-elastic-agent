@@ -17,10 +17,12 @@
 package com.thoughtworks.gocd.extensions;
 
 import com.thoughtworks.gocd.elasticagent.ecs.utils.Util;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.support.AnnotationConsumer;
+import org.junit.jupiter.params.support.ParameterDeclarations;
 
 import java.util.Arrays;
 import java.util.stream.Stream;
@@ -29,7 +31,7 @@ public class FileSourceProvider implements ArgumentsProvider, AnnotationConsumer
     private String[] jsonFiles;
 
     @Override
-    public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
+    public @NonNull Stream<? extends Arguments> provideArguments(@NonNull ParameterDeclarations parameters, @NonNull ExtensionContext context) {
         return Stream.of(Arguments.of(Arrays.stream(jsonFiles)
                 .map(Util::readResource).toArray()));
     }

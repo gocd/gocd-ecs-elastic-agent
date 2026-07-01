@@ -24,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class FieldTypeTest {
 
     @Test
-    public void shouldValidateNumber() throws Exception {
+    public void shouldValidateNumber() {
         assertThat(NUMBER.validate("foo")).isEqualTo("must be number");
         assertThat(NUMBER.validate("3.14.1")).isEqualTo("must be number");
         assertThat(NUMBER.validate("-999")).isNull();
@@ -34,7 +34,7 @@ public class FieldTypeTest {
     }
 
     @Test
-    public void shouldValidatePositiveDecimal() throws Exception {
+    public void shouldValidatePositiveDecimal() {
         assertThat(POSITIVE_DECIMAL.validate("foo")).isEqualTo("must be positive decimal");
         assertThat(POSITIVE_DECIMAL.validate("-999")).isEqualTo("must be positive decimal");
         assertThat(POSITIVE_DECIMAL.validate("1.4")).isEqualTo("must be positive decimal");
@@ -42,7 +42,7 @@ public class FieldTypeTest {
     }
 
     @Test
-    public void shouldValidateMemory() throws Exception {
+    public void shouldValidateMemory() {
         assertThat(MEMORY.validate("4194305b")).describedAs("4194305b is equal to 4M").isNull();
         assertThat(MEMORY.validate("4096k")).describedAs("4096k is equal to 4M").isNull();
         assertThat(MEMORY.validate("10m")).isNull();

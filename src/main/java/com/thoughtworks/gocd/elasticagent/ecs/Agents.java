@@ -43,14 +43,10 @@ public class Agents {
         addAll(toCopy);
     }
 
-    public void addAll(Collection<Agent> toAdd) {
+    private void addAll(Collection<Agent> toAdd) {
         for (Agent agent : toAdd) {
             add(agent);
         }
-    }
-
-    public void addAll(Agents agents) {
-        addAll(agents.agents());
     }
 
     public Collection<Agent> findInstancesToDisable() {

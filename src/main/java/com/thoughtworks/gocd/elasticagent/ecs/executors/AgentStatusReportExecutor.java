@@ -18,6 +18,7 @@ package com.thoughtworks.gocd.elasticagent.ecs.executors;
 
 import com.amazonaws.services.ecs.model.Task;
 import com.google.gson.JsonObject;
+import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.go.plugin.api.response.DefaultGoPluginApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import com.thoughtworks.gocd.elasticagent.ecs.AgentInstances;
@@ -34,10 +35,11 @@ import freemarker.template.Template;
 
 import java.util.Optional;
 
-import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 public class AgentStatusReportExecutor {
+    private static final Logger LOG = Logger.getLoggerFor(AgentStatusReportExecutor.class);
+
     private final AgentStatusReportRequest request;
     private final PluginStatusReportViewBuilder statusReportViewBuilder;
     private final TaskHelper taskHelper;

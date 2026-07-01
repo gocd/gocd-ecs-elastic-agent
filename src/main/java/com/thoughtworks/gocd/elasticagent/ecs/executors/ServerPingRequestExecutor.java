@@ -18,6 +18,7 @@ package com.thoughtworks.gocd.elasticagent.ecs.executors;
 
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ecs.model.ContainerInstance;
+import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.go.plugin.api.response.DefaultGoPluginApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import com.thoughtworks.gocd.elasticagent.ecs.*;
@@ -41,7 +42,6 @@ import com.thoughtworks.gocd.elasticagent.ecs.requests.ServerPingRequest;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
 import static com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerInstanceHelper.*;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.Platform.LINUX;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.Platform.values;
@@ -50,8 +50,10 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
 
 public class ServerPingRequestExecutor implements RequestExecutor {
-    private ServerPingRequest serverPingRequest;
-    private Map<String, ECSTasks> allAgentInstances;
+    private static final Logger LOG = Logger.getLoggerFor(ServerPingRequestExecutor.class);
+
+    private final ServerPingRequest serverPingRequest;
+    private final Map<String, ECSTasks> allAgentInstances;
     private final PluginRequest pluginRequest;
     private final ContainerInstanceHelper containerInstanceHelper;
     private final InstanceSelectionStrategyFactory instanceSelectionStrategyFactory;
@@ -106,7 +108,7 @@ public class ServerPingRequestExecutor implements RequestExecutor {
                 .noneMatch(instances -> instances.hasInstance(agent.elasticAgentId()))).collect(Collectors.toList());
 
         if (!missingAgents.isEmpty()) {
-            List<String> missingAgentIds = missingAgents.stream().map(Agent::elasticAgentId).collect(Collectors.toList());
+            List<String> missingAgentIds = missingAgents.stream().map(Agent::elasticAgentId).toList();
             LOG.warn("[Server Ping] Was expecting a containers with IDs " + missingAgentIds + ", but it was missing! Removing missing agents from config.");
             pluginRequest.disableAgents(missingAgents);
             pluginRequest.deleteAgents(missingAgents);
@@ -198,7 +200,7 @@ public class ServerPingRequestExecutor implements RequestExecutor {
         pluginRequest.disableAgents(agents.findInstancesToDisable());
     }
 
-    private void terminateDisabledAgents(Agents agents, PluginSettings pluginSettings, ECSTasks agentInstances) throws Exception {
+    private void terminateDisabledAgents(Agents agents, PluginSettings pluginSettings, ECSTasks agentInstances) {
         Collection<Agent> toBeDeleted = agents.findInstancesToTerminate();
         final Set<String> elasticAgentIds = toBeDeleted.stream().map(Agent::elasticAgentId).collect(toSet());
 
@@ -245,7 +247,7 @@ public class ServerPingRequestExecutor implements RequestExecutor {
     }
 
     private void terminateIdleContainerInstance(PluginSettings pluginSettings, List<Instance> instancesForPlatform) {
-        final Instance instance = instancesForPlatform.stream().sorted(new MostIdleInstanceComparator(Clock.DEFAULT.now())).collect(toList()).get(0);
+        final Instance instance = instancesForPlatform.stream().sorted(new MostIdleInstanceComparator(Clock.DEFAULT.now())).toList().getFirst();
         final Optional<ContainerInstance> containerInstance = containerInstanceHelper.onDemandContainerInstances(pluginSettings).stream()
                 .filter(ci -> ci.getEc2InstanceId().equals(instance.getInstanceId()))
                 .findFirst();

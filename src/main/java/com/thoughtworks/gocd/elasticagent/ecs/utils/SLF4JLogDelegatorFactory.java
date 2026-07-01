@@ -14,16 +14,20 @@
  * limitations under the License.
  */
 
-package org.slf4j.impl;
+package com.thoughtworks.gocd.elasticagent.ecs.utils;
 
 import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;
 
 public class SLF4JLogDelegatorFactory implements ILoggerFactory {
-    private static final SLF4JLogDelegator LOGGER = new SLF4JLogDelegator();
+    private final Class<?> fallbackLoggerClass;
+
+    public SLF4JLogDelegatorFactory(Class<?> fallbackLoggerClass) {
+        this.fallbackLoggerClass = fallbackLoggerClass;
+    }
 
     @Override
     public Logger getLogger(String name) {
-        return LOGGER;
+        return new SLF4JLogDelegator(name, fallbackLoggerClass);
     }
 }

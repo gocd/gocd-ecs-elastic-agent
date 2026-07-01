@@ -78,16 +78,8 @@ dependencies {
   implementation('com.google.code.gson:gson:2.14.0') {
     exclude(module: 'error_prone_annotations') // Not needed at runtime
   }
-  implementation('com.google.guava:guava:33.6.0-jre') {
-    // see https://github.com/google/guava/pull/6606
-    exclude(module: 'listenablefuture')
-    exclude(module: 'jspecify')
-    exclude(module: 'error_prone_annotations')
-    exclude(module: 'j2objc-annotations')
-  }
   implementation 'org.apache.commons:commons-lang3:3.20.0'
   implementation 'joda-time:joda-time:2.14.2'
-  implementation 'org.apache.commons:commons-collections4:4.5.0'
 
   implementation "com.amazonaws:aws-java-sdk-ecs:${project.versions.awsSdk}"
   implementation "com.amazonaws:aws-java-sdk-ec2:${project.versions.awsSdk}"
@@ -95,12 +87,13 @@ dependencies {
 
   implementation 'org.freemarker:freemarker:2.3.34'
 
+  implementation platform('org.slf4j:slf4j-bom:2.0.18')
+  implementation 'org.slf4j:jcl-over-slf4j'
   modules {
     module('commons-logging:commons-logging') {
       replacedBy('org.slf4j:jcl-over-slf4j', "Everything should go via SLF4J")
     }
   }
-  implementation 'org.slf4j:jcl-over-slf4j:2.0.18'
 
   testImplementation platform('org.junit:junit-bom:6.1.1')
   testImplementation 'org.junit.jupiter:junit-jupiter-api'
@@ -109,6 +102,7 @@ dependencies {
   testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
   testImplementation project.deps.gocdPluginApi
+  testRuntimeOnly 'org.slf4j:slf4j-simple'
   testImplementation 'uk.org.webcompere:system-stubs-jupiter:2.1.8'
   testImplementation 'org.assertj:assertj-core:3.27.7'
   testImplementation 'org.mockito:mockito-core:5.23.0'
@@ -139,7 +133,7 @@ interface InjectedExecOps {
   ExecOperations getExecOps()
 }
 
-task bundleInstall {
+tasks.register('bundleInstall') {
   inputs.files(project.files('contrib/cloudformation-template/Gemfile', 'contrib/cloudformation-template/Gemfile.lock'))
   outputs.dir(project.file('.bundle'))
 
@@ -154,7 +148,7 @@ task bundleInstall {
   }
 }
 
-task stackfile {
+tasks.register('stackfile') {
   dependsOn bundleInstall
 
   inputs.file(project.file('contrib/cloudformation-template/ecs_cloud_formation_template.rb'))

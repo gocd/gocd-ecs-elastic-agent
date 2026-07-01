@@ -25,12 +25,13 @@ class DockerRegistryAuthTypeAuthDataTest {
     void shouldDeserializeDockerCnfAuthData() throws Exception {
         DockerRegistryAuthData authData = new DockerRegistryAuthData("https://index.docker.io/v1/", "zq212MzEXAMPLE7o6T25Dk0i", "email@example.com");
 
-        String expectedJson = "{\n" +
-                "  \"https://index.docker.io/v1/\": {\n" +
-                "    \"auth\": \"zq212MzEXAMPLE7o6T25Dk0i\",\n" +
-                "    \"email\": \"email@example.com\"\n" +
-                "  }\n" +
-                "}";
+        String expectedJson = """
+                {
+                  "https://index.docker.io/v1/": {
+                    "auth": "zq212MzEXAMPLE7o6T25Dk0i",
+                    "email": "email@example.com"
+                  }
+                }""";
 
         JSONAssert.assertEquals(expectedJson, authData.toJson(), true);
     }
@@ -39,13 +40,14 @@ class DockerRegistryAuthTypeAuthDataTest {
     void shouldDeserializeToDockerAuthData() throws Exception {
         DockerRegistryAuthData authData = new DockerRegistryAuthData("https://index.docker.io/v1/", "username", "my_password", "email@example.com");
 
-        String expectedJson = "{\n" +
-                "  \"https://index.docker.io/v1/\": {\n" +
-                "    \"username\": \"username\",\n" +
-                "    \"password\": \"my_password\",\n" +
-                "    \"email\": \"email@example.com\"\n" +
-                "  }\n" +
-                "}";
+        String expectedJson = """
+                {
+                  "https://index.docker.io/v1/": {
+                    "username": "username",
+                    "password": "my_password",
+                    "email": "email@example.com"
+                  }
+                }""";
 
         JSONAssert.assertEquals(expectedJson, authData.toJson(), true);
     }

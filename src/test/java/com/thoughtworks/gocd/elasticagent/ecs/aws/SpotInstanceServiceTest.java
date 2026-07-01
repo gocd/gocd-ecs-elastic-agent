@@ -33,6 +33,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 
+import java.util.List;
 import java.util.Optional;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.aws.InstanceMother.spotInstance;
@@ -105,7 +106,7 @@ public class SpotInstanceServiceTest {
             when(configBuilder.withSettings(pluginSettings)).thenReturn(configBuilder);
             when(configBuilder.withProfile(elasticAgentProfileProperties)).thenReturn(configBuilder);
             when(configBuilder.build()).thenReturn(ec2Config);
-            when(spotInstanceHelper.getAllOpenOrSpotRequestsWithRunningInstances(any(), any(), any())).thenReturn(asList(openSpotInstanceRequest));
+            when(spotInstanceHelper.getAllOpenOrSpotRequestsWithRunningInstances(any(), any(), any())).thenReturn(singletonList(openSpotInstanceRequest));
             when(spotRequestMatcher.matches(ec2Config, openSpotInstanceRequest)).thenReturn(true);
 
             Optional<ContainerInstance> containerInstance = service.create(pluginSettings, elasticAgentProfileProperties, consoleLogAppender);
@@ -153,12 +154,12 @@ public class SpotInstanceServiceTest {
 
             InOrder inOrder = inOrder(spotInstanceHelper);
             inOrder.verify(spotInstanceHelper).waitTillSpotRequestCanBeLookedUpById(pluginSettings, spotInstanceRequest.getSpotInstanceRequestId());
-            inOrder.verify(spotInstanceHelper).tagSpotResources(pluginSettings, asList("spot_req_id"), LINUX);
+            inOrder.verify(spotInstanceHelper).tagSpotResources(pluginSettings, List.of("spot_req_id"), LINUX);
             assertThat(containerInstance.isPresent()).isFalse();
         }
 
         @Test
-        void shouldCancelTheSpotRequestIfTaggingItFails() throws LimitExceededException {
+        void shouldCancelTheSpotRequestIfTaggingItFails() {
             SpotInstanceRequest spotInstanceRequest = new SpotInstanceRequest().withSpotInstanceRequestId("spot_req_id").withState("open");
 
             when(elasticAgentProfileProperties.platform()).thenReturn(LINUX);
@@ -169,7 +170,7 @@ public class SpotInstanceServiceTest {
             when(configBuilder.build()).thenReturn(ec2Config);
             when(spotInstanceHelper.requestSpotInstanceRequest(any(), any(), any()))
                     .thenReturn(new RequestSpotInstancesResult().withSpotInstanceRequests(spotInstanceRequest.withStatus(new SpotInstanceStatus())));
-            doThrow(new RuntimeException()).when(spotInstanceHelper).tagSpotResources(pluginSettings, asList("spot_req_id"), LINUX);
+            doThrow(new RuntimeException()).when(spotInstanceHelper).tagSpotResources(pluginSettings, List.of("spot_req_id"), LINUX);
 
             assertThrows(RuntimeException.class,
                     () -> service.create(pluginSettings, elasticAgentProfileProperties, consoleLogAppender));
@@ -192,7 +193,7 @@ public class SpotInstanceServiceTest {
 
             service.create(pluginSettings, elasticAgentProfileProperties, consoleLogAppender);
 
-            verify(spotInstanceHelper).tagSpotResources(pluginSettings, asList("spot_req_id"), platform);
+            verify(spotInstanceHelper).tagSpotResources(pluginSettings, List.of("spot_req_id"), platform);
         }
 
         @Test
@@ -309,7 +310,7 @@ public class SpotInstanceServiceTest {
             service.tagSpotInstances(pluginSettings);
 
             verify(spotInstanceHelper).tagSpotResources(pluginSettings, asList("1", "3"), LINUX);
-            verify(spotInstanceHelper).tagSpotResources(pluginSettings, asList("2"), WINDOWS);
+            verify(spotInstanceHelper).tagSpotResources(pluginSettings, List.of("2"), WINDOWS);
         }
     }
 
@@ -338,7 +339,7 @@ public class SpotInstanceServiceTest {
 
             service.tagIdleSpotInstances(pluginSettings);
 
-            verify(spotInstanceHelper).tagSpotInstancesAsIdle(pluginSettings, asList("spot_1"));
+            verify(spotInstanceHelper).tagSpotInstancesAsIdle(pluginSettings, List.of("spot_1"));
         }
 
         @Test
@@ -385,7 +386,7 @@ public class SpotInstanceServiceTest {
 
             service.terminateIdleSpotInstances(pluginSettings);
 
-            verify(terminateOperation).execute(pluginSettings, asList(containerInstance1));
+            verify(terminateOperation).execute(pluginSettings, singletonList(containerInstance1));
         }
     }
 

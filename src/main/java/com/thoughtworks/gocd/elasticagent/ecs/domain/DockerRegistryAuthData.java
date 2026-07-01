@@ -21,6 +21,7 @@ import lombok.EqualsAndHashCode;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 
 @EqualsAndHashCode
 public class DockerRegistryAuthData {
@@ -38,7 +39,7 @@ public class DockerRegistryAuthData {
         return new GsonBuilder().create().toJson(authData);
     }
 
-    private class Authorization {
+    private static class Authorization {
         private String auth;
         private String username;
         private String password;
@@ -62,10 +63,10 @@ public class DockerRegistryAuthData {
 
             Authorization that = (Authorization) o;
 
-            if (auth != null ? !auth.equals(that.auth) : that.auth != null) return false;
-            if (username != null ? !username.equals(that.username) : that.username != null) return false;
-            if (password != null ? !password.equals(that.password) : that.password != null) return false;
-            return email != null ? email.equals(that.email) : that.email == null;
+            if (!Objects.equals(auth, that.auth)) return false;
+            if (!Objects.equals(username, that.username)) return false;
+            if (!Objects.equals(password, that.password)) return false;
+            return Objects.equals(email, that.email);
         }
 
         @Override

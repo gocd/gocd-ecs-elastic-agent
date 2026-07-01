@@ -27,12 +27,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ClusterStatusReportRequestTest {
     @Test
     void shouldDeserializeFromJSON() {
-        String json = "{\n" +
-                "  \"cluster_profile_properties\": {\n" +
-                "    \"GoServerUrl\": \"https://cd.server.com/go\", \n" +
-                "    \"ClusterName\": \"deployment-cluster\"\n" +
-                "  }\n" +
-                "}";
+        String json = """
+                {
+                  "cluster_profile_properties": {
+                    "GoServerUrl": "https://cd.server.com/go",\s
+                    "ClusterName": "deployment-cluster"
+                  }
+                }""";
 
         ClusterStatusReportRequest request = ClusterStatusReportRequest.fromJSON(json);
 

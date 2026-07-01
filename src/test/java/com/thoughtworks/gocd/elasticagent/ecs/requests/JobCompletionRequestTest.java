@@ -29,28 +29,29 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class JobCompletionRequestTest {
     @Test
     public void shouldDeserializeFromJSON() {
-        String json = "{\n" +
-                "  \"elastic_agent_id\": \"ea1\",\n" +
-                "  \"job_identifier\": {\n" +
-                "    \"pipeline_name\": \"test-pipeline\",\n" +
-                "    \"pipeline_counter\": 1,\n" +
-                "    \"pipeline_label\": \"Test Pipeline\",\n" +
-                "    \"stage_name\": \"test-stage\",\n" +
-                "    \"stage_counter\": \"1\",\n" +
-                "    \"job_name\": \"test-job\",\n" +
-                "    \"job_id\": 100\n" +
-                "  },\n" +
-                "  \"elastic_agent_profile_properties\": {\n" +
-                "    \"Image\": \"value1\",\n" +
-                "    \"MaxMemory\": \"2G\",\n" +
-                "    \"ReservedMemory\": \"150M\",\n" +
-                "    \"TerminationPolicy\": \"\"\n" +
-                "  },\n" +
-                "  \"cluster_profile_properties\": {\n" +
-                "    \"GoServerUrl\": \"https://cd.server.com/go\", \n" +
-                "    \"ClusterName\": \"deployment-cluster\"\n" +
-                "  }\n" +
-                "}";
+        String json = """
+                {
+                  "elastic_agent_id": "ea1",
+                  "job_identifier": {
+                    "pipeline_name": "test-pipeline",
+                    "pipeline_counter": 1,
+                    "pipeline_label": "Test Pipeline",
+                    "stage_name": "test-stage",
+                    "stage_counter": "1",
+                    "job_name": "test-job",
+                    "job_id": 100
+                  },
+                  "elastic_agent_profile_properties": {
+                    "Image": "value1",
+                    "MaxMemory": "2G",
+                    "ReservedMemory": "150M",
+                    "TerminationPolicy": ""
+                  },
+                  "cluster_profile_properties": {
+                    "GoServerUrl": "https://cd.server.com/go",\s
+                    "ClusterName": "deployment-cluster"
+                  }
+                }""";
 
         JobCompletionRequest request = JobCompletionRequest.fromJSON(json);
         JobIdentifier expectedJobIdentifier = new JobIdentifier("test-pipeline", 1L, "Test Pipeline", "test-stage", "1", "test-job", 100L);

@@ -16,36 +16,43 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.size;
 
-import com.google.common.collect.ImmutableSortedMap;
+import lombok.experimental.UtilityClass;
 
-import java.util.Map;
+import java.util.Collections;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 
+@UtilityClass
 public class UnitParser {
-    private static final Map<String, SizeUnit> SUFFIXES = ImmutableSortedMap.<String, SizeUnit>orderedBy(String.CASE_INSENSITIVE_ORDER)
-            .put("B", SizeUnit.BYTES)
-            .put("byte", SizeUnit.BYTES)
-            .put("bytes", SizeUnit.BYTES)
-            .put("K", SizeUnit.KILOBYTES)
-            .put("KB", SizeUnit.KILOBYTES)
-            .put("KiB", SizeUnit.KILOBYTES)
-            .put("kilobyte", SizeUnit.KILOBYTES)
-            .put("kilobytes", SizeUnit.KILOBYTES)
-            .put("M", SizeUnit.MEGABYTES)
-            .put("MB", SizeUnit.MEGABYTES)
-            .put("MiB", SizeUnit.MEGABYTES)
-            .put("megabyte", SizeUnit.MEGABYTES)
-            .put("megabytes", SizeUnit.MEGABYTES)
-            .put("G", SizeUnit.GIGABYTES)
-            .put("GB", SizeUnit.GIGABYTES)
-            .put("GiB", SizeUnit.GIGABYTES)
-            .put("gigabyte", SizeUnit.GIGABYTES)
-            .put("gigabytes", SizeUnit.GIGABYTES)
-            .put("T", SizeUnit.TERABYTES)
-            .put("TB", SizeUnit.TERABYTES)
-            .put("TiB", SizeUnit.TERABYTES)
-            .put("terabyte", SizeUnit.TERABYTES)
-            .put("terabytes", SizeUnit.TERABYTES)
-            .build();
+    private static final NavigableMap<String, SizeUnit> SUFFIXES = suffixes();
+
+    private static NavigableMap<String, SizeUnit> suffixes() {
+        var s = new TreeMap<String, SizeUnit>(String.CASE_INSENSITIVE_ORDER);
+        s.put("B", SizeUnit.BYTES);
+        s.put("byte", SizeUnit.BYTES);
+        s.put("bytes", SizeUnit.BYTES);
+        s.put("K", SizeUnit.KILOBYTES);
+        s.put("KB", SizeUnit.KILOBYTES);
+        s.put("KiB", SizeUnit.KILOBYTES);
+        s.put("kilobyte", SizeUnit.KILOBYTES);
+        s.put("kilobytes", SizeUnit.KILOBYTES);
+        s.put("M", SizeUnit.MEGABYTES);
+        s.put("MB", SizeUnit.MEGABYTES);
+        s.put("MiB", SizeUnit.MEGABYTES);
+        s.put("megabyte", SizeUnit.MEGABYTES);
+        s.put("megabytes", SizeUnit.MEGABYTES);
+        s.put("G", SizeUnit.GIGABYTES);
+        s.put("GB", SizeUnit.GIGABYTES);
+        s.put("GiB", SizeUnit.GIGABYTES);
+        s.put("gigabyte", SizeUnit.GIGABYTES);
+        s.put("gigabytes", SizeUnit.GIGABYTES);
+        s.put("T", SizeUnit.TERABYTES);
+        s.put("TB", SizeUnit.TERABYTES);
+        s.put("TiB", SizeUnit.TERABYTES);
+        s.put("terabyte", SizeUnit.TERABYTES);
+        s.put("terabytes", SizeUnit.TERABYTES);
+        return Collections.unmodifiableNavigableMap(s);
+    }
 
     public static SizeUnit toUnit(String input) {
         return SUFFIXES.get(input);

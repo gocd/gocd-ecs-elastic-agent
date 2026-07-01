@@ -50,11 +50,12 @@ class UtilTest {
 
     @Test
     void listFromCommaSeparatedString_shouldParseCommaSeparatedStringWithNewLine() {
-        String csvStringWithoutSpace = "sg-45b00b38,\n" +
-                "sg-30d2694d,\n" +
-                "sg-30d2694a,\n" +
-                "sg-30d2694s,\n" +
-                "sg-q0d2694d";
+        String csvStringWithoutSpace = """
+                sg-45b00b38,
+                sg-30d2694d,
+                sg-30d2694a,
+                sg-30d2694s,
+                sg-q0d2694d""";
         List<String> resultOfWithoutSpace = Util.listFromCommaSeparatedString(csvStringWithoutSpace);
 
         assertThat(resultOfWithoutSpace).hasSize(5);

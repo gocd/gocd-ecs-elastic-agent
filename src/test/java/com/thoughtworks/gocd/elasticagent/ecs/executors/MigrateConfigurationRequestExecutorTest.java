@@ -96,7 +96,7 @@ class MigrateConfigurationRequestExecutorTest {
 
         assertThat(responseObject.getPluginSettings()).isEqualTo(pluginSettings);
         List<ClusterProfile> actual = responseObject.getClusterProfiles();
-        ClusterProfile actualClusterProfile = actual.get(0);
+        ClusterProfile actualClusterProfile = actual.getFirst();
 
         assertThat(actualClusterProfile.getId()).isNotEqualTo(String.format("no-op-cluster-for-%s", Constants.PLUGIN_ID));
         this.clusterProfile.setId(actualClusterProfile.getId());
@@ -121,7 +121,7 @@ class MigrateConfigurationRequestExecutorTest {
 
         assertThat(responseObject.getPluginSettings()).isEqualTo(pluginSettings);
         List<ClusterProfile> actual = responseObject.getClusterProfiles();
-        ClusterProfile actualClusterProfile = actual.get(0);
+        ClusterProfile actualClusterProfile = actual.getFirst();
 
         assertThat(actualClusterProfile.getId()).isEqualTo(clusterProfileId);
         this.clusterProfile.setId(actualClusterProfile.getId());
@@ -143,7 +143,7 @@ class MigrateConfigurationRequestExecutorTest {
 
         assertThat(responseObject.getPluginSettings()).isEqualTo(pluginSettings);
         List<ClusterProfile> actual = responseObject.getClusterProfiles();
-        ClusterProfile actualClusterProfile = actual.get(0);
+        ClusterProfile actualClusterProfile = actual.getFirst();
         this.clusterProfile.setId(actualClusterProfile.getId());
 
         assertThat(actual).isEqualTo(Collections.singletonList(this.clusterProfile));

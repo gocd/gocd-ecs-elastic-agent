@@ -28,20 +28,21 @@ class CreateAgentRequestTest {
 
     @Test
     void shouldDeserializeFromJSON() {
-        String json = "{\n" +
-                "  \"auto_register_key\": \"secret-key\",\n" +
-                "  \"elastic_agent_profile_properties\": {\n" +
-                "    \"Image\": \"value1\",\n" +
-                "    \"MaxMemory\": \"2G\",\n" +
-                "    \"ReservedMemory\": \"150M\",\n" +
-                "    \"TerminationPolicy\": \"\"\n" +
-                "  },\n" +
-                "  \"cluster_profile_properties\": {\n" +
-                "    \"GoServerUrl\": \"https://cd.server.com/go\", \n" +
-                "    \"ClusterName\": \"deployment-cluster\"\n" +
-                "  },\n" +
-                "  \"environment\": \"prod\"\n" +
-                "}";
+        String json = """
+                {
+                  "auto_register_key": "secret-key",
+                  "elastic_agent_profile_properties": {
+                    "Image": "value1",
+                    "MaxMemory": "2G",
+                    "ReservedMemory": "150M",
+                    "TerminationPolicy": ""
+                  },
+                  "cluster_profile_properties": {
+                    "GoServerUrl": "https://cd.server.com/go",\s
+                    "ClusterName": "deployment-cluster"
+                  },
+                  "environment": "prod"
+                }""";
 
         CreateAgentRequest request = CreateAgentRequest.fromJSON(json);
         assertThat(request.autoRegisterKey()).isEqualTo("secret-key");

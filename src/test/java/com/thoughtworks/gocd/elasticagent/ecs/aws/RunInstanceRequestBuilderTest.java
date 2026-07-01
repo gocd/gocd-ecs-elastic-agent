@@ -76,7 +76,7 @@ class RunInstanceRequestBuilderTest {
         assertThat(runInstancesRequest.getSubnetId()).isEqualTo("s-s23cdf");
 
         assertThat(runInstancesRequest.getTagSpecifications()).hasSize(1);
-        assertThat(runInstancesRequest.getTagSpecifications().get(0).getTags())
+        assertThat(runInstancesRequest.getTagSpecifications().getFirst().getTags())
                 .hasSize(2)
                 .contains(new Tag("Foo", "Bar"), new Tag(LABEL_SERVER_ID,"gocd-server-id"));
     }
@@ -108,11 +108,11 @@ class RunInstanceRequestBuilderTest {
         final List<BlockDeviceMapping> deviceMappings = runInstancesRequest.getBlockDeviceMappings();
 
         assertThat(deviceMappings).hasSize(1);
-        assertThat(deviceMappings.get(0).getDeviceName()).isEqualTo("/dev/xvda");
-        assertThat(deviceMappings.get(0).getEbs().getDeleteOnTermination()).isTrue();
-        assertThat(deviceMappings.get(0).getEbs().getVolumeType()).isEqualTo("gp2");
-        assertThat(deviceMappings.get(0).getEbs().getVolumeSize()).isEqualTo(100);
-        assertThat(deviceMappings.get(0).getEbs().getIops()).isNull();
+        assertThat(deviceMappings.getFirst().getDeviceName()).isEqualTo("/dev/xvda");
+        assertThat(deviceMappings.getFirst().getEbs().getDeleteOnTermination()).isTrue();
+        assertThat(deviceMappings.getFirst().getEbs().getVolumeType()).isEqualTo("gp2");
+        assertThat(deviceMappings.getFirst().getEbs().getVolumeSize()).isEqualTo(100);
+        assertThat(deviceMappings.getFirst().getEbs().getIops()).isNull();
     }
 
     @Test
@@ -130,11 +130,11 @@ class RunInstanceRequestBuilderTest {
         final List<BlockDeviceMapping> deviceMappings = runInstancesRequest.getBlockDeviceMappings();
 
         assertThat(deviceMappings).hasSize(1);
-        assertThat(deviceMappings.get(0).getDeviceName()).isEqualTo("/dev/xvda");
-        assertThat(deviceMappings.get(0).getEbs().getDeleteOnTermination()).isTrue();
-        assertThat(deviceMappings.get(0).getEbs().getVolumeType()).isEqualTo("io1");
-        assertThat(deviceMappings.get(0).getEbs().getVolumeSize()).isEqualTo(100);
-        assertThat(deviceMappings.get(0).getEbs().getIops()).isEqualTo(700);
+        assertThat(deviceMappings.getFirst().getDeviceName()).isEqualTo("/dev/xvda");
+        assertThat(deviceMappings.getFirst().getEbs().getDeleteOnTermination()).isTrue();
+        assertThat(deviceMappings.getFirst().getEbs().getVolumeType()).isEqualTo("io1");
+        assertThat(deviceMappings.getFirst().getEbs().getVolumeSize()).isEqualTo(100);
+        assertThat(deviceMappings.getFirst().getEbs().getIops()).isEqualTo(700);
     }
 
     @Test
@@ -152,11 +152,11 @@ class RunInstanceRequestBuilderTest {
         final List<BlockDeviceMapping> deviceMappings = runInstancesRequest.getBlockDeviceMappings();
 
         assertThat(deviceMappings).hasSize(1);
-        assertThat(deviceMappings.get(0).getDeviceName()).isEqualTo("/dev/xvdcz");
-        assertThat(deviceMappings.get(0).getEbs().getDeleteOnTermination()).isTrue();
-        assertThat(deviceMappings.get(0).getEbs().getVolumeType()).isEqualTo("gp2");
-        assertThat(deviceMappings.get(0).getEbs().getVolumeSize()).isEqualTo(50);
-        assertThat(deviceMappings.get(0).getEbs().getIops()).isNull();
+        assertThat(deviceMappings.getFirst().getDeviceName()).isEqualTo("/dev/xvdcz");
+        assertThat(deviceMappings.getFirst().getEbs().getDeleteOnTermination()).isTrue();
+        assertThat(deviceMappings.getFirst().getEbs().getVolumeType()).isEqualTo("gp2");
+        assertThat(deviceMappings.getFirst().getEbs().getVolumeSize()).isEqualTo(50);
+        assertThat(deviceMappings.getFirst().getEbs().getIops()).isNull();
     }
 
     @Test
@@ -174,11 +174,11 @@ class RunInstanceRequestBuilderTest {
         final List<BlockDeviceMapping> deviceMappings = runInstancesRequest.getBlockDeviceMappings();
 
         assertThat(deviceMappings).hasSize(1);
-        assertThat(deviceMappings.get(0).getDeviceName()).isEqualTo("/dev/xvdcz");
-        assertThat(deviceMappings.get(0).getEbs().getDeleteOnTermination()).isTrue();
-        assertThat(deviceMappings.get(0).getEbs().getVolumeType()).isEqualTo("io1");
-        assertThat(deviceMappings.get(0).getEbs().getVolumeSize()).isEqualTo(50);
-        assertThat(deviceMappings.get(0).getEbs().getIops()).isEqualTo(1100);
+        assertThat(deviceMappings.getFirst().getDeviceName()).isEqualTo("/dev/xvdcz");
+        assertThat(deviceMappings.getFirst().getEbs().getDeleteOnTermination()).isTrue();
+        assertThat(deviceMappings.getFirst().getEbs().getVolumeType()).isEqualTo("io1");
+        assertThat(deviceMappings.getFirst().getEbs().getVolumeSize()).isEqualTo(50);
+        assertThat(deviceMappings.getFirst().getEbs().getIops()).isEqualTo(1100);
     }
 
     @Test
@@ -195,11 +195,11 @@ class RunInstanceRequestBuilderTest {
         final List<BlockDeviceMapping> deviceMappings = runInstancesRequest.getBlockDeviceMappings();
 
         assertThat(deviceMappings).hasSize(1);
-        assertThat(deviceMappings.get(0).getDeviceName()).isEqualTo("/dev/sda1");
-        assertThat(deviceMappings.get(0).getEbs().getDeleteOnTermination()).isTrue();
-        assertThat(deviceMappings.get(0).getEbs().getVolumeType()).isEqualTo("gp2");
-        assertThat(deviceMappings.get(0).getEbs().getVolumeSize()).isEqualTo(100);
-        assertThat(deviceMappings.get(0).getEbs().getIops()).isNull();
+        assertThat(deviceMappings.getFirst().getDeviceName()).isEqualTo("/dev/sda1");
+        assertThat(deviceMappings.getFirst().getEbs().getDeleteOnTermination()).isTrue();
+        assertThat(deviceMappings.getFirst().getEbs().getVolumeType()).isEqualTo("gp2");
+        assertThat(deviceMappings.getFirst().getEbs().getVolumeSize()).isEqualTo(100);
+        assertThat(deviceMappings.getFirst().getEbs().getIops()).isNull();
     }
 
     @Test
@@ -213,7 +213,7 @@ class RunInstanceRequestBuilderTest {
                 .withServerId("gocd-server-id")
                 .build();
 
-        assertThat(runInstancesRequest.getTagSpecifications().get(0).getTags())
+        assertThat(runInstancesRequest.getTagSpecifications().getFirst().getTags())
                 .contains(new Tag(LABEL_SERVER_ID, "gocd-server-id"));
     }
 }

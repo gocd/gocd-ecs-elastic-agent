@@ -26,9 +26,11 @@ class EFSTest {
     void shouldBuildEFSScript() {
         final String userDataScript = new EFS("foo", "bar").toScript();
 
-        final String expectedUserdataScript = "\nmkdir bar\n" +
-                "mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 foo:/  bar\n" +
-                "service docker restart";
+        final String expectedUserdataScript = """
+                
+                mkdir bar
+                mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 foo:/  bar
+                service docker restart""";
 
         assertThat(userDataScript).isEqualTo(expectedUserdataScript);
     }

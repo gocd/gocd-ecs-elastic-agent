@@ -20,6 +20,7 @@ import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ecs.model.Cluster;
 import com.amazonaws.services.ecs.model.ContainerInstance;
 import com.google.gson.JsonObject;
+import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.go.plugin.api.response.DefaultGoPluginApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import com.thoughtworks.gocd.elasticagent.ecs.ECSTasks;
@@ -44,10 +45,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
-
 public class ClusterStatusReportExecutor implements RequestExecutor {
-    private ClusterStatusReportRequest request;
+    private static final Logger LOG = Logger.getLoggerFor(ClusterStatusReportExecutor.class);
+
+    private final ClusterStatusReportRequest request;
     private final ECSTasks agentInstances;
     private final ContainerInstanceHelper helper;
     private final TaskHelper taskHelper;

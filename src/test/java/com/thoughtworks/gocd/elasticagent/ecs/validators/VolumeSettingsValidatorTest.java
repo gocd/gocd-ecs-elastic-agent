@@ -61,7 +61,7 @@ class VolumeSettingsValidatorTest {
             final List<Map<String, String>> errors = validator.validate(request);
 
             assertThat(errors).hasSize(1);
-            assertThat(errors.get(0))
+            assertThat(errors.getFirst())
                     .containsEntry("key", "LinuxDockerVolumeSize")
                     .containsEntry("message", "LinuxDockerVolumeSize must not be blank.");
         }
@@ -74,7 +74,7 @@ class VolumeSettingsValidatorTest {
             final List<Map<String, String>> errors = validator.validate(request);
 
             assertThat(errors).hasSize(1);
-            assertThat(errors.get(0))
+            assertThat(errors.getFirst())
                 .containsEntry("key", "LinuxDockerVolumeProvisionedIOPS")
                 .containsEntry("message", "LinuxDockerVolumeProvisionedIOPS must not be blank.");
         }
@@ -98,7 +98,7 @@ class VolumeSettingsValidatorTest {
             final List<Map<String, String>> errors = validator.validate(request);
 
             assertThat(errors).hasSize(1);
-            assertThat(errors.get(0))
+            assertThat(errors.getFirst())
                     .containsEntry("key", "WindowsOSVolumeSize")
                     .containsEntry("message", "WindowsOSVolumeSize must not be blank.");
         }
@@ -111,7 +111,7 @@ class VolumeSettingsValidatorTest {
             final List<Map<String, String>> errors = validator.validate(request);
 
             assertThat(errors).hasSize(1);
-            assertThat(errors.get(0))
+            assertThat(errors.getFirst())
                 .containsEntry("key", "WindowsOSVolumeProvisionedIOPS")
                 .containsEntry("message", "WindowsOSVolumeProvisionedIOPS must not be blank.");
         }

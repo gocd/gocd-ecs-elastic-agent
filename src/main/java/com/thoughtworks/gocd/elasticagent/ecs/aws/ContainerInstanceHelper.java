@@ -16,9 +16,10 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws;
 
-import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.*;
+import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ecs.model.*;
+import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.gocd.elasticagent.ecs.Clock;
 import com.thoughtworks.gocd.elasticagent.ecs.Constants;
 import com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin;
@@ -45,7 +46,6 @@ import java.util.stream.Stream;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.Constants.LABEL_SERVER_ID;
 import static com.thoughtworks.gocd.elasticagent.ecs.Constants.LAST_SEEN_IDLE;
-import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
 import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.getServerId;
 import static com.thoughtworks.gocd.elasticagent.ecs.aws.SpotInstanceHelper.SPOT_INSTANCE_NAME_FORMAT;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.EC2InstanceState.*;
@@ -53,11 +53,11 @@ import static java.lang.String.valueOf;
 import static java.text.MessageFormat.format;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.*;
-import static org.apache.commons.collections4.ListUtils.union;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 public class ContainerInstanceHelper {
+    private static final Logger LOG = Logger.getLoggerFor(ContainerInstanceHelper.class);
     private static final PeriodFormatter PERIOD_FORMATTER = new PeriodFormatterBuilder()
             .appendMinutes().appendSuffix(" minutes")
             .appendSeconds().appendSuffix(" seconds")
@@ -141,7 +141,7 @@ public class ContainerInstanceHelper {
             throw new ClusterNotFoundException(format("Cluster {0} not found.", settings.getClusterName()));
         }
 
-        return clusters.get(0);
+        return clusters.getFirst();
     }
 
     public List<Instance> ec2InstancesFromContainerInstances(PluginSettings settings, List<ContainerInstance> containerInstanceList) {
@@ -220,7 +220,7 @@ public class ContainerInstanceHelper {
 
     public @NonNull ContainerInstance startOrCreateOneInstance(PluginSettings pluginSettings, ElasticAgentProfileProperties elasticAgentProfileProperties, ConsoleLogAppender consoleLogAppender) throws LimitExceededException {
         return startOrCreateInstance(pluginSettings, elasticAgentProfileProperties, 1, consoleLogAppender)
-                .get(0);
+                .getFirst();
     }
 
     public List<ContainerInstance> startOrCreateInstance(PluginSettings pluginSettings, ElasticAgentProfileProperties elasticAgentProfileProperties, int numberOfInstanceToStartOrCreate, ConsoleLogAppender consoleLogAppender) throws LimitExceededException {
@@ -331,7 +331,7 @@ public class ContainerInstanceHelper {
         List<Instance> onDemandInstances = filterBy(allInstances, hasTag("Name", onDemandInstanceName));
         List<Instance> spotInstances = filterBy(allInstances, hasTag("Name", spotInstanceName));
 
-        return union(onDemandInstances, spotInstances);
+        return Stream.concat(onDemandInstances.stream(), spotInstances.stream()).toList();
     }
 
     public static Map<Platform, List<Instance>> groupByPlatform(List<Instance> instances) {
@@ -448,7 +448,7 @@ public class ContainerInstanceHelper {
 
     private void terminateMostIdleStoppedInstance(PluginSettings pluginSettings, List<Instance> stoppedInstances) {
         stoppedInstances.sort(new MostIdleInstanceComparator(Clock.DEFAULT.now()));
-        final String instanceId = stoppedInstances.get(0).getInstanceId();
+        final String instanceId = stoppedInstances.getFirst().getInstanceId();
 
         LOG.info(format("Terminating stopped instance as max cluster limit is reached {0}.", instanceId));
         final Optional<ContainerInstance> containerInstance = getContainerInstances(pluginSettings)

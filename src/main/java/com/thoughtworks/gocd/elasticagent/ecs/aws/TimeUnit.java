@@ -26,6 +26,6 @@ public enum TimeUnit {
     }
 
     public String stringify(int value) {
-        return new StringBuilder().append(value).append(unit).toString();
+        return value + unit;
     }
 }

@@ -56,7 +56,7 @@ class AmiAndInstanceTypeValidatorTest {
             final List<Map<String, String>> validationResult = validator.validate(request);
 
             assertThat(validationResult).hasSize(1);
-            assertThat(validationResult.get(0))
+            assertThat(validationResult.getFirst())
                     .containsEntry("key", LINUX_AMI)
                     .containsEntry("message", "LinuxAmi must not be blank.");
         }
@@ -69,7 +69,7 @@ class AmiAndInstanceTypeValidatorTest {
             final List<Map<String, String>> validationResult = validator.validate(request);
 
             assertThat(validationResult).hasSize(1);
-            assertThat(validationResult.get(0))
+            assertThat(validationResult.getFirst())
                     .containsEntry("key", LINUX_INSTANCE_TYPE)
                     .containsEntry("message", "LinuxInstanceType must not be blank.");
         }
@@ -92,7 +92,7 @@ class AmiAndInstanceTypeValidatorTest {
             final List<Map<String, String>> validationResult = validator.validate(request);
 
             assertThat(validationResult).hasSize(1);
-            assertThat(validationResult.get(0))
+            assertThat(validationResult.getFirst())
                     .containsEntry("key", WINDOWS_AMI)
                     .containsEntry("message", "WindowsAmi must not be blank.");
         }
@@ -105,7 +105,7 @@ class AmiAndInstanceTypeValidatorTest {
             final List<Map<String, String>> validationResult = validator.validate(request);
 
             assertThat(validationResult).hasSize(1);
-            assertThat(validationResult.get(0))
+            assertThat(validationResult.getFirst())
                     .containsEntry("key", WINDOWS_INSTANCE_TYPE)
                     .containsEntry("message", "WindowsInstanceType must not be blank.");
         }

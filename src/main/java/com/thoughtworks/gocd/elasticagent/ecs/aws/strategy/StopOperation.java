@@ -20,6 +20,7 @@ import com.amazonaws.services.ec2.model.CreateTagsRequest;
 import com.amazonaws.services.ec2.model.StopInstancesRequest;
 import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ecs.model.ContainerInstance;
+import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.gocd.elasticagent.ecs.Clock;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
 
@@ -28,10 +29,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.Constants.STOPPED_AT;
-import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
 import static java.text.MessageFormat.format;
 
 public class StopOperation implements Operation<ContainerInstance> {
+    private static final Logger LOG = Logger.getLoggerFor(StopOperation.class);
 
     @Override
     public void execute(PluginSettings pluginSettings, Collection<ContainerInstance> containerInstanceToStop) {

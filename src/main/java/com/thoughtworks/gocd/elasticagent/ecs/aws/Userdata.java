@@ -18,6 +18,7 @@ package com.thoughtworks.gocd.elasticagent.ecs.aws;
 
 import com.amazonaws.util.EncodingSchemeEnum;
 import com.google.gson.GsonBuilder;
+import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.gocd.elasticagent.ecs.builders.ScriptBuilder;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.DockerRegistryAuthData;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.DockerRegistryAuthType;
@@ -27,17 +28,18 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.amazonaws.util.EncodingSchemeEnum.BASE64;
-import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.DockerRegistryAuthType.AUTH_TOKEN;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.DockerRegistryAuthType.USERNAME_PASSWORD;
 import static java.lang.String.format;
 import static java.lang.String.join;
-import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 
 public class Userdata {
+    private static final Logger LOG = Logger.getLoggerFor(Userdata.class);
+
     private static final String KEY_ECS_CLUSTER = "ECS_CLUSTER";
     private static final String KEY_ECS_ENGINE_AUTH_TYPE = "ECS_ENGINE_AUTH_TYPE";
     private static final String KEY_ECS_ENGINE_AUTH_DATA = "ECS_ENGINE_AUTH_DATA";
@@ -107,7 +109,7 @@ public class Userdata {
     }
 
     public Userdata dockerRegistry(DockerRegistryAuthType authType, DockerRegistryAuthData authData) {
-        if (authType != null && (authType == AUTH_TOKEN || authType == USERNAME_PASSWORD)) {
+        if (authType == AUTH_TOKEN || authType == USERNAME_PASSWORD) {
             addConfig(KEY_ECS_ENGINE_AUTH_TYPE, authType.getValue());
             addConfig(KEY_ECS_ENGINE_AUTH_DATA, authData.toJson());
         }
@@ -143,7 +145,7 @@ public class Userdata {
 
     private String linuxOverrideStorageOption() {
         if (storageOptions != null && !storageOptions.isEmpty()) {
-            return join(" ", storageOptions.entrySet().stream().map(e -> format("--storage-opt %s", join("=", e.getKey(), e.getValue()))).collect(toList()));
+            return storageOptions.entrySet().stream().map(e -> format("--storage-opt %s", join("=", e.getKey(), e.getValue()))).collect(Collectors.joining(" "));
         }
         return EMPTY;
     }
@@ -168,7 +170,7 @@ public class Userdata {
     }
 
     private String escapePowershell(String stringToEscape) {
-        return StringUtils.isBlank(stringToEscape) ? stringToEscape : stringToEscape.replaceAll("\"", "`\"");
+        return StringUtils.isBlank(stringToEscape) ? stringToEscape : stringToEscape.replace("\"", "`\"");
     }
 
     public Userdata attribute(String name, String value) {

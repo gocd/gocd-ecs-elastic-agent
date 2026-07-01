@@ -62,8 +62,8 @@ class DockerRegistrySettingsValidatorTest {
 
         assertThat(result).hasSize(1);
 
-        assertThat(result.get(0)).containsEntry("key", "PrivateDockerRegistryUrl");
-        assertThat(result.get(0)).containsEntry("message", "PrivateDockerRegistryUrl must not be blank.");
+        assertThat(result.getFirst()).containsEntry("key", "PrivateDockerRegistryUrl");
+        assertThat(result.getFirst()).containsEntry("message", "PrivateDockerRegistryUrl must not be blank.");
     }
 
     @Test
@@ -76,8 +76,8 @@ class DockerRegistrySettingsValidatorTest {
 
         assertThat(result).hasSize(1);
 
-        assertThat(result.get(0)).containsEntry("key", "PrivateDockerRegistryEmail");
-        assertThat(result.get(0)).containsEntry("message", "PrivateDockerRegistryEmail must not be blank.");
+        assertThat(result.getFirst()).containsEntry("key", "PrivateDockerRegistryEmail");
+        assertThat(result.getFirst()).containsEntry("message", "PrivateDockerRegistryEmail must not be blank.");
     }
 
     @Test

@@ -29,22 +29,23 @@ class ShouldAssignWorkRequestTest {
 
     @Test
     void shouldDeserializeFromJSON() {
-        String json = "{\n" +
-                "  \"environment\": \"prod\",\n" +
-                "  \"agent\": {\n" +
-                "    \"agent_id\": \"42\",\n" +
-                "    \"agent_state\": \"Idle\",\n" +
-                "    \"build_state\": \"Idle\",\n" +
-                "    \"config_state\": \"Enabled\"\n" +
-                "  },\n" +
-                "  \"elastic_agent_profile_properties\": {\n" +
-                "    \"Image\": \"go-agent\"\n" +
-                "  },\n" +
-                "  \"cluster_profile_properties\": {\n" +
-                "    \"GoServerUrl\": \"https://cd.server.com/go\", \n" +
-                "    \"ClusterName\": \"deployment-cluster\"\n" +
-                "  }\n" +
-                "}";
+        String json = """
+                {
+                  "environment": "prod",
+                  "agent": {
+                    "agent_id": "42",
+                    "agent_state": "Idle",
+                    "build_state": "Idle",
+                    "config_state": "Enabled"
+                  },
+                  "elastic_agent_profile_properties": {
+                    "Image": "go-agent"
+                  },
+                  "cluster_profile_properties": {
+                    "GoServerUrl": "https://cd.server.com/go",\s
+                    "ClusterName": "deployment-cluster"
+                  }
+                }""";
 
         ShouldAssignWorkRequest request = ShouldAssignWorkRequest.fromJSON(json);
         assertThat(request.environment()).isEqualTo("prod");

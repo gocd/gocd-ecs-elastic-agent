@@ -20,7 +20,7 @@ import com.amazonaws.services.ec2.model.DescribeSubnetsRequest;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.Subnet;
 import com.amazonaws.services.ec2.model.SubnetState;
-import com.google.common.base.Joiner;
+import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
 import com.thoughtworks.gocd.elasticagent.ecs.exceptions.SubnetNotAvailableException;
 import org.apache.commons.lang3.RandomUtils;
@@ -28,12 +28,13 @@ import org.apache.commons.lang3.RandomUtils;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
 import static java.text.MessageFormat.format;
 import static java.util.stream.Collectors.collectingAndThen;
 import static java.util.stream.Collectors.toList;
 
 public class SubnetSelector {
+    private static final Logger LOG = Logger.getLoggerFor(SubnetSelector.class);
+
     public Subnet selectSubnetWithMinimumEC2Instances(PluginSettings pluginSettings, Collection<String> subnetIds, List<Instance> instances) {
         if (subnetIds.isEmpty()) {
             LOG.info("Subnet id is not configured in plugin settings. AWS will assign subnet default available subnet id.");
@@ -88,13 +89,13 @@ public class SubnetSelector {
     private List<Subnet> availableSubnets(PluginSettings pluginSettings, Collection<String> subnetIds) {
         final List<Subnet> subnets = allSubnets(pluginSettings, subnetIds).stream()
                 .filter(this::isSubnetAvailable)
-                .collect(toList());
+                .toList();
 
         if (subnets.isEmpty()) {
-            throw new SubnetNotAvailableException(format("None of the subnet available to launch ec2 instance from list {0}", Joiner.on(",").join(subnetIds)));
+            throw new SubnetNotAvailableException(format("None of the subnet available to launch ec2 instance from list {0}", String.join(",", subnetIds)));
         }
 
-        return Collections.unmodifiableList(subnets);
+        return subnets;
     }
 
     private boolean isSubnetAvailable(Subnet subnet) {

@@ -47,7 +47,7 @@ public class ClusterProfile {
     public ClusterProfile(String id, String pluginId, PluginSettings pluginSettings) {
         this.id = id;
         this.pluginId = pluginId;
-        setClusterProfileProperties(pluginSettings);
+        doSetClusterProfileProperties(pluginSettings);
     }
 
     public static ClusterProfile fromJSON(String json) {
@@ -79,8 +79,11 @@ public class ClusterProfile {
     }
 
     public void setClusterProfileProperties(PluginSettings pluginSettings) {
-        final Type type = new TypeToken<Map<String, String>>() {
-        }.getType();
+        doSetClusterProfileProperties(pluginSettings);
+    }
+
+    private void doSetClusterProfileProperties(PluginSettings pluginSettings) {
+        final Type type = new TypeToken<Map<String, String>>() {}.getType();
         this.clusterProfileProperties = ClusterProfileProperties.fromConfiguration(GSON.fromJson(GSON.toJson(pluginSettings), type));
     }
 }

@@ -18,6 +18,7 @@ package com.thoughtworks.gocd.elasticagent.ecs.aws;
 
 import com.amazonaws.services.ecs.AmazonECS;
 import com.amazonaws.services.ecs.model.*;
+import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.gocd.elasticagent.ecs.Constants;
 import com.thoughtworks.gocd.elasticagent.ecs.ECSTask;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.strategy.InstanceSelectionStrategyFactory;
@@ -33,13 +34,14 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.Constants.*;
-import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
 import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.getServerId;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.Platform.LINUX;
 import static java.text.MessageFormat.format;
 import static java.util.Optional.empty;
 
 public class TaskHelper {
+    private static final Logger LOG = Logger.getLoggerFor(TaskHelper.class);
+
     private final ContainerInstanceHelper containerInstanceHelper;
     private final RegisterTaskDefinitionRequestBuilder registerTaskDefinitionRequestBuilder;
     private final InstanceSelectionStrategyFactory instanceSelectionStrategyFactory;
@@ -58,7 +60,7 @@ public class TaskHelper {
     }
 
     public Optional<ECSTask> create(CreateAgentRequest createAgentRequest, PluginSettings pluginSettings, ConsoleLogAppender consoleLogAppender) throws ContainerInstanceFailedToRegisterException, LimitExceededException, ContainerFailedToRegisterException {
-        final String taskName = "GoCD" + UUID.randomUUID().toString().replaceAll("-", "");
+        final String taskName = "GoCD" + UUID.randomUUID().toString().replace("-", "");
 
         final ElasticAgentProfileProperties elasticAgentProfileProperties = createAgentRequest.elasticProfile();
 
@@ -117,7 +119,7 @@ public class TaskHelper {
             consoleLogAppender.accept(message);
 
             LOG.info(format("[create-agent] Task {0} scheduled on container instance {1}", taskName, containerInstance.get().getEc2InstanceId()));
-            return Optional.of(new ECSTask(startTaskResult.getTasks().get(0), taskDefinitionFromNewTask, elasticAgentProfileProperties, createAgentRequest.getJobIdentifier(), createAgentRequest.environment(), containerInstance.get().getEc2InstanceId()));
+            return Optional.of(new ECSTask(startTaskResult.getTasks().getFirst(), taskDefinitionFromNewTask, elasticAgentProfileProperties, createAgentRequest.getJobIdentifier(), createAgentRequest.environment(), containerInstance.get().getEc2InstanceId()));
         } else {
             cleanupTaskDefinition(pluginSettings, taskDefinitionFromNewTask.getTaskDefinitionArn());
             String errors = startTaskResult.getFailures().stream().map(failure -> "    " + failure.getArn() + " failed with reason :" + failure.getReason()).collect(Collectors.joining("\n"));
@@ -202,12 +204,12 @@ public class TaskHelper {
             return empty();
         }
 
-        return Optional.of(tasks.get(0));
+        return Optional.of(tasks.getFirst());
     }
 
     public Optional<ECSTask> fromTaskInfo(Task task, TaskDefinition taskDefinition, Map<String, String> arnToInstanceId, String serverId) {
         List<ContainerDefinition> containerDefinitions = taskDefinition.getContainerDefinitions();
-        Map<String, String> labels = containerDefinitions.get(0).getDockerLabels();
+        Map<String, String> labels = containerDefinitions.getFirst().getDockerLabels();
 
         if (!Strings.CI.equals(labels.getOrDefault(Constants.LABEL_SERVER_ID, serverId), serverId)) {
             LOG.debug(MessageFormat.format("Ignoring task {0} as server id({1}) doest not match with {2}", task.getTaskArn(), labels.get(LABEL_SERVER_ID), serverId));

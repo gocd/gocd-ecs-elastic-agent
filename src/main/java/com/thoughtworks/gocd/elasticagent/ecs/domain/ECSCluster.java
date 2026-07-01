@@ -58,7 +58,7 @@ public class ECSCluster {
         this.maxLinuxSpotInstanceAllowed = maxLinuxSpotInstanceAllowed;
         this.maxWindowsSpotInstanceAllowed = maxWindowsSpotInstanceAllowed;
 
-        this.ec2InstanceType = ec2Instances.stream().collect(Collectors.toMap(i -> i.getInstanceId(), i -> instanceType(i)));
+        this.ec2InstanceType = ec2Instances.stream().collect(Collectors.toMap(Instance::getInstanceId, this::instanceType));
         final Map<Platform, List<Instance>> platformRoInstances = groupByPlatform(ec2Instances);
         this.registeredWindowsOnDemandInstanceCount = filterBy(platformRoInstances.getOrDefault(Platform.WINDOWS, emptyList()), isOnDemandInstance()).size();
         this.registeredLinuxOnDemandInstanceCount = filterBy(platformRoInstances.getOrDefault(Platform.LINUX, emptyList()), isOnDemandInstance()).size();

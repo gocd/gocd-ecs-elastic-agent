@@ -31,7 +31,6 @@ import com.thoughtworks.gocd.elasticagent.ecs.executors.CreateAgentRequestExecut
 
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 

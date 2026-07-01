@@ -28,162 +28,164 @@ class ElasticAgentProfilePropertiesTest {
     void shouldCreateValidMetadata() throws Exception {
         final String actualJSON = GSON.toJson(new MetadataExtractor().extract(ElasticAgentProfileProperties.class));
 
-        String expectedJSON = "[\n" +
-                "  {\n" +
-                "    \"key\": \"Image\",\n" +
-                "    \"metadata\": {\n" +
-                "      \"required\": true,\n" +
-                "      \"secure\": false\n" +
-                "    }\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"key\": \"Command\",\n" +
-                "    \"metadata\": {\n" +
-                "      \"required\": false,\n" +
-                "      \"secure\": false\n" +
-                "    }\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"key\": \"Environment\",\n" +
-                "    \"metadata\": {\n" +
-                "      \"required\": false,\n" +
-                "      \"secure\": false\n" +
-                "    }\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"key\": \"MaxMemory\",\n" +
-                "    \"metadata\": {\n" +
-                "      \"required\": true,\n" +
-                "      \"secure\": false\n" +
-                "    }\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"key\": \"ReservedMemory\",\n" +
-                "    \"metadata\": {\n" +
-                "      \"required\": false,\n" +
-                "      \"secure\": false\n" +
-                "    }\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"key\": \"CPU\",\n" +
-                "    \"metadata\": {\n" +
-                "      \"required\": true,\n" +
-                "      \"secure\": false\n" +
-                "    }\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"key\": \"MountDockerSocket\",\n" +
-                "    \"metadata\": {\n" +
-                "      \"required\": false,\n" +
-                "      \"secure\": false\n" +
-                "    }\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"key\": \"Privileged\",\n" +
-                "    \"metadata\": {\n" +
-                "      \"required\": false,\n" +
-                "      \"secure\": false\n" +
-                "    }\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"key\": \"TaskRoleArn\",\n" +
-                "    \"metadata\": {\n" +
-                "      \"required\": false,\n" +
-                "      \"secure\": false\n" +
-                "    }\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"key\": \"AMI\",\n" +
-                "    \"metadata\": {\n" +
-                "      \"required\": false,\n" +
-                "      \"secure\": false\n" +
-                "    }\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"key\": \"InstanceType\",\n" +
-                "    \"metadata\": {\n" +
-                "      \"required\": false,\n" +
-                "      \"secure\": false\n" +
-                "    }\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"key\": \"SubnetIds\",\n" +
-                "    \"metadata\": {\n" +
-                "      \"required\": false,\n" +
-                "      \"secure\": false\n" +
-                "    }\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"key\": \"SecurityGroupIds\",\n" +
-                "    \"metadata\": {\n" +
-                "      \"required\": false,\n" +
-                "      \"secure\": false\n" +
-                "    }\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"key\": \"IAMInstanceProfile\",\n" +
-                "    \"metadata\": {\n" +
-                "      \"required\": false,\n" +
-                "      \"secure\": false\n" +
-                "    }\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"key\": \"Platform\",\n" +
-                "    \"metadata\": {\n" +
-                "      \"required\": false,\n" +
-                "      \"secure\": false\n" +
-                "    }\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"key\": \"BindMount\",\n" +
-                "    \"metadata\": {\n" +
-                "      \"required\": false,\n" +
-                "      \"secure\": false\n" +
-                "    }\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"key\": \"RunAsSpotInstance\",\n" +
-                "    \"metadata\": {\n" +
-                "      \"required\": false,\n" +
-                "      \"secure\": false\n" +
-                "    }\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"key\": \"SpotPrice\",\n" +
-                "    \"metadata\": {\n" +
-                "      \"required\": false,\n" +
-                "      \"secure\": false\n" +
-                "    }\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"key\": \"SpotRequestExpiresAfter\",\n" +
-                "    \"metadata\": {\n" +
-                "      \"required\": false,\n" +
-                "      \"secure\": false\n" +
-                "    }\n" +
-                "  }\n" +
-                "]";
+        String expectedJSON = """
+                [
+                  {
+                    "key": "Image",
+                    "metadata": {
+                      "required": true,
+                      "secure": false
+                    }
+                  },
+                  {
+                    "key": "Command",
+                    "metadata": {
+                      "required": false,
+                      "secure": false
+                    }
+                  },
+                  {
+                    "key": "Environment",
+                    "metadata": {
+                      "required": false,
+                      "secure": false
+                    }
+                  },
+                  {
+                    "key": "MaxMemory",
+                    "metadata": {
+                      "required": true,
+                      "secure": false
+                    }
+                  },
+                  {
+                    "key": "ReservedMemory",
+                    "metadata": {
+                      "required": false,
+                      "secure": false
+                    }
+                  },
+                  {
+                    "key": "CPU",
+                    "metadata": {
+                      "required": true,
+                      "secure": false
+                    }
+                  },
+                  {
+                    "key": "MountDockerSocket",
+                    "metadata": {
+                      "required": false,
+                      "secure": false
+                    }
+                  },
+                  {
+                    "key": "Privileged",
+                    "metadata": {
+                      "required": false,
+                      "secure": false
+                    }
+                  },
+                  {
+                    "key": "TaskRoleArn",
+                    "metadata": {
+                      "required": false,
+                      "secure": false
+                    }
+                  },
+                  {
+                    "key": "AMI",
+                    "metadata": {
+                      "required": false,
+                      "secure": false
+                    }
+                  },
+                  {
+                    "key": "InstanceType",
+                    "metadata": {
+                      "required": false,
+                      "secure": false
+                    }
+                  },
+                  {
+                    "key": "SubnetIds",
+                    "metadata": {
+                      "required": false,
+                      "secure": false
+                    }
+                  },
+                  {
+                    "key": "SecurityGroupIds",
+                    "metadata": {
+                      "required": false,
+                      "secure": false
+                    }
+                  },
+                  {
+                    "key": "IAMInstanceProfile",
+                    "metadata": {
+                      "required": false,
+                      "secure": false
+                    }
+                  },
+                  {
+                    "key": "Platform",
+                    "metadata": {
+                      "required": false,
+                      "secure": false
+                    }
+                  },
+                  {
+                    "key": "BindMount",
+                    "metadata": {
+                      "required": false,
+                      "secure": false
+                    }
+                  },
+                  {
+                    "key": "RunAsSpotInstance",
+                    "metadata": {
+                      "required": false,
+                      "secure": false
+                    }
+                  },
+                  {
+                    "key": "SpotPrice",
+                    "metadata": {
+                      "required": false,
+                      "secure": false
+                    }
+                  },
+                  {
+                    "key": "SpotRequestExpiresAfter",
+                    "metadata": {
+                      "required": false,
+                      "secure": false
+                    }
+                  }
+                ]""";
 
         JSONAssert.assertEquals(expectedJSON, actualJSON, true);
     }
 
     @Test
     void shouldParseJsonToElasticProfile() {
-        String json = "{\n" +
-                "  \"Image\": \"nginx\",\n" +
-                "  \"Command\": \"ls\\n-al\",\n" +
-                "  \"Environment\": \"JAVA_HOME=/java\\nANT_HOME=/ant\",\n" +
-                "  \"MaxMemory\": \"200G\",\n" +
-                "  \"ReservedMemory\": \"150M\",\n" +
-                "  \"AMI\": \"ami-123456\",\n" +
-                "  \"InstanceType\": \"t2.small\",\n" +
-                "  \"SubnetIds\": \"subnet-abc045we\",\n" +
-                "  \"SecurityGroupIds\": \"sg-ec33sl0,sg-ec33sl2,sg-ec33sl1\",\n" +
-                "  \"EC2TerminateAfter\": \"240\",\n" +
-                "  \"IAMInstanceProfile\": \"ecsInstanceRole\",\n" +
-                "  \"Privileged\": \"true\",\n" +
-                "  \"MountDockerSocket\": \"true\"\n" +
-                "}";
+        String json = """
+                {
+                  "Image": "nginx",
+                  "Command": "ls\\n-al",
+                  "Environment": "JAVA_HOME=/java\\nANT_HOME=/ant",
+                  "MaxMemory": "200G",
+                  "ReservedMemory": "150M",
+                  "AMI": "ami-123456",
+                  "InstanceType": "t2.small",
+                  "SubnetIds": "subnet-abc045we",
+                  "SecurityGroupIds": "sg-ec33sl0,sg-ec33sl2,sg-ec33sl1",
+                  "EC2TerminateAfter": "240",
+                  "IAMInstanceProfile": "ecsInstanceRole",
+                  "Privileged": "true",
+                  "MountDockerSocket": "true"
+                }""";
 
         ElasticAgentProfileProperties elasticAgentProfileProperties = ElasticAgentProfileProperties.fromJson(json);
 
@@ -205,21 +207,22 @@ class ElasticAgentProfilePropertiesTest {
 
     @Test
     void shouldParseJSONWithBindMount() {
-        String json = "{\n" +
-                "\"BindMount\": \"[\n" +
-                "    {\n" +
-                "      \\\"Name\\\": \\\"data\\\",\n" +
-                "      \\\"SourcePath\\\": \\\"/ecs/data\\\",\n" +
-                "      \\\"ContainerPath\\\": \\\"/var/data\\\"\n" +
-                "    }\n" +
-                "  ]\"\t\n" +
-                "}";
+        String json = """
+                {
+                "BindMount": "[
+                    {
+                      \\"Name\\": \\"data\\",
+                      \\"SourcePath\\": \\"/ecs/data\\",
+                      \\"ContainerPath\\": \\"/var/data\\"
+                    }
+                  ]"\t
+                }""";
 
         ElasticAgentProfileProperties elasticAgentProfileProperties = ElasticAgentProfileProperties.fromJson(json);
 
         assertThat(elasticAgentProfileProperties.bindMounts().size()).isEqualTo(1);
 
-        BindMount bindMount = elasticAgentProfileProperties.bindMounts().get(0);
+        BindMount bindMount = elasticAgentProfileProperties.bindMounts().getFirst();
         assertThat(bindMount.getName()).isEqualTo("data");
         assertThat(bindMount.getContainerPath()).isEqualTo("/var/data");
         assertThat(bindMount.getSourcePath()).isEqualTo("/ecs/data");

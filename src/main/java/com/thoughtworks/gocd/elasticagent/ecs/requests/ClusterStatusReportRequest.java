@@ -24,7 +24,6 @@ import com.thoughtworks.gocd.elasticagent.ecs.domain.ClusterProfileProperties;
 import com.thoughtworks.gocd.elasticagent.ecs.events.EventStream;
 import com.thoughtworks.gocd.elasticagent.ecs.executors.ClusterStatusReportExecutor;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
 
@@ -50,7 +49,7 @@ public class ClusterStatusReportRequest {
         return GSON.fromJson(json, ClusterStatusReportRequest.class);
     }
 
-    public RequestExecutor executor(ECSTasks agentInstances, EventStream eventStream) throws IOException {
+    public RequestExecutor executor(ECSTasks agentInstances, EventStream eventStream) {
         return new ClusterStatusReportExecutor(this, eventStream, agentInstances);
     }
 

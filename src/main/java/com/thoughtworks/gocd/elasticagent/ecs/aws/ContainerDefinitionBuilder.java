@@ -18,6 +18,7 @@ package com.thoughtworks.gocd.elasticagent.ecs.aws;
 
 import com.amazonaws.services.ecs.model.ContainerDefinition;
 import com.amazonaws.services.ecs.model.KeyValuePair;
+import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.ElasticAgentProfileProperties;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
 import com.thoughtworks.gocd.elasticagent.ecs.requests.CreateAgentRequest;
@@ -30,12 +31,13 @@ import java.util.HashSet;
 import java.util.Map;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.Constants.*;
-import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.Platform.LINUX;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.Platform.WINDOWS;
 import static java.text.MessageFormat.format;
 
 public class ContainerDefinitionBuilder {
+    private static final Logger LOG = Logger.getLoggerFor(ContainerDefinitionBuilder.class);
+
     private String taskName;
     private PluginSettings pluginSettings;
     private CreateAgentRequest request;

@@ -25,11 +25,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ValidateClusterProfileRequestTest {
     @Test
     void shouldDeserializeFromJSON() {
-        String json = "{\n" +
-                "    \"server_url\": \"http://localhost\", \n" +
-                "    \"username\": \"bob\", \n" +
-                "    \"password\": \"secret\"" +
-                "}";
+        String json = """
+                {
+                    "server_url": "http://localhost",\s
+                    "username": "bob",\s
+                    "password": "secret"\
+                }""";
 
         ValidateClusterProfileRequest request = ValidateClusterProfileRequest.fromJSON(json);
         HashMap<String, String> expectedSettings = new HashMap<>();

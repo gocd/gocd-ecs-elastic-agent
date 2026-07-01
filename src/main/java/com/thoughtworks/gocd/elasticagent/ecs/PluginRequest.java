@@ -18,6 +18,7 @@ package com.thoughtworks.gocd.elasticagent.ecs;
 
 import com.google.gson.GsonBuilder;
 import com.thoughtworks.go.plugin.api.GoApplicationAccessor;
+import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.go.plugin.api.request.DefaultGoApiRequest;
 import com.thoughtworks.go.plugin.api.response.GoApiResponse;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.Agent;
@@ -30,9 +31,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.Constants.*;
-import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
 
 public class PluginRequest {
+    private static final Logger LOG = Logger.getLoggerFor(PluginRequest.class);
     private final GoApplicationAccessor accessor;
 
     public PluginRequest(GoApplicationAccessor accessor) {

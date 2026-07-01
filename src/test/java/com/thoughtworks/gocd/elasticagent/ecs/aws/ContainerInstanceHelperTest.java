@@ -416,7 +416,7 @@ class ContainerInstanceHelperTest {
                 .contains("i-123abcd");
 
         assertThat(createTagsRequest.getTags()).hasSize(1);
-        assertThat(createTagsRequest.getTags().get(0).getKey()).isEqualTo(LAST_SEEN_IDLE);
+        assertThat(createTagsRequest.getTags().getFirst().getKey()).isEqualTo(LAST_SEEN_IDLE);
     }
 
     @Test

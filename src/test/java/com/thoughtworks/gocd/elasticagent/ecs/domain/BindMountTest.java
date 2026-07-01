@@ -24,11 +24,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class BindMountTest {
     @Test
     void shouldDeSerializableFromJSON() {
-        String json = "{\n" +
-                "  \"Name\": \"data\",\n" +
-                "  \"SourcePath\": \"/ecs/data\",\n" +
-                "  \"ContainerPath\": \"/var/data\"\n" +
-                "}";
+        String json = """
+                {
+                  "Name": "data",
+                  "SourcePath": "/ecs/data",
+                  "ContainerPath": "/var/data"
+                }""";
 
         BindMount bindMount = GSON.fromJson(json, BindMount.class);
 
@@ -39,10 +40,11 @@ public class BindMountTest {
 
     @Test
     void shouldBeInvalidConfigurationIfNameIsNotProvided() {
-        String json = "{\n" +
-                "  \"SourcePath\": \"/ecs/data\",\n" +
-                "  \"ContainerPath\": \"/var/data\"\n" +
-                "}";
+        String json = """
+                {
+                  "SourcePath": "/ecs/data",
+                  "ContainerPath": "/var/data"
+                }""";
 
         BindMount bindMount = GSON.fromJson(json, BindMount.class);
 
@@ -52,10 +54,11 @@ public class BindMountTest {
 
     @Test
     void shouldBeInvalidConfigurationIfSourcePathIsNotProvided() {
-        String json = "{\n" +
-                "  \"Name\": \"data\",\n" +
-                "  \"ContainerPath\": \"/var/data\"\n" +
-                "}";
+        String json = """
+                {
+                  "Name": "data",
+                  "ContainerPath": "/var/data"
+                }""";
 
         BindMount bindMount = GSON.fromJson(json, BindMount.class);
 
@@ -65,10 +68,11 @@ public class BindMountTest {
 
     @Test
     void shouldBeInvalidConfigurationIfContainerPathIsNotProvided() {
-        String json = "{\n" +
-                "  \"Name\": \"data\",\n" +
-                "  \"SourcePath\": \"/ecs/data\"\n" +
-                "}";
+        String json = """
+                {
+                  "Name": "data",
+                  "SourcePath": "/ecs/data"
+                }""";
         BindMount bindMount = GSON.fromJson(json, BindMount.class);
 
         assertThat(bindMount.isValid()).isFalse();
@@ -80,6 +84,6 @@ public class BindMountTest {
         BindMount bindMount = GSON.fromJson("{}", BindMount.class);
 
         assertThat(bindMount.isValid()).isFalse();
-        assertThat(bindMount.errors()).isEqualTo("ContainerPath cannot be empty. , Name cannot be empty. , SourcePath cannot be empty.");
+        assertThat(bindMount.errors()).isEqualTo("Name cannot be empty., SourcePath cannot be empty., ContainerPath cannot be empty.");
     }
 }

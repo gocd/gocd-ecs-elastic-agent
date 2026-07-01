@@ -22,9 +22,8 @@ import org.apache.commons.lang3.math.NumberUtils;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.thoughtworks.gocd.elasticagent.ecs.utils.Util.checkArgument;
 import static java.text.MessageFormat.format;
-import static org.apache.commons.lang3.StringUtils.contains;
 
 public class SizeValidator {
     private static final Pattern SIZE_PATTERN = Pattern.compile("(\\d+\\.?\\d?)\\s*(\\S+)");

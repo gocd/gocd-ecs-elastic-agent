@@ -27,6 +27,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.EC2InstanceState.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -64,12 +66,12 @@ class InstanceMatcherTest {
         when(ec2Config.getInstanceType()).thenReturn("t2.small");
 
         when(instance.getSubnetId()).thenReturn("s-foo-id");
-        when(ec2Config.getSubnetIds()).thenReturn(Arrays.asList("s-foo-id"));
+        when(ec2Config.getSubnetIds()).thenReturn(List.of("s-foo-id"));
 
-        when(instance.getSecurityGroups()).thenReturn(Arrays.asList(
+        when(instance.getSecurityGroups()).thenReturn(Collections.singletonList(
                 new GroupIdentifier().withGroupId("sg-abcde")
         ));
-        when(ec2Config.getSecurityGroups()).thenReturn(Arrays.asList("sg-abcde"));
+        when(ec2Config.getSecurityGroups()).thenReturn(List.of("sg-abcde"));
 
         when(instance.getSpotInstanceRequestId()).thenReturn("spot_id");
         when(ec2Config.runAsSpotInstance()).thenReturn(true);
@@ -99,12 +101,12 @@ class InstanceMatcherTest {
         when(ec2Config.getInstanceType()).thenReturn("t2.medium");
 
         when(instance.getSubnetId()).thenReturn("s-foo-id");
-        when(ec2Config.getSubnetIds()).thenReturn(Arrays.asList("s-foo-id"));
+        when(ec2Config.getSubnetIds()).thenReturn(List.of("s-foo-id"));
 
-        when(instance.getSecurityGroups()).thenReturn(Arrays.asList(
+        when(instance.getSecurityGroups()).thenReturn(Collections.singletonList(
                 new GroupIdentifier().withGroupId("sg-abcde")
         ));
-        when(ec2Config.getSecurityGroups()).thenReturn(Arrays.asList("sg-abcde"));
+        when(ec2Config.getSecurityGroups()).thenReturn(List.of("sg-abcde"));
 
         assertThat(instanceMatcher.matches(ec2Config, instance)).isFalse();
     }
@@ -122,9 +124,9 @@ class InstanceMatcherTest {
         when(ec2Config.getInstanceType()).thenReturn("t2.small");
 
         when(instance.getSubnetId()).thenReturn("s-foo-id");
-        when(ec2Config.getSubnetIds()).thenReturn(Arrays.asList("s-foo-id"));
+        when(ec2Config.getSubnetIds()).thenReturn(List.of("s-foo-id"));
 
-        when(instance.getSecurityGroups()).thenReturn(Arrays.asList(
+        when(instance.getSecurityGroups()).thenReturn(Collections.singletonList(
                 new GroupIdentifier().withGroupId("sg-abcde")
         ));
 
@@ -146,12 +148,12 @@ class InstanceMatcherTest {
         when(ec2Config.getInstanceType()).thenReturn("t2.small");
 
         when(instance.getSubnetId()).thenReturn("s-foo-id");
-        when(ec2Config.getSubnetIds()).thenReturn(Arrays.asList("different-subnet-id"));
+        when(ec2Config.getSubnetIds()).thenReturn(List.of("different-subnet-id"));
 
-        when(instance.getSecurityGroups()).thenReturn(Arrays.asList(
+        when(instance.getSecurityGroups()).thenReturn(Collections.singletonList(
                 new GroupIdentifier().withGroupId("sg-abcde")
         ));
-        when(ec2Config.getSecurityGroups()).thenReturn(Arrays.asList("sg-abcde"));
+        when(ec2Config.getSecurityGroups()).thenReturn(List.of("sg-abcde"));
 
         assertThat(instanceMatcher.matches(ec2Config, instance)).isFalse();
     }
@@ -169,12 +171,12 @@ class InstanceMatcherTest {
         when(ec2Config.getInstanceType()).thenReturn("t2.small");
 
         when(instance.getSubnetId()).thenReturn("s-foo-id");
-        when(ec2Config.getSubnetIds()).thenReturn(Arrays.asList("s-foo-id"));
+        when(ec2Config.getSubnetIds()).thenReturn(List.of("s-foo-id"));
 
-        when(instance.getSecurityGroups()).thenReturn(Arrays.asList(
+        when(instance.getSecurityGroups()).thenReturn(Collections.singletonList(
                 new GroupIdentifier().withGroupId("sg-abcde")
         ));
-        when(ec2Config.getSecurityGroups()).thenReturn(Arrays.asList("sg-abcde"));
+        when(ec2Config.getSecurityGroups()).thenReturn(List.of("sg-abcde"));
 
         assertThat(instanceMatcher.matches(ec2Config, instance)).isFalse();
     }
@@ -192,12 +194,12 @@ class InstanceMatcherTest {
         when(ec2Config.getInstanceType()).thenReturn("t2.small");
 
         when(instance.getSubnetId()).thenReturn("s-foo-id");
-        when(ec2Config.getSubnetIds()).thenReturn(Arrays.asList("s-foo-id"));
+        when(ec2Config.getSubnetIds()).thenReturn(List.of("s-foo-id"));
 
-        when(instance.getSecurityGroups()).thenReturn(Arrays.asList(
+        when(instance.getSecurityGroups()).thenReturn(Collections.singletonList(
                 new GroupIdentifier().withGroupId("sg-abcde")
         ));
-        when(ec2Config.getSecurityGroups()).thenReturn(Arrays.asList("sg-abcde"));
+        when(ec2Config.getSecurityGroups()).thenReturn(List.of("sg-abcde"));
 
         when(instance.getSpotInstanceRequestId()).thenReturn(null);
         when(ec2Config.runAsSpotInstance()).thenReturn(true);

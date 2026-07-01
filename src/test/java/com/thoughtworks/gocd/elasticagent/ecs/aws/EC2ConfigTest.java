@@ -629,15 +629,16 @@ class EC2ConfigTest {
                     .withProfile(elasticAgentProfileProperties)
                     .build();
 
-            final String expectedUserdataScript = "<powershell>\n" +
-                    "[Environment]::SetEnvironmentVariable(\"ECS_CLUSTER\", \"ECS\", \"Machine\")\n" +
-                    "[Environment]::SetEnvironmentVariable(\"ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION\", \"1m\", \"Machine\")\n" +
-                    "[Environment]::SetEnvironmentVariable(\"ECS_IMAGE_MINIMUM_CLEANUP_AGE\", \"24h\", \"Machine\")\n" +
-                    "[Environment]::SetEnvironmentVariable(\"ECS_INSTANCE_ATTRIBUTES\", \"{`\"server-id`\":`\"`\"}\", \"Machine\")\n" +
-                    "Import-Module ECSTools\n" +
-                    "Initialize-ECSAgent -Cluster 'ECS' -EnableTaskIAMRole\n" +
-                    "windows-script\n" +
-                    "</powershell>";
+            final String expectedUserdataScript = """
+                    <powershell>
+                    [Environment]::SetEnvironmentVariable("ECS_CLUSTER", "ECS", "Machine")
+                    [Environment]::SetEnvironmentVariable("ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION", "1m", "Machine")
+                    [Environment]::SetEnvironmentVariable("ECS_IMAGE_MINIMUM_CLEANUP_AGE", "24h", "Machine")
+                    [Environment]::SetEnvironmentVariable("ECS_INSTANCE_ATTRIBUTES", "{`"server-id`":`"`"}", "Machine")
+                    Import-Module ECSTools
+                    Initialize-ECSAgent -Cluster 'ECS' -EnableTaskIAMRole
+                    windows-script
+                    </powershell>""";
 
             assertThat(decodeBase64(ec2Config.getUserdata())).isEqualTo(expectedUserdataScript);
             assertThat(decodeBase64(ec2Config.getUserdata())).doesNotContain("linux-script");

@@ -16,6 +16,7 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.executors;
 
+import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.go.plugin.api.response.DefaultGoPluginApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import com.thoughtworks.gocd.elasticagent.ecs.AgentInstances;
@@ -32,11 +33,12 @@ import org.joda.time.LocalTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
-import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
 import static java.text.MessageFormat.format;
 
 public class CreateAgentRequestExecutor implements RequestExecutor {
+    private static final Logger LOG = Logger.getLoggerFor(CreateAgentRequestExecutor.class);
     private static final DateTimeFormatter MESSAGE_PREFIX_FORMATTER = DateTimeFormat.forPattern("'##|'HH:mm:ss.SSS '[go]'");
+
     private final AgentInstances<ECSTask> agentInstances;
     private final PluginRequest pluginRequest;
     private final EventStream eventStream;

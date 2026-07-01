@@ -44,7 +44,7 @@ public class OldestInstanceSelectionStrategy extends InstanceSelectionStrategy {
     protected List<ContainerInstance> findInstancesToStop(PluginSettings pluginSettings, Platform platform, Map<String, ContainerInstance> instanceIdToContainerInstance, List<Instance> idleInstances) {
         idleInstances.sort(Comparator.comparing(Instance::getLaunchTime));
 
-        final Instance instance = idleInstances.get(0);
+        final Instance instance = idleInstances.getFirst();
 
         return singletonList(instanceIdToContainerInstance.get(instance.getInstanceId()));
     }

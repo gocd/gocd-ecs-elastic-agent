@@ -72,7 +72,7 @@ public class JobCompletionRequestExecutorTest {
 
         List<Agent> agentsToDisabled = agentsArgumentCaptor.getValue();
         assertThat(1).isEqualTo(agentsToDisabled.size());
-        assertThat(elasticAgentId).isEqualTo(agentsToDisabled.get(0).elasticAgentId());
+        assertThat(elasticAgentId).isEqualTo(agentsToDisabled.getFirst().elasticAgentId());
 
         List<Agent> agentsToDelete = agentsArgumentCaptor.getValue();
         assertThat(agentsToDisabled).isEqualTo(agentsToDelete);

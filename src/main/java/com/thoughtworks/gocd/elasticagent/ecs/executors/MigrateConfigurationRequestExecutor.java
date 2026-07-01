@@ -16,6 +16,7 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.executors;
 
+import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.go.plugin.api.response.DefaultGoPluginApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import com.thoughtworks.gocd.elasticagent.ecs.Constants;
@@ -32,17 +33,17 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
-
 public class MigrateConfigurationRequestExecutor implements RequestExecutor {
-    private MigrateConfigurationRequest migrateConfigurationRequest;
+    private static final Logger LOG = Logger.getLoggerFor(MigrateConfigurationRequestExecutor.class);
+
+    private final MigrateConfigurationRequest migrateConfigurationRequest;
 
     public MigrateConfigurationRequestExecutor(MigrateConfigurationRequest migrateConfigurationRequest) {
         this.migrateConfigurationRequest = migrateConfigurationRequest;
     }
 
     @Override
-    public GoPluginApiResponse execute() throws Exception {
+    public GoPluginApiResponse execute() {
         LOG.info("[Migrate Config] Request for Config Migration Started...");
 
         PluginSettings pluginSettings = migrateConfigurationRequest.getPluginSettings();

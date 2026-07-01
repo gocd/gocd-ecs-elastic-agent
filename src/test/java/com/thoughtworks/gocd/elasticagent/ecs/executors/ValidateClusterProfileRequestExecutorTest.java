@@ -54,24 +54,25 @@ class ValidateClusterProfileRequestExecutorTest {
 
                     assertThat(response.responseCode()).isEqualTo(200);
                     System.out.println(response.responseBody());
-                    JSONAssert.assertEquals("[\n" +
-                            "  {\n" +
-                            "    \"message\": \"Go Server URL must not be blank.\",\n" +
-                            "    \"key\": \"GoServerUrl\"\n" +
-                            "  },\n" +
-                            "  {\n" +
-                            "    \"message\": \"AWS Cluster Name must not be blank.\",\n" +
-                            "    \"key\": \"ClusterName\"\n" +
-                            "  },\n" +
-                            "  {\n" +
-                            "    \"message\": \"Container auto-register timeout (in minutes) must be a positive integer.\",\n" +
-                            "    \"key\": \"ContainerAutoregisterTimeout\"\n" +
-                            "  },\n" +
-                            "  {\n" +
-                            "    \"message\": \"Iam instance profile must not be blank.\",\n" +
-                            "    \"key\": \"IamInstanceProfile\"\n" +
-                            "  }\n" +
-                            "]", response.responseBody(), true);
+                    JSONAssert.assertEquals("""
+                            [
+                              {
+                                "message": "Go Server URL must not be blank.",
+                                "key": "GoServerUrl"
+                              },
+                              {
+                                "message": "AWS Cluster Name must not be blank.",
+                                "key": "ClusterName"
+                              },
+                              {
+                                "message": "Container auto-register timeout (in minutes) must be a positive integer.",
+                                "key": "ContainerAutoregisterTimeout"
+                              },
+                              {
+                                "message": "Iam instance profile must not be blank.",
+                                "key": "IamInstanceProfile"
+                              }
+                            ]""", response.responseBody(), true);
                 });
     }
 
@@ -82,12 +83,13 @@ class ValidateClusterProfileRequestExecutorTest {
 
         GoPluginApiResponse response = new ValidateClusterProfileRequestExecutor(request).execute();
 
-        JSONAssert.assertEquals("[\n" +
-                "  {\n" +
-                "    \"message\": \"Log driver unknown-log-driver-name is not supported. Supported log drivers are [json-file, syslog, journald, gelf, fluentd, awslogs, splunk, awsfirelens] \",\n" +
-                "    \"key\": \"LogDriver\"\n" +
-                "  }\n" +
-                "]", response.responseBody(), true);
+        JSONAssert.assertEquals("""
+                [
+                  {
+                    "message": "Log driver unknown-log-driver-name is not supported. Supported log drivers are [json-file, syslog, journald, gelf, fluentd, awslogs, splunk, awsfirelens] ",
+                    "key": "LogDriver"
+                  }
+                ]""", response.responseBody(), true);
     }
 
     @Test

@@ -17,15 +17,16 @@
 package com.thoughtworks.gocd.elasticagent.ecs.reports;
 
 import com.google.gson.JsonObject;
+import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.go.plugin.api.response.DefaultGoPluginApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import com.thoughtworks.gocd.elasticagent.ecs.builders.PluginStatusReportViewBuilder;
 import freemarker.template.Template;
 
-import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
 import static java.text.MessageFormat.format;
 
 public class StatusReportGenerationErrorHandler {
+    private static final Logger LOG = Logger.getLoggerFor(StatusReportGenerationErrorHandler.class);
 
     public static GoPluginApiResponse handle(PluginStatusReportViewBuilder builder, Exception e) {
         try {

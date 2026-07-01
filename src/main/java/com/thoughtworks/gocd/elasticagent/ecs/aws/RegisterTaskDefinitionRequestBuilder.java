@@ -17,16 +17,17 @@
 package com.thoughtworks.gocd.elasticagent.ecs.aws;
 
 import com.amazonaws.services.ecs.model.*;
+import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.ElasticAgentProfileProperties;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.Platform;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
 import org.apache.commons.lang3.StringUtils;
 
-import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
 import static java.text.MessageFormat.format;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 public class RegisterTaskDefinitionRequestBuilder {
+    private static final Logger LOG = Logger.getLoggerFor(RegisterTaskDefinitionRequestBuilder.class);
 
     public RegisterTaskDefinitionRequest build(PluginSettings pluginSettings, ElasticAgentProfileProperties elasticAgentProfileProperties, ContainerDefinition containerDefinition) {
 
@@ -44,7 +45,7 @@ public class RegisterTaskDefinitionRequestBuilder {
                     .withName("efs")
                     .withHost(new HostVolumeProperties().withSourcePath(pluginSettings.efsMountLocation())));
 
-            request.getContainerDefinitions().get(0).withMountPoints(new MountPoint()
+            request.getContainerDefinitions().getFirst().withMountPoints(new MountPoint()
                     .withSourceVolume("efs")
                     .withContainerPath(pluginSettings.efsMountLocation()));
         }
@@ -55,7 +56,7 @@ public class RegisterTaskDefinitionRequestBuilder {
                     .withName("DockerSocket")
                     .withHost(new HostVolumeProperties().withSourcePath("/var/run/docker.sock")));
 
-            request.getContainerDefinitions().get(0)
+            request.getContainerDefinitions().getFirst()
                     .withMountPoints(new MountPoint()
                             .withSourceVolume("DockerSocket")
                             .withContainerPath("/var/run/docker.sock")
@@ -68,7 +69,7 @@ public class RegisterTaskDefinitionRequestBuilder {
                         .withName(bindMount.getName())
                         .withHost(new HostVolumeProperties().withSourcePath(bindMount.getSourcePath()))
                 );
-                request.getContainerDefinitions().get(0).withMountPoints(new MountPoint()
+                request.getContainerDefinitions().getFirst().withMountPoints(new MountPoint()
                         .withSourceVolume(bindMount.getName())
                         .withContainerPath(bindMount.getContainerPath()));
             });

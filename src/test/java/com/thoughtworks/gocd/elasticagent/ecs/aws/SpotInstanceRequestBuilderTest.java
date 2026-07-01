@@ -122,11 +122,11 @@ class SpotInstanceRequestBuilderTest {
         final List<BlockDeviceMapping> deviceMappings = request.getLaunchSpecification().getBlockDeviceMappings();
 
         assertThat(deviceMappings).hasSize(1);
-        assertThat(deviceMappings.get(0).getDeviceName()).isEqualTo("/dev/xvda");
-        assertThat(deviceMappings.get(0).getEbs().getDeleteOnTermination()).isTrue();
-        assertThat(deviceMappings.get(0).getEbs().getVolumeType()).isEqualTo("gp2");
-        assertThat(deviceMappings.get(0).getEbs().getVolumeSize()).isEqualTo(100);
-        assertThat(deviceMappings.get(0).getEbs().getIops()).isNull();
+        assertThat(deviceMappings.getFirst().getDeviceName()).isEqualTo("/dev/xvda");
+        assertThat(deviceMappings.getFirst().getEbs().getDeleteOnTermination()).isTrue();
+        assertThat(deviceMappings.getFirst().getEbs().getVolumeType()).isEqualTo("gp2");
+        assertThat(deviceMappings.getFirst().getEbs().getVolumeSize()).isEqualTo(100);
+        assertThat(deviceMappings.getFirst().getEbs().getIops()).isNull();
     }
 
     @Test
@@ -144,11 +144,11 @@ class SpotInstanceRequestBuilderTest {
         final List<BlockDeviceMapping> deviceMappings = request.getLaunchSpecification().getBlockDeviceMappings();
 
         assertThat(deviceMappings).hasSize(1);
-        assertThat(deviceMappings.get(0).getDeviceName()).isEqualTo("/dev/xvda");
-        assertThat(deviceMappings.get(0).getEbs().getDeleteOnTermination()).isTrue();
-        assertThat(deviceMappings.get(0).getEbs().getVolumeType()).isEqualTo("io1");
-        assertThat(deviceMappings.get(0).getEbs().getVolumeSize()).isEqualTo(100);
-        assertThat(deviceMappings.get(0).getEbs().getIops()).isEqualTo(700);
+        assertThat(deviceMappings.getFirst().getDeviceName()).isEqualTo("/dev/xvda");
+        assertThat(deviceMappings.getFirst().getEbs().getDeleteOnTermination()).isTrue();
+        assertThat(deviceMappings.getFirst().getEbs().getVolumeType()).isEqualTo("io1");
+        assertThat(deviceMappings.getFirst().getEbs().getVolumeSize()).isEqualTo(100);
+        assertThat(deviceMappings.getFirst().getEbs().getIops()).isEqualTo(700);
     }
 
     @Test
@@ -166,11 +166,11 @@ class SpotInstanceRequestBuilderTest {
         final List<BlockDeviceMapping> deviceMappings = request.getLaunchSpecification().getBlockDeviceMappings();
 
         assertThat(deviceMappings).hasSize(1);
-        assertThat(deviceMappings.get(0).getDeviceName()).isEqualTo("/dev/xvdcz");
-        assertThat(deviceMappings.get(0).getEbs().getDeleteOnTermination()).isTrue();
-        assertThat(deviceMappings.get(0).getEbs().getVolumeType()).isEqualTo("gp2");
-        assertThat(deviceMappings.get(0).getEbs().getVolumeSize()).isEqualTo(50);
-        assertThat(deviceMappings.get(0).getEbs().getIops()).isNull();
+        assertThat(deviceMappings.getFirst().getDeviceName()).isEqualTo("/dev/xvdcz");
+        assertThat(deviceMappings.getFirst().getEbs().getDeleteOnTermination()).isTrue();
+        assertThat(deviceMappings.getFirst().getEbs().getVolumeType()).isEqualTo("gp2");
+        assertThat(deviceMappings.getFirst().getEbs().getVolumeSize()).isEqualTo(50);
+        assertThat(deviceMappings.getFirst().getEbs().getIops()).isNull();
     }
 
     @Test
@@ -188,11 +188,11 @@ class SpotInstanceRequestBuilderTest {
         final List<BlockDeviceMapping> deviceMappings = request.getLaunchSpecification().getBlockDeviceMappings();
 
         assertThat(deviceMappings).hasSize(1);
-        assertThat(deviceMappings.get(0).getDeviceName()).isEqualTo("/dev/xvdcz");
-        assertThat(deviceMappings.get(0).getEbs().getDeleteOnTermination()).isTrue();
-        assertThat(deviceMappings.get(0).getEbs().getVolumeType()).isEqualTo("io1");
-        assertThat(deviceMappings.get(0).getEbs().getVolumeSize()).isEqualTo(50);
-        assertThat(deviceMappings.get(0).getEbs().getIops()).isEqualTo(1100);
+        assertThat(deviceMappings.getFirst().getDeviceName()).isEqualTo("/dev/xvdcz");
+        assertThat(deviceMappings.getFirst().getEbs().getDeleteOnTermination()).isTrue();
+        assertThat(deviceMappings.getFirst().getEbs().getVolumeType()).isEqualTo("io1");
+        assertThat(deviceMappings.getFirst().getEbs().getVolumeSize()).isEqualTo(50);
+        assertThat(deviceMappings.getFirst().getEbs().getIops()).isEqualTo(1100);
     }
 
     @Test
@@ -209,10 +209,10 @@ class SpotInstanceRequestBuilderTest {
         final List<BlockDeviceMapping> deviceMappings = request.getLaunchSpecification().getBlockDeviceMappings();
 
         assertThat(deviceMappings).hasSize(1);
-        assertThat(deviceMappings.get(0).getDeviceName()).isEqualTo("/dev/sda1");
-        assertThat(deviceMappings.get(0).getEbs().getDeleteOnTermination()).isTrue();
-        assertThat(deviceMappings.get(0).getEbs().getVolumeType()).isEqualTo("gp2");
-        assertThat(deviceMappings.get(0).getEbs().getVolumeSize()).isEqualTo(100);
-        assertThat(deviceMappings.get(0).getEbs().getIops()).isNull();
+        assertThat(deviceMappings.getFirst().getDeviceName()).isEqualTo("/dev/sda1");
+        assertThat(deviceMappings.getFirst().getEbs().getDeleteOnTermination()).isTrue();
+        assertThat(deviceMappings.getFirst().getEbs().getVolumeType()).isEqualTo("gp2");
+        assertThat(deviceMappings.getFirst().getEbs().getVolumeSize()).isEqualTo(100);
+        assertThat(deviceMappings.getFirst().getEbs().getIops()).isNull();
     }
 }

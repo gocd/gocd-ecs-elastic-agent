@@ -41,7 +41,6 @@ import static com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerInstanceMother
 import static com.thoughtworks.gocd.elasticagent.ecs.aws.InstanceMother.instance;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.AWSModelMother.*;
 import static java.lang.String.format;
-import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang3.StringUtils.capitalize;
@@ -128,8 +127,8 @@ class PluginStatusReportViewTest {
     @Test
     void shouldBuildViewWithErrors() throws Exception {
         Map<String, List<Event>> dataModel = new HashMap<>();
-        dataModel.put("errors", asList(Event.errorEvent(EventFingerprint.forStatusReport(), "Error-Title", "Error-Description")));
-        dataModel.put("warnings", asList(Event.warningEvent(EventFingerprint.forStatusReport(), "Warning-Title", "Warning-Description")));
+        dataModel.put("errors", List.of(Event.errorEvent(EventFingerprint.forStatusReport(), "Error-Title", "Error-Description")));
+        dataModel.put("warnings", List.of(Event.warningEvent(EventFingerprint.forStatusReport(), "Warning-Title", "Warning-Description")));
 
         final PluginStatusReportViewBuilder statusReportViewBuilder = PluginStatusReportViewBuilder.instance();
         final Template template = statusReportViewBuilder.getTemplate("status-report.template.ftlh");
@@ -182,7 +181,7 @@ class PluginStatusReportViewTest {
             final Elements warningMessage = document.select(".cluster .ea-panel_body");
             assertThat(warningMessage.text()).isEqualTo("No running container instances.");
         } else {
-            cluster.getContainerInstances().stream().forEach(containerInstance -> assertContainerInstanceView(document, containerInstance));
+            cluster.getContainerInstances().forEach(containerInstance -> assertContainerInstanceView(document, containerInstance));
         }
 
     }
@@ -192,7 +191,7 @@ class PluginStatusReportViewTest {
 
         final String expectedHeader = format("Container Instance ARN %s Platform %s State %s", containerInstance.getContainerInstanceArn(), capitalize(containerInstance.getPlatform().toLowerCase()), capitalize(containerInstance.getInstance().getState().getName()));
 
-        assertThat(containerInstanceHeader.get(0).text()).contains(expectedHeader);
+        assertThat(containerInstanceHeader.getFirst().text()).contains(expectedHeader);
 
         assertContainerInstanceProperties(document, containerInstance);
         assertEC2InstanceProperties(document, containerInstance);
@@ -266,7 +265,7 @@ class PluginStatusReportViewTest {
     private void assertProperty(Elements allProperties, String key, Double value) {
         final Elements keyElements = allProperties.select(format("label.key:contains(%s)", key));
         assertThat(keyElements).isNotNull();
-        assertThat(Double.parseDouble(keyElements.next().text().replaceAll(",", ""))).describedAs("Asserting property %s", key).isEqualTo(value);
+        assertThat(Double.parseDouble(keyElements.next().text().replace(",", ""))).describedAs("Asserting property %s", key).isEqualTo(value);
     }
 
     private String toDateTimeString(Date date) {

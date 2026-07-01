@@ -29,6 +29,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.Constants.*;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.Platform.LINUX;
@@ -86,9 +87,9 @@ class ContainerDefinitionBuilderTest {
     @Test
     void shouldBuildContainerDefinitionWithEnvironments() {
         when(elasticAgentProfileProperties.getImage()).thenReturn("alpine");
-        when(elasticAgentProfileProperties.getEnvironment()).thenReturn(Arrays.asList("TZ=PST"));
+        when(elasticAgentProfileProperties.getEnvironment()).thenReturn(List.of("TZ=PST"));
 
-        when(pluginSettings.getEnvironmentVariables()).thenReturn(Arrays.asList("JAVA_HOME=/var/lib/java"));
+        when(pluginSettings.getEnvironmentVariables()).thenReturn(List.of("JAVA_HOME=/var/lib/java"));
         when(pluginSettings.getGoServerUrl()).thenReturn("https://foo.server/go");
 
         when(createAgentRequest.autoRegisterKey()).thenReturn("some-auto-register-key");

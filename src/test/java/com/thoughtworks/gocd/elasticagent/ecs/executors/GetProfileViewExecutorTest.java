@@ -69,7 +69,7 @@ class GetProfileViewExecutorTest {
 
         assertThat(Platform).hasSize(2);
 
-        final Element linuxOS = Platform.get(0);
+        final Element linuxOS = Platform.getFirst();
         assertThat(linuxOS.attr("id")).isEqualTo("linux-os");
         assertThat(linuxOS.attr("value")).isEqualTo("linux");
 
@@ -84,7 +84,7 @@ class GetProfileViewExecutorTest {
     @ParameterizedTest
     @MethodSource("fieldArguments")
     void shouldHaveInputDefinedForDockerImage(String fieldName, String labelText) {
-        final Element image = document.getElementsByAttributeValue("ng-model", fieldName).get(0);
+        final Element image = document.getElementsByAttributeValue("ng-model", fieldName).getFirst();
         assertThat(image).isNotNull();
 
         assertThat(image.attr("ng-class"))
@@ -93,12 +93,12 @@ class GetProfileViewExecutorTest {
 
         final Elements div = image.parents();
 
-        final Element label = div.select("label").get(0);
+        final Element label = div.select("label").getFirst();
         assertThat(label.text()).contains(labelText);
         assertThat(label.attr("ng-class"))
                 .isEqualTo(format("{'is-invalid-label': GOINPUTNAME[%s].$error.server}", fieldName));
 
-        final Element errorSpan = div.select("span[class='form_error form-error']").get(0);
+        final Element errorSpan = div.select("span[class='form_error form-error']").getFirst();
         assertThat(errorSpan.text()).isEqualTo(format("{{GOINPUTNAME[%s].$error.server}}", fieldName));
         assertThat(errorSpan.attr("ng-class")).isEqualTo(format("{'is-visible': GOINPUTNAME[%s].$error.server}", fieldName));
         assertThat(errorSpan.attr("ng-show")).isEqualTo(format("GOINPUTNAME[%s].$error.server", fieldName));

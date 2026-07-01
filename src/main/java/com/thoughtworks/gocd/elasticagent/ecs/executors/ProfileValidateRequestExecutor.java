@@ -40,7 +40,7 @@ public class ProfileValidateRequestExecutor implements RequestExecutor {
     }
 
     @Override
-    public GoPluginApiResponse execute() throws Exception {
+    public GoPluginApiResponse execute() {
         ValidationResult validationResult = validate(request.getProperties());
         return DefaultGoPluginApiResponse.success(validationResult.toJSON());
     }

@@ -30,6 +30,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.AWSCredentialsProviderChain;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.StopPolicy;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.annotation.Metadata;
@@ -41,7 +42,6 @@ import org.joda.time.Period;
 import java.text.MessageFormat;
 import java.util.*;
 
-import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.DockerRegistryAuthType.AUTH_TOKEN;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.DockerRegistryAuthType.USERNAME_PASSWORD;
 import static com.thoughtworks.gocd.elasticagent.ecs.utils.Util.*;
@@ -50,6 +50,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.stripToNull;
 
 public class PluginSettings {
+    private static final Logger LOG = Logger.getLoggerFor(PluginSettings.class);
     public static final Gson GSON = new GsonBuilder()
             .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
             .excludeFieldsWithoutExposeAnnotation()

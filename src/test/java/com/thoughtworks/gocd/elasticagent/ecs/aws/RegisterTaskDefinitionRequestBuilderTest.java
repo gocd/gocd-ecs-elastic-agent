@@ -78,14 +78,14 @@ class RegisterTaskDefinitionRequestBuilderTest {
 
         assertThat(request.getVolumes().size()).isEqualTo(1);
 
-        Volume volume = request.getVolumes().get(0);
+        Volume volume = request.getVolumes().getFirst();
         assertThat(volume.getName()).isEqualTo(bindMount.getName());
         assertThat(volume.getHost().getSourcePath()).isEqualTo(bindMount.getSourcePath());
 
-        ContainerDefinition containerDefinition = request.getContainerDefinitions().get(0);
+        ContainerDefinition containerDefinition = request.getContainerDefinitions().getFirst();
         assertThat(containerDefinition.getMountPoints().size()).isEqualTo(1);
 
-        MountPoint mountPoint = containerDefinition.getMountPoints().get(0);
+        MountPoint mountPoint = containerDefinition.getMountPoints().getFirst();
         assertThat(mountPoint.getContainerPath()).isEqualTo(bindMount.getContainerPath());
         assertThat(mountPoint.getSourceVolume()).isEqualTo(bindMount.getName());
     }
@@ -98,16 +98,16 @@ class RegisterTaskDefinitionRequestBuilderTest {
 
         final RegisterTaskDefinitionRequest request = builder.build(pluginSettings, elasticAgentProfileProperties, new ContainerDefinition());
 
-        ContainerDefinition containerDefinition = request.getContainerDefinitions().get(0);
+        ContainerDefinition containerDefinition = request.getContainerDefinitions().getFirst();
 
         assertThat(request.getVolumes().size()).isEqualTo(2);
         assertThat(containerDefinition.getMountPoints().size()).isEqualTo(2);
 
-        Volume volume1 = request.getVolumes().get(0);
+        Volume volume1 = request.getVolumes().getFirst();
         assertThat(volume1.getName()).isEqualTo(bindMount1.getName());
         assertThat(volume1.getHost().getSourcePath()).isEqualTo(bindMount1.getSourcePath());
 
-        MountPoint mountPoint1 = containerDefinition.getMountPoints().get(0);
+        MountPoint mountPoint1 = containerDefinition.getMountPoints().getFirst();
         assertThat(mountPoint1.getContainerPath()).isEqualTo(bindMount1.getContainerPath());
         assertThat(mountPoint1.getSourceVolume()).isEqualTo(bindMount1.getName());
 

@@ -17,7 +17,6 @@
 package com.thoughtworks.gocd.elasticagent.ecs.aws.strategy;
 
 import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ecs.model.ContainerInstance;
 import com.thoughtworks.gocd.elasticagent.ecs.Clock;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerInstanceHelper;
@@ -29,7 +28,6 @@ import org.joda.time.Period;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 

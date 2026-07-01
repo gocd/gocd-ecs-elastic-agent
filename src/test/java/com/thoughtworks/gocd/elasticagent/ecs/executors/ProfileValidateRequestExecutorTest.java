@@ -35,28 +35,29 @@ class ProfileValidateRequestExecutorTest {
         ProfileValidateRequestExecutor executor = new ProfileValidateRequestExecutor(new ProfileValidateRequest(Collections.singletonMap("foo", "bar")));
         String json = executor.execute().responseBody();
 
-        String expectedJSON = "[\n" +
-                "  {\n" +
-                "    \"message\": \"Image must not be blank.\",\n" +
-                "    \"key\": \"Image\"\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"message\": \"MaxMemory must not be blank.\",\n" +
-                "    \"key\": \"MaxMemory\"\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"message\": \"ReservedMemory must not be blank.\",\n" +
-                "    \"key\": \"ReservedMemory\"\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"message\": \"CPU must not be blank.\",\n" +
-                "    \"key\": \"CPU\"\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"key\": \"foo\",\n" +
-                "    \"message\": \"Is an unknown property\"\n" +
-                "  }\n" +
-                "]";
+        String expectedJSON = """
+                [
+                  {
+                    "message": "Image must not be blank.",
+                    "key": "Image"
+                  },
+                  {
+                    "message": "MaxMemory must not be blank.",
+                    "key": "MaxMemory"
+                  },
+                  {
+                    "message": "ReservedMemory must not be blank.",
+                    "key": "ReservedMemory"
+                  },
+                  {
+                    "message": "CPU must not be blank.",
+                    "key": "CPU"
+                  },
+                  {
+                    "key": "foo",
+                    "message": "Is an unknown property"
+                  }
+                ]""";
 
         JSONAssert.assertEquals(expectedJSON, json, JSONCompareMode.NON_EXTENSIBLE);
     }
@@ -65,24 +66,25 @@ class ProfileValidateRequestExecutorTest {
     void shouldValidateMandatoryKeys() throws Exception {
         ProfileValidateRequestExecutor executor = new ProfileValidateRequestExecutor(new ProfileValidateRequest(Collections.emptyMap()));
         String json = executor.execute().responseBody();
-        String expectedJSON = "[\n" +
-                "  {\n" +
-                "    \"message\": \"Image must not be blank.\",\n" +
-                "    \"key\": \"Image\"\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"message\": \"MaxMemory must not be blank.\",\n" +
-                "    \"key\": \"MaxMemory\"\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"message\": \"ReservedMemory must not be blank.\",\n" +
-                "    \"key\": \"ReservedMemory\"\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"message\": \"CPU must not be blank.\",\n" +
-                "    \"key\": \"CPU\"\n" +
-                "  }\n" +
-                "]";
+        String expectedJSON = """
+                [
+                  {
+                    "message": "Image must not be blank.",
+                    "key": "Image"
+                  },
+                  {
+                    "message": "MaxMemory must not be blank.",
+                    "key": "MaxMemory"
+                  },
+                  {
+                    "message": "ReservedMemory must not be blank.",
+                    "key": "ReservedMemory"
+                  },
+                  {
+                    "message": "CPU must not be blank.",
+                    "key": "CPU"
+                  }
+                ]""";
         JSONAssert.assertEquals(expectedJSON, json, JSONCompareMode.NON_EXTENSIBLE);
     }
 
@@ -111,12 +113,13 @@ class ProfileValidateRequestExecutorTest {
         ProfileValidateRequestExecutor executor = new ProfileValidateRequestExecutor(new ProfileValidateRequest(properties));
 
         String json = executor.execute().responseBody();
-        final String expectedJSON = "[\n" +
-                "  {\n" +
-                "    \"key\": \"MaxMemory\",\n" +
-                "    \"message\": \"Must be greater than or equal to `ReservedMemory`.\"\n" +
-                "  }\n" +
-                "]";
+        final String expectedJSON = """
+                [
+                  {
+                    "key": "MaxMemory",
+                    "message": "Must be greater than or equal to `ReservedMemory`."
+                  }
+                ]""";
 
         JSONAssert.assertEquals(expectedJSON, json, JSONCompareMode.NON_EXTENSIBLE);
     }
@@ -132,12 +135,13 @@ class ProfileValidateRequestExecutorTest {
         ProfileValidateRequestExecutor executor = new ProfileValidateRequestExecutor(new ProfileValidateRequest(properties));
 
         String json = executor.execute().responseBody();
-        final String expectedJSON = "[\n" +
-                "  {\n" +
-                "    \"key\": \"MaxMemory\",\n" +
-                "    \"message\": \"Invalid size: `1000`. Must be a positive integer followed by unit (B, K, M, G or T)\"\n" +
-                "  }\n" +
-                "]";
+        final String expectedJSON = """
+                [
+                  {
+                    "key": "MaxMemory",
+                    "message": "Invalid size: `1000`. Must be a positive integer followed by unit (B, K, M, G or T)"
+                  }
+                ]""";
 
         JSONAssert.assertEquals(expectedJSON, json, JSONCompareMode.NON_EXTENSIBLE);
     }
@@ -174,16 +178,17 @@ class ProfileValidateRequestExecutorTest {
         ProfileValidateRequestExecutor executor = new ProfileValidateRequestExecutor(new ProfileValidateRequest(properties));
         String json = executor.execute().responseBody();
 
-        final String expectedJSON = "[\n" +
-                "  {\n" +
-                "    \"key\": \"AMI\",\n" +
-                "    \"message\": \"AMI must not be blank.\"\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"key\": \"InstanceType\",\n" +
-                "    \"message\": \"Instance type must not be blank.\"\n" +
-                "  }\n" +
-                "]";
+        final String expectedJSON = """
+                [
+                  {
+                    "key": "AMI",
+                    "message": "AMI must not be blank."
+                  },
+                  {
+                    "key": "InstanceType",
+                    "message": "Instance type must not be blank."
+                  }
+                ]""";
         JSONAssert.assertEquals(expectedJSON, json, JSONCompareMode.NON_EXTENSIBLE);
 
     }
@@ -192,20 +197,21 @@ class ProfileValidateRequestExecutorTest {
     void shouldNotErrorOutForReservedMemoryWhenPlatformIsWindows() throws Exception {
         ProfileValidateRequestExecutor executor = new ProfileValidateRequestExecutor(new ProfileValidateRequest(Collections.singletonMap(PLATFORM, Platform.WINDOWS.name())));
         String json = executor.execute().responseBody();
-        String expectedJSON = "[\n" +
-                "  {\n" +
-                "    \"message\": \"Image must not be blank.\",\n" +
-                "    \"key\": \"Image\"\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"message\": \"MaxMemory must not be blank.\",\n" +
-                "    \"key\": \"MaxMemory\"\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"message\": \"CPU must not be blank.\",\n" +
-                "    \"key\": \"CPU\"\n" +
-                "  }\n" +
-                "]";
+        String expectedJSON = """
+                [
+                  {
+                    "message": "Image must not be blank.",
+                    "key": "Image"
+                  },
+                  {
+                    "message": "MaxMemory must not be blank.",
+                    "key": "MaxMemory"
+                  },
+                  {
+                    "message": "CPU must not be blank.",
+                    "key": "CPU"
+                  }
+                ]""";
         JSONAssert.assertEquals(expectedJSON, json, JSONCompareMode.NON_EXTENSIBLE);
     }
 
@@ -221,12 +227,14 @@ class ProfileValidateRequestExecutorTest {
         ProfileValidateRequestExecutor executor = new ProfileValidateRequestExecutor(new ProfileValidateRequest(properties));
         String json = executor.execute().responseBody();
 
-        String expectedJSON = "[\n" +
-                "  {\n" +
-                "    \"key\": \"BindMount\",\n" +
-                "    \"message\": \"Invalid BindMount configuration:\nErrors in BindMount at index 0, 'Name cannot be empty.'\"" +
-                "  }\n" +
-                "]";
+        String expectedJSON = """
+                [
+                  {
+                    "key": "BindMount",
+                    "message": "Invalid BindMount configuration:
+                Errors in BindMount at index 0, 'Name cannot be empty.'"\
+                  }
+                ]""";
 
         JSONAssert.assertEquals(expectedJSON, json, JSONCompareMode.NON_EXTENSIBLE);
     }
@@ -243,12 +251,13 @@ class ProfileValidateRequestExecutorTest {
         ProfileValidateRequestExecutor executor = new ProfileValidateRequestExecutor(new ProfileValidateRequest(properties));
         String json = executor.execute().responseBody();
 
-        String expectedJSON = "[\n" +
-                "  {\n" +
-                "    \"key\": \"BindMount\",\n" +
-                "    \"message\": \"There were errors parsing the BindMount JSON, check if the given JSON is valid.\"\n" +
-                "  }\n" +
-                "]";
+        String expectedJSON = """
+                [
+                  {
+                    "key": "BindMount",
+                    "message": "There were errors parsing the BindMount JSON, check if the given JSON is valid."
+                  }
+                ]""";
 
         JSONAssert.assertEquals(expectedJSON, json, JSONCompareMode.NON_EXTENSIBLE);
     }
@@ -261,28 +270,31 @@ class ProfileValidateRequestExecutorTest {
         properties.put("CPU", "0");
         properties.put("Image", "alpine");
 
-        String invalidConfig = "[\n" +
-                "  {\n" +
-                "    \"name\": \"data\",\n" +
-                "    \"SourcePath\": \"/ecs/data\",\n" +
-                "    \"ContainerPath\": \"/var/data\"\n" +
-                "  },\n" +
-                "  {\n" +
-                "    \"SourcePath\": \"/ecs/data\",\n" +
-                "    \"ContainerPath\": \"/var/data\"\n" +
-                "  }\n" +
-                "]";
+        String invalidConfig = """
+                [
+                  {
+                    "name": "data",
+                    "SourcePath": "/ecs/data",
+                    "ContainerPath": "/var/data"
+                  },
+                  {
+                    "SourcePath": "/ecs/data",
+                    "ContainerPath": "/var/data"
+                  }
+                ]""";
         properties.put(BIND_MOUNT, invalidConfig);
 
         ProfileValidateRequestExecutor executor = new ProfileValidateRequestExecutor(new ProfileValidateRequest(properties));
         String json = executor.execute().responseBody();
 
-        String expectedJSON = "[\n" +
-                "  {\n" +
-                "    \"key\": \"BindMount\",\n" +
-                "    \"message\": \"Invalid BindMount configuration:\nErrors in BindMount at index 0, 'Name cannot be empty.'\"\n" +
-                "  }\n" +
-                "]";
+        String expectedJSON = """
+                [
+                  {
+                    "key": "BindMount",
+                    "message": "Invalid BindMount configuration:
+                Errors in BindMount at index 0, 'Name cannot be empty.'"
+                  }
+                ]""";
 
         JSONAssert.assertEquals(expectedJSON, json, JSONCompareMode.NON_EXTENSIBLE);
     }
@@ -300,12 +312,13 @@ class ProfileValidateRequestExecutorTest {
         ProfileValidateRequestExecutor executor = new ProfileValidateRequestExecutor(new ProfileValidateRequest(properties));
         String json = executor.execute().responseBody();
 
-        String expectedJSON = "[\n" +
-                "  {\n" +
-                "    \"key\": \"SpotPrice\",\n" +
-                "    \"message\": \"Error parsing Spot Price, should be a valid double.\"\n" +
-                "  }\n" +
-                "]";
+        String expectedJSON = """
+                [
+                  {
+                    "key": "SpotPrice",
+                    "message": "Error parsing Spot Price, should be a valid double."
+                  }
+                ]""";
 
         JSONAssert.assertEquals(expectedJSON, json, JSONCompareMode.NON_EXTENSIBLE);
     }
@@ -323,12 +336,13 @@ class ProfileValidateRequestExecutorTest {
         ProfileValidateRequestExecutor executor = new ProfileValidateRequestExecutor(new ProfileValidateRequest(properties));
         String json = executor.execute().responseBody();
 
-        String expectedJSON = "[\n" +
-                "  {\n" +
-                "    \"key\": \"SpotRequestExpiresAfter\",\n" +
-                "    \"message\": \"Error parsing Spot Request Expires After, should be a valid integer.\"\n" +
-                "  }\n" +
-                "]";
+        String expectedJSON = """
+                [
+                  {
+                    "key": "SpotRequestExpiresAfter",
+                    "message": "Error parsing Spot Request Expires After, should be a valid integer."
+                  }
+                ]""";
 
         JSONAssert.assertEquals(expectedJSON, json, JSONCompareMode.NON_EXTENSIBLE);
     }

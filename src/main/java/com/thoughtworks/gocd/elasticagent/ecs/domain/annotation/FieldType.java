@@ -22,7 +22,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import static com.thoughtworks.gocd.elasticagent.ecs.utils.Util.checkArgument;
 import static java.text.MessageFormat.format;
 
 public enum FieldType {
@@ -61,7 +61,7 @@ public enum FieldType {
         }
     };
 
-    private static final Map<FieldType, String> errorsMap = Collections.unmodifiableMap(new HashMap<FieldType, String>() {{
+    private static final Map<FieldType, String> errorsMap = Collections.unmodifiableMap(new HashMap<>() {{
         put(STRING, null);
         put(NUMBER, "must be number");
         put(POSITIVE_DECIMAL, "must be positive decimal");

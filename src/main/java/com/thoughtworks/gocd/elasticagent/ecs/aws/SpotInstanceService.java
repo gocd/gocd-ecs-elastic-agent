@@ -18,28 +18,27 @@ package com.thoughtworks.gocd.elasticagent.ecs.aws;
 
 import com.amazonaws.services.ec2.model.*;
 import com.amazonaws.services.ecs.model.ContainerInstance;
+import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.matcher.SpotRequestMatcher;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.strategy.TerminateOperation;
-import com.thoughtworks.gocd.elasticagent.ecs.domain.ConsoleLogAppender;
-import com.thoughtworks.gocd.elasticagent.ecs.domain.ElasticAgentProfileProperties;
-import com.thoughtworks.gocd.elasticagent.ecs.domain.Platform;
-import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
+import com.thoughtworks.gocd.elasticagent.ecs.domain.*;
 import com.thoughtworks.gocd.elasticagent.ecs.exceptions.LimitExceededException;
+import org.apache.commons.lang3.Strings;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.Constants.LAST_SEEN_IDLE;
-import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.LOG;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.SpotRequestState.ACTIVE;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.SpotRequestState.OPEN;
 import static java.lang.String.format;
 import static java.util.stream.Collectors.*;
-import static org.apache.commons.collections4.CollectionUtils.union;
-import static org.apache.commons.lang3.StringUtils.containsAny;
 
 
 public class SpotInstanceService {
+    private static final Logger LOG = Logger.getLoggerFor(SpotInstanceService.class);
+
     private final SpotInstanceHelper spotInstanceHelper;
     private final EC2Config.Builder ec2ConfigBuilder;
     private final ContainerInstanceHelper containerInstanceHelper;
@@ -77,7 +76,7 @@ public class SpotInstanceService {
 
                 List<SpotInstanceRequest> spotRequestsWithoutRegisteredInstances = spotRequestsWithoutRegisteredInstances(pluginSettings, platform, allRegisteredSpotInstancesForPlatform);
 
-                Collection<SpotInstanceRequest> allSpotRequestsWithoutRunningInstance = union(spotRequestsWithoutRegisteredInstances, untaggedSpotRequests);
+                Set<SpotInstanceRequest> allSpotRequestsWithoutRunningInstance = Stream.concat(spotRequestsWithoutRegisteredInstances.stream(), untaggedSpotRequests.stream()).collect(toUnmodifiableSet());
 
                 LOG.info("[create-agent] For Platform: '{}',All-Registered-Spot-Instances count: '{}', Spot-Requests-Without-Registered-Instances count: '{}'," +
                                 "UnTagged-Spot-Requests count: '{}'", platform.name(), allRegisteredSpotInstancesForPlatform.size(),
@@ -106,7 +105,7 @@ public class SpotInstanceService {
             LOG.debug("[create-agent] Initiating a new spot instance request.");
             RequestSpotInstancesResult requestSpotInstancesResult = spotInstanceHelper.requestSpotInstanceRequest(pluginSettings, ec2Config, consoleLogAppender);
 
-            SpotInstanceRequest spotInstanceRequest = requestSpotInstancesResult.getSpotInstanceRequests().get(0);
+            SpotInstanceRequest spotInstanceRequest = requestSpotInstancesResult.getSpotInstanceRequests().getFirst();
 
             /*
                All valid spot SpotRequests are tagged after making a request for a spot instance.
@@ -167,7 +166,7 @@ public class SpotInstanceService {
     private List<SpotInstanceRequest> spotRequestsWithoutRegisteredInstances(PluginSettings pluginSettings, Platform platform,
                                                                              List<Instance> allRegisteredSpotInstancesForPlatform) {
         List<String> registeredInstanceIds = allRegisteredSpotInstancesForPlatform.stream()
-                .map(Instance::getInstanceId).collect(toList());
+                .map(Instance::getInstanceId).toList();
 
         List<SpotInstanceRequest> spotRequests = spotInstanceHelper
                 .getAllOpenOrSpotRequestsWithRunningInstances(pluginSettings, pluginSettings.getClusterName(), platform);
@@ -208,7 +207,7 @@ public class SpotInstanceService {
             return;
         }
 
-        List<String> instancesToTerminateIds = instancesToTerminate.stream().map(Instance::getInstanceId).collect(toList());
+        List<String> instancesToTerminateIds = instancesToTerminate.stream().map(Instance::getInstanceId).toList();
 
         final List<ContainerInstance> containerInstances = containerInstanceHelper.spotContainerInstances(pluginSettings);
         final List<ContainerInstance> containerInstanceList = containerInstances.stream()
@@ -235,7 +234,7 @@ public class SpotInstanceService {
         return tags.stream()
                 .filter(tag -> "platform".equals(tag.getKey()))
                 .findFirst()
-                .get();
+                .orElseThrow();
     }
 
     private void tagSpotRequest(PluginSettings pluginSettings, ElasticAgentProfileProperties elasticAgentProfileProperties, SpotInstanceRequest spotInstanceRequest) {
@@ -254,6 +253,6 @@ public class SpotInstanceService {
     }
 
     private boolean isSpotRequestValid(SpotInstanceRequest spotInstanceRequest) {
-        return containsAny(spotInstanceRequest.getState(), ACTIVE, OPEN);
+        return Strings.CS.containsAny(spotInstanceRequest.getState(), ACTIVE, OPEN);
     }
 }

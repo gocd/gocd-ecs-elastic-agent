@@ -28,7 +28,7 @@ public class GetClusterProfileMetadataExecutor implements RequestExecutor {
     private static final Gson GSON = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
 
     @Override
-    public GoPluginApiResponse execute() throws Exception {
+    public GoPluginApiResponse execute() {
         return new DefaultGoPluginApiResponse(200, GSON.toJson(new MetadataExtractor().extract(PluginSettings.class)));
     }
 

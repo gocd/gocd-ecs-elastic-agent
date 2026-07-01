@@ -42,7 +42,6 @@ import static com.thoughtworks.gocd.elasticagent.ecs.domain.Platform.LINUX;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 class OldestInstanceSelectionStrategyTest {
@@ -125,7 +124,7 @@ class OldestInstanceSelectionStrategyTest {
             final Optional<List<ContainerInstance>> containerInstance = oldestInstanceSelectionStrategy.instancesToStop(pluginSettings, LINUX);
 
             assertThat(containerInstance.isPresent()).isTrue();
-            assertThat(containerInstance.get().get(0).getEc2InstanceId()).isEqualTo("i-abcde");
+            assertThat(containerInstance.get().getFirst().getEc2InstanceId()).isEqualTo("i-abcde");
         }
 
         @Test

@@ -16,10 +16,7 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.size;
 
-import com.google.common.collect.ImmutableSortedMap;
-
 import java.util.Locale;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,31 +25,6 @@ import static java.util.Objects.requireNonNull;
 public class Size implements Comparable<Size> {
     private static final Pattern SIZE_PATTERN = Pattern.compile("(\\d+\\.?\\d?)\\s*(\\S+)");
 
-    private static final Map<String, SizeUnit> SUFFIXES = ImmutableSortedMap.<String, SizeUnit>orderedBy(String.CASE_INSENSITIVE_ORDER)
-            .put("B", SizeUnit.BYTES)
-            .put("byte", SizeUnit.BYTES)
-            .put("bytes", SizeUnit.BYTES)
-            .put("K", SizeUnit.KILOBYTES)
-            .put("KB", SizeUnit.KILOBYTES)
-            .put("KiB", SizeUnit.KILOBYTES)
-            .put("kilobyte", SizeUnit.KILOBYTES)
-            .put("kilobytes", SizeUnit.KILOBYTES)
-            .put("M", SizeUnit.MEGABYTES)
-            .put("MB", SizeUnit.MEGABYTES)
-            .put("MiB", SizeUnit.MEGABYTES)
-            .put("megabyte", SizeUnit.MEGABYTES)
-            .put("megabytes", SizeUnit.MEGABYTES)
-            .put("G", SizeUnit.GIGABYTES)
-            .put("GB", SizeUnit.GIGABYTES)
-            .put("GiB", SizeUnit.GIGABYTES)
-            .put("gigabyte", SizeUnit.GIGABYTES)
-            .put("gigabytes", SizeUnit.GIGABYTES)
-            .put("T", SizeUnit.TERABYTES)
-            .put("TB", SizeUnit.TERABYTES)
-            .put("TiB", SizeUnit.TERABYTES)
-            .put("terabyte", SizeUnit.TERABYTES)
-            .put("terabytes", SizeUnit.TERABYTES)
-            .build();
     private final long count;
     private final SizeUnit unit;
 
@@ -88,7 +60,7 @@ public class Size implements Comparable<Size> {
         matcher.matches();
 
         final long count = Long.parseLong(matcher.group(1));
-        SizeUnit unit = SUFFIXES.get(matcher.group(2));
+        SizeUnit unit = UnitParser.toUnit(matcher.group(2));
 
         return new Size(count, unit);
     }
@@ -135,7 +107,7 @@ public class Size implements Comparable<Size> {
 
     @Override
     public int hashCode() {
-        return (31 * (int) (count ^ (count >>> 32))) + unit.hashCode();
+        return (31 * Long.hashCode(count)) + unit.hashCode();
     }
 
     @Override

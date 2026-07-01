@@ -66,7 +66,7 @@ class AgentStatusReportViewTest {
         assertThat(document.select(".sub_tabs_container .tabs li").text()).isEqualTo("Details Environment Variables Log Configuration");
         assertThat(document.select(".tab-content-outer .container-details li label").text()).isEqualTo("Name Hostname Container Arn Task name Image Container Instance Arn CPU Units Max Memory(MB) Min Memory(MB) Privileged Docker Command Created At Started At Last status");
 
-        final List<String> detailsProperties = document.select(".tab-content-outer .container-details li span").stream().map(e -> e.text()).collect(toList());
+        final List<String> detailsProperties = document.select(".tab-content-outer .container-details li span").stream().map(Element::text).collect(toList());
         assertThat(detailsProperties).containsExactly(container.getName(),
                 container.getHostname(),
                 container.getContainerArn(),

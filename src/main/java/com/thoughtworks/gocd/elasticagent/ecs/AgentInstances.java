@@ -27,13 +27,13 @@ import java.util.Optional;
 public interface AgentInstances<T> {
     Optional<ECSTask> create(CreateAgentRequest request, PluginSettings settings, ConsoleLogAppender consoleLogAppender) throws Exception;
 
-    void terminate(String agentId, PluginSettings settings) throws Exception;
+    void terminate(String agentId, PluginSettings settings);
 
-    void terminateUnregisteredInstances(PluginSettings settings, Agents agents) throws Exception;
+    void terminateUnregisteredInstances(PluginSettings settings, Agents agents);
 
     Agents instancesCreatedAfterTimeout(PluginSettings settings, Agents agents);
 
-    void refreshAll(PluginSettings pluginRequest) throws Exception;
+    void refreshAll(PluginSettings pluginRequest);
 
     T find(String agentId);
 

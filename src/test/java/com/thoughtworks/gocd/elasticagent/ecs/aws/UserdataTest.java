@@ -144,11 +144,12 @@ class UserdataTest {
                     .clusterName("GoCD")
                     .toBase64();
 
-            final String expectedUserdataScript = "<powershell>\n" +
-                    "[Environment]::SetEnvironmentVariable(\"ECS_CLUSTER\", \"GoCD\", \"Machine\")\n" +
-                    "Import-Module ECSTools\n" +
-                    "Initialize-ECSAgent -Cluster 'GoCD' -EnableTaskIAMRole\n" +
-                    "</powershell>";
+            final String expectedUserdataScript = """
+                    <powershell>
+                    [Environment]::SetEnvironmentVariable("ECS_CLUSTER", "GoCD", "Machine")
+                    Import-Module ECSTools
+                    Initialize-ECSAgent -Cluster 'GoCD' -EnableTaskIAMRole
+                    </powershell>""";
 
             assertThat(decodeBase64(userdataScript)).isEqualTo(expectedUserdataScript);
         }
@@ -158,11 +159,12 @@ class UserdataTest {
             final String userdataScript = userdata.cleanupTaskAfter(10, TimeUnit.MINUTES)
                     .toBase64();
 
-            final String expectedUserdataScript = "<powershell>\n" +
-                    "[Environment]::SetEnvironmentVariable(\"ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION\", \"10m\", \"Machine\")\n" +
-                    "Import-Module ECSTools\n" +
-                    "Initialize-ECSAgent -Cluster 'null' -EnableTaskIAMRole\n" +
-                    "</powershell>";
+            final String expectedUserdataScript = """
+                    <powershell>
+                    [Environment]::SetEnvironmentVariable("ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION", "10m", "Machine")
+                    Import-Module ECSTools
+                    Initialize-ECSAgent -Cluster 'null' -EnableTaskIAMRole
+                    </powershell>""";
 
             assertThat(decodeBase64(userdataScript)).isEqualTo(expectedUserdataScript);
         }
@@ -172,11 +174,12 @@ class UserdataTest {
             final String userdataScript = userdata.imageCleanupAge(24, TimeUnit.HOURS)
                     .toBase64();
 
-            final String expectedUserdataScript = "<powershell>\n" +
-                    "[Environment]::SetEnvironmentVariable(\"ECS_IMAGE_MINIMUM_CLEANUP_AGE\", \"24h\", \"Machine\")\n" +
-                    "Import-Module ECSTools\n" +
-                    "Initialize-ECSAgent -Cluster 'null' -EnableTaskIAMRole\n" +
-                    "</powershell>";
+            final String expectedUserdataScript = """
+                    <powershell>
+                    [Environment]::SetEnvironmentVariable("ECS_IMAGE_MINIMUM_CLEANUP_AGE", "24h", "Machine")
+                    Import-Module ECSTools
+                    Initialize-ECSAgent -Cluster 'null' -EnableTaskIAMRole
+                    </powershell>""";
 
             assertThat(decodeBase64(userdataScript)).isEqualTo(expectedUserdataScript);
         }
@@ -186,12 +189,13 @@ class UserdataTest {
             final String userdataScript = userdata.dockerRegistry(DockerRegistryAuthType.AUTH_TOKEN, new DockerRegistryAuthData("url", "some-token", "email"))
                     .toBase64();
 
-            final String expectedUserdataScript = "<powershell>\n" +
-                    "[Environment]::SetEnvironmentVariable(\"ECS_ENGINE_AUTH_TYPE\", \"dockercfg\", \"Machine\")\n" +
-                    "[Environment]::SetEnvironmentVariable(\"ECS_ENGINE_AUTH_DATA\", \"{`\"url`\":{`\"auth`\":`\"some-token`\",`\"email`\":`\"email`\"}}\", \"Machine\")\n" +
-                    "Import-Module ECSTools\n" +
-                    "Initialize-ECSAgent -Cluster 'null' -EnableTaskIAMRole\n" +
-                    "</powershell>";
+            final String expectedUserdataScript = """
+                    <powershell>
+                    [Environment]::SetEnvironmentVariable("ECS_ENGINE_AUTH_TYPE", "dockercfg", "Machine")
+                    [Environment]::SetEnvironmentVariable("ECS_ENGINE_AUTH_DATA", "{`"url`":{`"auth`":`"some-token`",`"email`":`"email`"}}", "Machine")
+                    Import-Module ECSTools
+                    Initialize-ECSAgent -Cluster 'null' -EnableTaskIAMRole
+                    </powershell>""";
 
             assertThat(decodeBase64(userdataScript)).isEqualTo(expectedUserdataScript);
 
@@ -202,11 +206,12 @@ class UserdataTest {
             final String userdataScript = userdata.initScript("some-script")
                     .toBase64();
 
-            final String expectedUserdataScript = "<powershell>\n" +
-                    "Import-Module ECSTools\n" +
-                    "Initialize-ECSAgent -Cluster 'null' -EnableTaskIAMRole\n" +
-                    "some-script\n" +
-                    "</powershell>";
+            final String expectedUserdataScript = """
+                    <powershell>
+                    Import-Module ECSTools
+                    Initialize-ECSAgent -Cluster 'null' -EnableTaskIAMRole
+                    some-script
+                    </powershell>""";
 
             assertThat(decodeBase64(userdataScript)).isEqualTo(expectedUserdataScript);
         }
@@ -218,7 +223,6 @@ class UserdataTest {
                     .storageOption("dm.fs", "ext4").toBase64();
 
             final String expectedUserdataScript = "<powershell>\n" +
-                    "" +
                     "</powershell>";
 
             assertThat(decodeBase64(userdataScript)).isEqualTo(expectedUserdataScript);
@@ -231,11 +235,12 @@ class UserdataTest {
                     .attribute("LastName", "Ford")
                     .toBase64();
 
-            final String expectedUserdataScript = "<powershell>\n" +
-                    "[Environment]::SetEnvironmentVariable(\"ECS_INSTANCE_ATTRIBUTES\", \"{`\"FirstName`\":`\"Bob`\",`\"LastName`\":`\"Ford`\"}\", \"Machine\")\n" +
-                    "Import-Module ECSTools\n" +
-                    "Initialize-ECSAgent -Cluster 'null' -EnableTaskIAMRole\n" +
-                    "</powershell>";
+            final String expectedUserdataScript = """
+                    <powershell>
+                    [Environment]::SetEnvironmentVariable("ECS_INSTANCE_ATTRIBUTES", "{`"FirstName`":`"Bob`",`"LastName`":`"Ford`"}", "Machine")
+                    Import-Module ECSTools
+                    Initialize-ECSAgent -Cluster 'null' -EnableTaskIAMRole
+                    </powershell>""";
 
             assertThat(decodeBase64(userdataScript)).isEqualTo(expectedUserdataScript);
         }

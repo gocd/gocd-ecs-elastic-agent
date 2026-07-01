@@ -94,7 +94,7 @@ class ServerPingRequestExecutorTest {
         when(elasticAgentProfileProperties.platform()).thenReturn(LINUX);
         when(instanceSelectionStrategyFactory.strategyFor(any())).thenReturn(instanceSelectionStrategy);
 
-        when(serverPingRequest.allClusterProfileProperties()).thenReturn(Arrays.asList(clusterProfileProperties));
+        when(serverPingRequest.allClusterProfileProperties()).thenReturn(singletonList(clusterProfileProperties));
         allAgentInstances = new HashMap<>();
         allAgentInstances.put("id1", agentInstances);
         executor = new ServerPingRequestExecutor(serverPingRequest, allAgentInstances, pluginRequest, containerInstanceHelper, instanceSelectionStrategyFactory, stopOperation, terminationOperation, spotInstanceService);
@@ -102,7 +102,7 @@ class ServerPingRequestExecutorTest {
 
     @Test
     void testShouldDisableIdleAgents() throws Exception {
-        final Agents agents = new Agents(Arrays.asList(new Agent("agent-id", Agent.AgentState.Idle, Agent.BuildState.Idle, Agent.ConfigState.Enabled)));
+        final Agents agents = new Agents(List.of(new Agent("agent-id", Agent.AgentState.Idle, Agent.BuildState.Idle, Agent.ConfigState.Enabled)));
 
         when(pluginRequest.listAgents()).thenReturn(agents);
         verifyNoMoreInteractions(pluginRequest);
@@ -114,7 +114,7 @@ class ServerPingRequestExecutorTest {
 
     @Test
     void testShouldTerminateDisabledAgents() throws Exception {
-        final Agents agents = new Agents(Arrays.asList(new Agent("agent-id", Agent.AgentState.Idle, Agent.BuildState.Idle, Disabled)));
+        final Agents agents = new Agents(List.of(new Agent("agent-id", Agent.AgentState.Idle, Agent.BuildState.Idle, Disabled)));
 
         when(pluginRequest.listAgents()).thenReturn(agents, agents, new Agents());
         verifyNoMoreInteractions(pluginRequest);
@@ -144,7 +144,7 @@ class ServerPingRequestExecutorTest {
 
     @Test
     void shouldDeleteAgentFromConfigWhenCorrespondingContainerIsNotPresent() throws Exception {
-        when(pluginRequest.listAgents()).thenReturn(new Agents(Arrays.asList(new Agent("foo", Agent.AgentState.Idle, Agent.BuildState.Idle, Agent.ConfigState.Enabled))));
+        when(pluginRequest.listAgents()).thenReturn(new Agents(List.of(new Agent("foo", Agent.AgentState.Idle, Agent.BuildState.Idle, Agent.ConfigState.Enabled))));
         verifyNoMoreInteractions(pluginRequest);
 
         ECSTasks spyAgentInstances = spy(new ECSTasks(taskHelper, containerInstanceHelper, null));

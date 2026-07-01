@@ -148,7 +148,7 @@ class ECSTasksTest {
     }
 
     @Test
-    void shouldRefreshAllAgentInstancesAtStartup() throws Exception {
+    void shouldRefreshAllAgentInstancesAtStartup() {
         final PluginRequest pluginRequest = mock(PluginRequest.class);
         final TaskDefinition taskDefinition = mock(TaskDefinition.class);
         final Task task = mock(Task.class);
@@ -166,7 +166,7 @@ class ECSTasksTest {
     }
 
     @Test
-    void shouldNotRefreshAllAgentInstancesAfterTheStartup() throws Exception {
+    void shouldNotRefreshAllAgentInstancesAfterTheStartup() {
         ecsTasks.refreshAll(pluginSettings);
         verify(taskHelper, times(1)).listAllTasks(pluginSettings);
 
