@@ -78,8 +78,14 @@ public class ECSElasticPlugin implements GoPlugin {
             fetchServerIdFromServer();
             LOG.debug("Request from server: " + request.requestName());
             switch (Request.fromString(request.requestName())) {
+                case REQUEST_GET_CAPABILITIES:
+                    return new GetCapabilitiesExecutor().execute();
                 case PLUGIN_SETTINGS_GET_ICON:
                     return new GetPluginSettingsIconExecutor().execute();
+                case PLUGIN_SETTINGS_GET_CONFIG:
+                    return DefaultGoPluginApiResponse.success("{}");
+                case REQUEST_MIGRATE_CONFIGURATION:
+                    return MigrateConfigurationRequest.fromJSON(request.requestBody()).executor().execute();
                 case REQUEST_GET_ELASTIC_AGENT_PROFILE_METADATA:
                     return new GetProfileMetadataExecutor().execute();
                 case REQUEST_GET_ELASTIC_AGENT_PROFILE_VIEW:
@@ -122,12 +128,8 @@ public class ECSElasticPlugin implements GoPlugin {
                     clusterProfileProperties = statusReportRequest.clusterProfileProperties();
                     refreshInstancesForCluster(clusterProfileProperties);
                     return statusReportRequest.executor(getAgentInstancesFor(clusterProfileProperties)).execute();
-                case REQUEST_GET_CAPABILITIES:
-                    return new GetCapabilitiesExecutor().execute();
                 case REQUEST_CLUSTER_PROFILE_CHANGED:
                     return new DefaultGoPluginApiResponse(200);
-                case REQUEST_MIGRATE_CONFIGURATION:
-                    return MigrateConfigurationRequest.fromJSON(request.requestBody()).executor().execute();
                 default:
                     throw new UnhandledRequestTypeException(request.requestName());
             }

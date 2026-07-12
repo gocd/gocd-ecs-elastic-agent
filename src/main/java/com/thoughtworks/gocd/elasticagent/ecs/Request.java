@@ -36,6 +36,7 @@ public enum Request {
 
     // settings related requests that the server makes to the plugin
     PLUGIN_SETTINGS_GET_ICON(Constants.ELASTIC_AGENT_REQUEST_PREFIX + ".get-icon"),
+    PLUGIN_SETTINGS_GET_CONFIG(Constants.PLUGIN_SETTINGS_REQUEST_PREFIX + ".get-configuration"),
 
     //capabilities and status reports
     REQUEST_GET_CAPABILITIES(Constants.ELASTIC_AGENT_REQUEST_PREFIX + ".get-capabilities"),
@@ -65,5 +66,6 @@ public enum Request {
 
     private static class Constants {
         public static final String ELASTIC_AGENT_REQUEST_PREFIX = "cd.go.elastic-agent";
+        public static final String PLUGIN_SETTINGS_REQUEST_PREFIX = "go.plugin-settings";
     }
 }
