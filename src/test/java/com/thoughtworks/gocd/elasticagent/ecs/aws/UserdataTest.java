@@ -94,22 +94,12 @@ class UserdataTest {
         }
 
         @ParameterizedTest
-        @FileSource(files = "/userdata/with-storage-config.sh")
-        void shouldCreateUserdataWithStorageOptions(String expectedUserdataScript) {
-            final String userdataScript = userdata.storageOption("dm.basesize", "20G")
-                    .storageOption("dm.fs", "ext4").toBase64();
-
-            assertThat(decodeBase64(userdataScript)).isEqualTo(expectedUserdataScript);
-        }
-
-        @ParameterizedTest
         @FileSource(files = "/userdata/full-userdata.sh")
         void shouldBuildCompleteUserdataScript(String expectedUserdataScript) {
             final String userdataScript = userdata.clusterName("some-cluster")
                     .cleanupTaskAfter(1, TimeUnit.MINUTES)
                     .imageCleanupAge(24, TimeUnit.HOURS)
                     .dockerRegistry(DockerRegistryAuthType.AUTH_TOKEN, new DockerRegistryAuthData("url", "some-token", "email"))
-                    .storageOption("foo", "bsfds")
                     .efs("3.4.5.7", "/dir/")
                     .initScript("some-script")
                     .toBase64();
@@ -212,18 +202,6 @@ class UserdataTest {
                     Initialize-ECSAgent -Cluster 'null' -EnableTaskIAMRole
                     some-script
                     </powershell>""";
-
-            assertThat(decodeBase64(userdataScript)).isEqualTo(expectedUserdataScript);
-        }
-
-        @Test
-        @Disabled("Do not know how to change docker storage option read: https://docs.microsoft.com/en-us/virtualization/windowscontainers/manage-docker/configure-docker-daemon")
-        void shouldCreateUserdataWithStorageOptions() {
-            final String userdataScript = userdata.storageOption("dm.basesize", "20G")
-                    .storageOption("dm.fs", "ext4").toBase64();
-
-            final String expectedUserdataScript = "<powershell>\n" +
-                    "</powershell>";
 
             assertThat(decodeBase64(userdataScript)).isEqualTo(expectedUserdataScript);
         }

@@ -33,13 +33,8 @@ import java.util.stream.Collectors;
 import static com.amazonaws.util.EncodingSchemeEnum.BASE64;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.DockerRegistryAuthType.AUTH_TOKEN;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.DockerRegistryAuthType.USERNAME_PASSWORD;
-import static java.lang.String.format;
-import static java.lang.String.join;
-import static org.apache.commons.lang3.StringUtils.EMPTY;
 
 public class Userdata {
-    private static final Logger LOG = Logger.getLoggerFor(Userdata.class);
-
     private static final String KEY_ECS_CLUSTER = "ECS_CLUSTER";
     private static final String KEY_ECS_ENGINE_AUTH_TYPE = "ECS_ENGINE_AUTH_TYPE";
     private static final String KEY_ECS_ENGINE_AUTH_DATA = "ECS_ENGINE_AUTH_DATA";
@@ -48,12 +43,12 @@ public class Userdata {
     private static final String KEY_ECS_INSTANCE_ATTRIBUTES = "ECS_INSTANCE_ATTRIBUTES";
     private static final String LINUX_USER_DATA = Util.readResource("/userdata.template");
 
+    private final Map<String, String> ecsConfig = new HashMap<>();
+    private final Map<String, String> customAttributes = new HashMap<>();
+
     private EFS efs;
     private String initScript;
-    private Map<String, String> storageOptions = new HashMap<>();
     private Platform platform = Platform.LINUX;
-    private Map<String, String> ecsConfig = new HashMap<>();
-    private Map<String, String> customAttributes = new HashMap<>();
 
     public Userdata efs(String dnsOrIP, String mountDir) {
         this.efs = new EFS(dnsOrIP, mountDir);
@@ -79,16 +74,6 @@ public class Userdata {
 
     public static String decodeBase64(String userData) {
         return new String(EncodingSchemeEnum.BASE64.decode(userData));
-    }
-
-    public Userdata storageOption(String name, String value) {
-        if (StringUtils.isAnyBlank(name, value)) {
-            LOG.warn("Skipping storage option as either name or value is not specified.");
-            return this;
-        }
-
-        storageOptions.put(name, value);
-        return this;
     }
 
     public Userdata clusterName(String clusterName) {
@@ -139,22 +124,11 @@ public class Userdata {
         return LINUX_USER_DATA
                 .replace("ECS_CONFIG_FILE", linuxECSConfig())
                 .replace("EFS_CONFIG_SCRIPT", linuxEFSConfig())
-                .replace("OVERRIDE_STORAGE_OPTION", linuxOverrideStorageOption())
-                .replace("CUSTOM_USER_DATA_SCRIPT", StringUtils.isNotBlank(initScript) ? initScript : EMPTY);
-    }
-
-    private String linuxOverrideStorageOption() {
-        if (storageOptions != null && !storageOptions.isEmpty()) {
-            return storageOptions.entrySet().stream().map(e -> format("--storage-opt %s", join("=", e.getKey(), e.getValue()))).collect(Collectors.joining(" "));
-        }
-        return EMPTY;
+                .replace("CUSTOM_USER_DATA_SCRIPT", StringUtils.isBlank(initScript) ? "" : initScript);
     }
 
     private String linuxEFSConfig() {
-        if (efs != null) {
-            return StringUtils.stripToEmpty(efs.toScript());
-        }
-        return EMPTY;
+        return efs == null ? "" : StringUtils.stripToEmpty(efs.toScript());
     }
 
     private String linuxECSConfig() {
@@ -175,7 +149,7 @@ public class Userdata {
 
     public Userdata attribute(String name, String value) {
         if (StringUtils.isNotBlank(name)) {
-            customAttributes.put(name, StringUtils.isBlank(value) ? EMPTY : value);
+            customAttributes.put(name, StringUtils.isBlank(value) ? "" : value);
         }
         return this;
     }

@@ -73,12 +73,6 @@ class PluginSettingsTest {
         assertThat(pluginSettings.getKeyPairName()).isNull();
     }
 
-    @Test
-    void shouldReturnSpecifiedContainerDataSizeLimit() {
-        PluginSettings pluginSettings = buildPluginSettings("MaxContainerDataVolumeSize", "20");
-        assertThat(pluginSettings.getMaxContainerDataVolumeSize()).isEqualTo("20");
-    }
-
     private PluginSettings buildPluginSettings(String key, String value) {
         return new PluginSettingsBuilder().addSetting(key, value).build();
     }

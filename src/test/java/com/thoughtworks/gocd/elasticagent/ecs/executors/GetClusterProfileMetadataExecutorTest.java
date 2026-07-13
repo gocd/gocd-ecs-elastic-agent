@@ -96,13 +96,6 @@ class GetClusterProfileMetadataExecutorTest {
                     }
                   },
                   {
-                    "key": "MaxContainerDataVolumeSize",
-                    "metadata": {
-                      "required": false,
-                      "secure": false
-                    }
-                  },
-                  {
                     "key": "KeyPairName",
                     "metadata": {
                       "required": false,

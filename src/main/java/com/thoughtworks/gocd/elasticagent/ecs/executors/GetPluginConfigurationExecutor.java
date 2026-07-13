@@ -38,7 +38,6 @@ public class GetPluginConfigurationExecutor implements RequestExecutor {
     private static final String ENVIRONMENT_VARIABLES = "EnvironmentVariables";
     private static final String CLUSTER_NAME = "ClusterName";
     private static final String CONTAINER_AUTOREGISTER_TIMEOUT = "ContainerAutoregisterTimeout";
-    private static final String CONTAINER_DATA_VOLUME_SIZE = "MaxContainerDataVolumeSize";
     private static final String KEY_PAIR_NAME = "KeyPairName";
 
 
@@ -77,7 +76,6 @@ public class GetPluginConfigurationExecutor implements RequestExecutor {
             new NonBlankField(CLUSTER_NAME, "AWS Cluster Name", false, next()),
             new Field(ENVIRONMENT_VARIABLES, "Environment Variables", null, false, false, next()),
             new PositiveNumberField(CONTAINER_AUTOREGISTER_TIMEOUT, "Container auto-register timeout (in minutes)", null, true, next()),
-            new ContainerDataVolumeField(CONTAINER_DATA_VOLUME_SIZE, next()),
 
             // Common configurations for instance
             new Field(KEY_PAIR_NAME, "KeyPair name", null, false, false, next()),

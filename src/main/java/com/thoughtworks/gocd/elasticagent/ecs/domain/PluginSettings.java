@@ -92,11 +92,6 @@ public class PluginSettings {
     private String containerAutoregisterTimeout;
 
     @Expose
-    @SerializedName("MaxContainerDataVolumeSize")
-    @Metadata(key = "MaxContainerDataVolumeSize", required = false, secure = false)
-    private String maxContainerDataVolumeSize;
-
-    @Expose
     @SerializedName("KeyPairName")
     @Metadata(key = "KeyPairName", required = false, secure = false)
     private String keyPairName;
@@ -340,10 +335,6 @@ public class PluginSettings {
         return new Period().withMinutes(parseInt(containerAutoregisterTimeout));
     }
 
-    public String getMaxContainerDataVolumeSize() {
-        return maxContainerDataVolumeSize;
-    }
-
     public StopPolicy getLinuxStopPolicy() {
         return linuxStopPolicy;
     }
@@ -584,7 +575,6 @@ public class PluginSettings {
                 Objects.equals(secretAccessKey, that.secretAccessKey) &&
                 Objects.equals(environmentVariables, that.environmentVariables) &&
                 Objects.equals(containerAutoregisterTimeout, that.containerAutoregisterTimeout) &&
-                Objects.equals(maxContainerDataVolumeSize, that.maxContainerDataVolumeSize) &&
                 Objects.equals(keyPairName, that.keyPairName) &&
                 Objects.equals(iamInstanceProfile, that.iamInstanceProfile) &&
                 Objects.equals(subnetIds, that.subnetIds) &&
@@ -633,7 +623,7 @@ public class PluginSettings {
 
     @Override
     public int hashCode() {
-        return Objects.hash(goServerUrl, clusterName, region, accessKeyId, secretAccessKey, environmentVariables, containerAutoregisterTimeout, maxContainerDataVolumeSize, keyPairName, iamInstanceProfile, subnetIds, securityGroupIds, logDriverName, logOptions, linuxAMI, linuxInstanceType, linuxRegisterTimeout, minLinuxInstanceCount, maxLinuxInstancesAllowed, maxLinuxSpotInstanceAllowed, linuxVolumeType, linuxVolumeSize, linuxVolumeProvisionedIOPS, linuxOSVolumeType, linuxOSVolumeSize, linuxOSVolumeProvisionedIOPS, linuxUserdataScript, linuxStopPolicy, stopLinuxInstanceAfter, terminateStoppedLinuxInstanceAfter, terminateIdleLinuxSpotInstanceAfter, windowsAMI, windowsInstanceType, windowsVolumeType, windowsVolumeSize, windowsOSVolumeProvisionedIOPS, windowsRegisterTimeout, minWindowsInstanceCount, maxWindowsInstancesAllowed, maxWindowsSpotInstanceAllowed, windowsUserdataScript, windowsStopPolicy, stopWindowsInstanceAfter, terminateStoppedWindowsInstanceAfter, terminateIdleWindowsSpotInstanceAfter, privateDockerRegistryAuthType, privateDockerRegistryAuthToken, privateDockerRegistryUrl, privateDockerRegistryEmail, privateDockerRegistryUsername, privateDockerRegistryPassword, efsDnsOrIP);
+        return Objects.hash(goServerUrl, clusterName, region, accessKeyId, secretAccessKey, environmentVariables, containerAutoregisterTimeout, keyPairName, iamInstanceProfile, subnetIds, securityGroupIds, logDriverName, logOptions, linuxAMI, linuxInstanceType, linuxRegisterTimeout, minLinuxInstanceCount, maxLinuxInstancesAllowed, maxLinuxSpotInstanceAllowed, linuxVolumeType, linuxVolumeSize, linuxVolumeProvisionedIOPS, linuxOSVolumeType, linuxOSVolumeSize, linuxOSVolumeProvisionedIOPS, linuxUserdataScript, linuxStopPolicy, stopLinuxInstanceAfter, terminateStoppedLinuxInstanceAfter, terminateIdleLinuxSpotInstanceAfter, windowsAMI, windowsInstanceType, windowsVolumeType, windowsVolumeSize, windowsOSVolumeProvisionedIOPS, windowsRegisterTimeout, minWindowsInstanceCount, maxWindowsInstancesAllowed, maxWindowsSpotInstanceAllowed, windowsUserdataScript, windowsStopPolicy, stopWindowsInstanceAfter, terminateStoppedWindowsInstanceAfter, terminateIdleWindowsSpotInstanceAfter, privateDockerRegistryAuthType, privateDockerRegistryAuthToken, privateDockerRegistryUrl, privateDockerRegistryEmail, privateDockerRegistryUsername, privateDockerRegistryPassword, efsDnsOrIP);
     }
 
     public String uuid() {

@@ -86,274 +86,267 @@ class GetPluginConfigurationExecutorTest {
                     "secure": false,
                     "display-order": "6"
                   },
-                  "MaxContainerDataVolumeSize": {
-                    "display-name": "Container data volume size",
-                    "default-value": "10",
-                    "required": false,
-                    "secure": false,
-                    "display-order": "7"
-                  },
                   "KeyPairName": {
                     "display-name": "KeyPair name",
                     "required": false,
                     "secure": false,
-                    "display-order": "8"
+                    "display-order": "7"
                   },
                   "IamInstanceProfile": {
                     "display-name": "Iam instance profile",
                     "required": true,
                     "secure": false,
-                    "display-order": "9"
+                    "display-order": "8"
                   },
                   "SubnetIds": {
                     "display-name": "Subnet id(s)",
                     "required": false,
                     "secure": false,
-                    "display-order": "10"
+                    "display-order": "9"
                   },
                   "SecurityGroupIds": {
                     "display-name": "Security Group Id(s)",
                     "required": false,
                     "secure": false,
-                    "display-order": "11"
+                    "display-order": "10"
                   },
                   "LinuxAmi": {
                     "display-name": "Ami id",
                     "required": false,
                     "secure": false,
-                    "display-order": "12"
+                    "display-order": "11"
                   },
                   "LinuxInstanceType": {
                     "display-name": "Instance type",
                     "required": false,
                     "secure": false,
-                    "display-order": "13"
+                    "display-order": "12"
                   },
                   "LinuxRegisterTimeout": {
                     "display-name": "Instance creation timeout (in minutes)",
                     "default-value": "5",
                     "required": false,
                     "secure": false,
-                    "display-order": "14"
+                    "display-order": "13"
                   },
                   "MinLinuxInstanceCount": {
                     "display-name": "Minimum instance required in cluster",
                     "default-value": "0",
                     "required": false,
                     "secure": false,
-                    "display-order": "15"
+                    "display-order": "14"
                   },
                   "MaxLinuxInstancesAllowed": {
                     "display-name": "Maximum instances allowed",
                     "default-value": "5",
                     "required": false,
                     "secure": false,
-                    "display-order": "16"
+                    "display-order": "15"
                   },
                   "LinuxOSVolumeType": {
                     "display-name": "Additional volume for operating system",
                     "default-value": "none",
                     "required": false,
                     "secure": false,
-                    "display-order": "17"
+                    "display-order": "16"
                   },
                   "LinuxOSVolumeSize": {
                     "display-name": "Volume size",
                     "default-value": "8",
                     "required": false,
                     "secure": false,
-                    "display-order": "18"
+                    "display-order": "17"
                   },
                   "LinuxOSVolumeProvisionedIOPS": {
                     "display-name": "Provisioned IOPS",
                     "default-value": "400",
                     "required": false,
                     "secure": false,
-                    "display-order": "19"
+                    "display-order": "18"
                   },
                   "LinuxDockerVolumeType": {
                     "display-name": "Additional volume",
                     "default-value": "none",
                     "required": false,
                     "secure": false,
-                    "display-order": "20"
+                    "display-order": "19"
                   },
                   "LinuxDockerVolumeSize": {
                     "display-name": "Volume size",
                     "default-value": "22",
                     "required": false,
                     "secure": false,
-                    "display-order": "21"
+                    "display-order": "20"
                   },
                   "LinuxDockerVolumeProvisionedIOPS": {
                     "display-name": "Provisioned IOPS",
                     "default-value": "400",
                     "required": false,
                     "secure": false,
-                    "display-order": "22"
+                    "display-order": "21"
                   },
                   "LinuxStopPolicy": {
                     "display-name": "Stop instance policy",
                     "default-value": "StopIdleInstance",
                     "required": false,
                     "secure": false,
-                    "display-order": "23"
+                    "display-order": "22"
                   },
                   "StopLinuxInstanceAfter": {
                     "display-name": "Stop instance after(in minutes)",
                     "default-value": "10",
                     "required": false,
                     "secure": false,
-                    "display-order": "24"
+                    "display-order": "23"
                   },
                   "TerminateStoppedLinuxInstanceAfter": {
                     "display-name": "Terminate stopped instance after(in minutes)",
                     "default-value": "5",
                     "required": false,
                     "secure": false,
-                    "display-order": "25"
+                    "display-order": "24"
                   },
                   "LinuxUserdataScript": {
                     "display-name": "Userdata script",
                     "required": false,
                     "secure": false,
-                    "display-order": "26"
+                    "display-order": "25"
                   },
                   "WindowsAmi": {
                     "display-name": "Ami id",
                     "required": false,
                     "secure": false,
-                    "display-order": "27"
+                    "display-order": "26"
                   },
                   "WindowsInstanceType": {
                     "display-name": "Instance type",
                     "required": false,
                     "secure": false,
-                    "display-order": "28"
+                    "display-order": "27"
                   },
                   "WindowsOSVolumeType": {
                     "display-name": "Additional volume",
                     "default-value": "none",
                     "required": false,
                     "secure": false,
-                    "display-order": "29"
+                    "display-order": "28"
                   },
                   "WindowsOSVolumeSize": {
                     "display-name": "Volume size",
                     "default-value": "50",
                     "required": false,
                     "secure": false,
-                    "display-order": "30"
+                    "display-order": "29"
                   },
                   "WindowsOSVolumeProvisionedIOPS": {
                     "display-name": "Provisioned IOPS",
                     "default-value": "400",
                     "required": false,
                     "secure": false,
-                    "display-order": "31"
+                    "display-order": "30"
                   },
                   "WindowsRegisterTimeout": {
                     "display-name": "Instance creation timeout (in minutes)",
                     "default-value": "15",
                     "required": false,
                     "secure": false,
-                    "display-order": "32"
+                    "display-order": "31"
                   },
                   "MinWindowsInstanceCount": {
                     "display-name": "Minimum instances required in cluster",
                     "default-value": "0",
                     "required": false,
                     "secure": false,
-                    "display-order": "33"
+                    "display-order": "32"
                   },
                   "MaxWindowsInstancesAllowed": {
                     "display-name": "Maximum instances allowed",
                     "default-value": "5",
                     "required": false,
                     "secure": false,
-                    "display-order": "34"
+                    "display-order": "33"
                   },
                   "WindowsStopPolicy": {
                     "display-name": "Stop instance policy",
                     "default-value": "StopIdleInstance",
                     "required": false,
                     "secure": false,
-                    "display-order": "35"
+                    "display-order": "34"
                   },
                   "StopWindowsInstanceAfter": {
                     "display-name": "Stop instance after(in minutes)",
                     "default-value": "10",
                     "required": false,
                     "secure": false,
-                    "display-order": "36"
+                    "display-order": "35"
                   },
                   "TerminateStoppedWindowsInstanceAfter": {
                     "display-name": "Terminate stopped instance after(in minutes)",
                     "default-value": "5",
                     "required": false,
                     "secure": false,
-                    "display-order": "37"
+                    "display-order": "36"
                   },
                   "WindowsUserdataScript": {
                     "display-name": "Userdata script",
                     "required": false,
                     "secure": false,
-                    "display-order": "38"
+                    "display-order": "37"
                   },
                   "PrivateDockerRegistryAuthType": {
                     "display-name": "Default Docker Registry",
                     "required": false,
                     "secure": false,
-                    "display-order": "39"
+                    "display-order": "38"
                   },
                   "PrivateDockerRegistryUrl": {
                     "display-name": "Private docker registry url",
                     "required": false,
                     "secure": false,
-                    "display-order": "40"
+                    "display-order": "39"
                   },
                   "PrivateDockerRegistryEmail": {
                     "display-name": "Email",
                     "required": false,
                     "secure": false,
-                    "display-order": "41"
+                    "display-order": "40"
                   },
                   "PrivateDockerRegistryUsername": {
                     "display-name": "Docker registry username",
                     "required": false,
                     "secure": false,
-                    "display-order": "42"
+                    "display-order": "41"
                   },
                   "PrivateDockerRegistryPassword": {
                     "display-name": "Docker registry password",
                     "required": false,
                     "secure": true,
-                    "display-order": "43"
+                    "display-order": "42"
                   },
                   "PrivateDockerRegistryAuthToken": {
                     "display-name": "Docker registry auth token",
                     "required": false,
                     "secure": false,
-                    "display-order": "44"
+                    "display-order": "43"
                   },
                   "LogDriver": {
                     "display-name": "Log driver name",
                     "required": false,
                     "secure": false,
-                    "display-order": "45"
+                    "display-order": "44"
                   },
                   "LogOptions": {
                     "display-name": "Log options",
                     "required": false,
                     "secure": false,
-                    "display-order": "46"
+                    "display-order": "45"
                   },
                   "EfsDnsOrIP": {
                     "display-name": "Additional volume",
                     "default-value": "none",
                     "required": false,
                     "secure": false,
-                    "display-order": "47"
+                    "display-order": "46"
                   }
                 }""";
 

@@ -238,7 +238,7 @@ public class EC2Config {
 
         private String getEncodedUserData(String userdataScript) {
 
-            final Userdata userdata = new Userdata()
+            return new Userdata()
                     .platform(elasticAgentProfileProperties.platform())
                     .clusterName(pluginSettings.getClusterName())
                     .cleanupTaskAfter(1, TimeUnit.MINUTES)
@@ -246,13 +246,8 @@ public class EC2Config {
                     .dockerRegistry(pluginSettings.getPrivateDockerRegistryAuthType(), pluginSettings.getPrivateDockerRegistryAuthData())
                     .attribute(Constants.LABEL_SERVER_ID, getServerId())
                     .efs(pluginSettings.efsDnsOrIP(), pluginSettings.efsMountLocation())
-                    .initScript(StringUtils.stripToEmpty(userdataScript));
-
-            if (StringUtils.isNotBlank(pluginSettings.getMaxContainerDataVolumeSize())) {
-                userdata.storageOption("dm.basesize", pluginSettings.getMaxContainerDataVolumeSize() + "G");
-            }
-
-            return userdata.toBase64();
+                    .initScript(StringUtils.stripToEmpty(userdataScript))
+                    .toBase64();
         }
     }
 }

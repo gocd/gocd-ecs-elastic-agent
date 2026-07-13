@@ -114,7 +114,6 @@ class ValidateClusterProfileRequestExecutorTest {
         request.put("IamInstanceProfile", "1");
         request.put("AWSRegion", "ap-south-1");
         request.put("SubnetIds", "xyz-subnet");
-        request.put("MaxContainerDataVolumeSize", "20");
         return request;
     }
 
