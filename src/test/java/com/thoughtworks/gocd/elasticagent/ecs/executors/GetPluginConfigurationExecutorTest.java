@@ -21,8 +21,10 @@ import com.google.gson.reflect.TypeToken;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompareMode;
 
 import java.util.Map;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -42,314 +44,315 @@ class GetPluginConfigurationExecutorTest {
 
         assertThat(response.responseCode()).isEqualTo(200);
 
+        int expectedFieldNumber = 47;
         String expectedJSON = """
                 {
                   "GoServerUrl": {
                     "display-name": "Go Server URL",
                     "required": true,
                     "secure": false,
-                    "display-order": "0"
+                    "display-order": "%d"
                   },
                   "AWSAccessKeyId": {
                     "display-name": "AWS Access Key ID",
                     "required": false,
                     "secure": true,
-                    "display-order": "1"
+                    "display-order": "%d"
                   },
                   "AWSSecretAccessKey": {
                     "display-name": "AWS Secret Access Key",
                     "required": false,
                     "secure": true,
-                    "display-order": "2"
+                    "display-order": "%d"
                   },
                   "AWSRegion": {
                     "display-name": "AWS Region",
                     "required": false,
                     "secure": false,
-                    "display-order": "3"
+                    "display-order": "%d"
                   },
                   "ClusterName": {
                     "display-name": "AWS Cluster Name",
                     "required": true,
                     "secure": false,
-                    "display-order": "4"
+                    "display-order": "%d"
                   },
                   "EnvironmentVariables": {
                     "display-name": "Environment Variables",
                     "required": false,
                     "secure": false,
-                    "display-order": "5"
+                    "display-order": "%d"
                   },
                   "ContainerAutoregisterTimeout": {
                     "display-name": "Container auto-register timeout (in minutes)",
                     "required": true,
                     "secure": false,
-                    "display-order": "6"
+                    "display-order": "%d"
                   },
                   "KeyPairName": {
                     "display-name": "KeyPair name",
                     "required": false,
                     "secure": false,
-                    "display-order": "7"
+                    "display-order": "%d"
                   },
                   "IamInstanceProfile": {
                     "display-name": "Iam instance profile",
                     "required": true,
                     "secure": false,
-                    "display-order": "8"
+                    "display-order": "%d"
                   },
                   "SubnetIds": {
                     "display-name": "Subnet id(s)",
                     "required": false,
                     "secure": false,
-                    "display-order": "9"
+                    "display-order": "%d"
                   },
                   "SecurityGroupIds": {
                     "display-name": "Security Group Id(s)",
                     "required": false,
                     "secure": false,
-                    "display-order": "10"
+                    "display-order": "%d"
                   },
                   "LinuxAmi": {
                     "display-name": "Ami id",
                     "required": false,
                     "secure": false,
-                    "display-order": "11"
+                    "display-order": "%d"
                   },
                   "LinuxInstanceType": {
                     "display-name": "Instance type",
                     "required": false,
                     "secure": false,
-                    "display-order": "12"
+                    "display-order": "%d"
                   },
                   "LinuxRegisterTimeout": {
                     "display-name": "Instance creation timeout (in minutes)",
                     "default-value": "5",
                     "required": false,
                     "secure": false,
-                    "display-order": "13"
+                    "display-order": "%d"
                   },
                   "MinLinuxInstanceCount": {
                     "display-name": "Minimum instance required in cluster",
                     "default-value": "0",
                     "required": false,
                     "secure": false,
-                    "display-order": "14"
+                    "display-order": "%d"
                   },
                   "MaxLinuxInstancesAllowed": {
                     "display-name": "Maximum instances allowed",
                     "default-value": "5",
                     "required": false,
                     "secure": false,
-                    "display-order": "15"
+                    "display-order": "%d"
                   },
                   "LinuxOSVolumeType": {
                     "display-name": "Additional volume for operating system",
                     "default-value": "none",
                     "required": false,
                     "secure": false,
-                    "display-order": "16"
+                    "display-order": "%d"
                   },
                   "LinuxOSVolumeSize": {
                     "display-name": "Volume size",
                     "default-value": "8",
                     "required": false,
                     "secure": false,
-                    "display-order": "17"
+                    "display-order": "%d"
                   },
                   "LinuxOSVolumeProvisionedIOPS": {
                     "display-name": "Provisioned IOPS",
                     "default-value": "400",
                     "required": false,
                     "secure": false,
-                    "display-order": "18"
+                    "display-order": "%d"
                   },
                   "LinuxDockerVolumeType": {
                     "display-name": "Additional volume",
                     "default-value": "none",
                     "required": false,
                     "secure": false,
-                    "display-order": "19"
+                    "display-order": "%d"
                   },
                   "LinuxDockerVolumeSize": {
                     "display-name": "Volume size",
                     "default-value": "22",
                     "required": false,
                     "secure": false,
-                    "display-order": "20"
+                    "display-order": "%d"
                   },
                   "LinuxDockerVolumeProvisionedIOPS": {
                     "display-name": "Provisioned IOPS",
                     "default-value": "400",
                     "required": false,
                     "secure": false,
-                    "display-order": "21"
+                    "display-order": "%d"
                   },
                   "LinuxStopPolicy": {
                     "display-name": "Stop instance policy",
                     "default-value": "StopIdleInstance",
                     "required": false,
                     "secure": false,
-                    "display-order": "22"
+                    "display-order": "%d"
                   },
                   "StopLinuxInstanceAfter": {
                     "display-name": "Stop instance after(in minutes)",
                     "default-value": "10",
                     "required": false,
                     "secure": false,
-                    "display-order": "23"
+                    "display-order": "%d"
                   },
                   "TerminateStoppedLinuxInstanceAfter": {
                     "display-name": "Terminate stopped instance after(in minutes)",
                     "default-value": "5",
                     "required": false,
                     "secure": false,
-                    "display-order": "24"
+                    "display-order": "%d"
                   },
                   "LinuxUserdataScript": {
                     "display-name": "Userdata script",
                     "required": false,
                     "secure": false,
-                    "display-order": "25"
+                    "display-order": "%d"
                   },
                   "WindowsAmi": {
                     "display-name": "Ami id",
                     "required": false,
                     "secure": false,
-                    "display-order": "26"
+                    "display-order": "%d"
                   },
                   "WindowsInstanceType": {
                     "display-name": "Instance type",
                     "required": false,
                     "secure": false,
-                    "display-order": "27"
+                    "display-order": "%d"
                   },
                   "WindowsOSVolumeType": {
                     "display-name": "Additional volume",
                     "default-value": "none",
                     "required": false,
                     "secure": false,
-                    "display-order": "28"
+                    "display-order": "%d"
                   },
                   "WindowsOSVolumeSize": {
                     "display-name": "Volume size",
                     "default-value": "50",
                     "required": false,
                     "secure": false,
-                    "display-order": "29"
+                    "display-order": "%d"
                   },
                   "WindowsOSVolumeProvisionedIOPS": {
                     "display-name": "Provisioned IOPS",
                     "default-value": "400",
                     "required": false,
                     "secure": false,
-                    "display-order": "30"
+                    "display-order": "%d"
                   },
                   "WindowsRegisterTimeout": {
                     "display-name": "Instance creation timeout (in minutes)",
                     "default-value": "15",
                     "required": false,
                     "secure": false,
-                    "display-order": "31"
+                    "display-order": "%d"
                   },
                   "MinWindowsInstanceCount": {
                     "display-name": "Minimum instances required in cluster",
                     "default-value": "0",
                     "required": false,
                     "secure": false,
-                    "display-order": "32"
+                    "display-order": "%d"
                   },
                   "MaxWindowsInstancesAllowed": {
                     "display-name": "Maximum instances allowed",
                     "default-value": "5",
                     "required": false,
                     "secure": false,
-                    "display-order": "33"
+                    "display-order": "%d"
                   },
                   "WindowsStopPolicy": {
                     "display-name": "Stop instance policy",
                     "default-value": "StopIdleInstance",
                     "required": false,
                     "secure": false,
-                    "display-order": "34"
+                    "display-order": "%d"
                   },
                   "StopWindowsInstanceAfter": {
                     "display-name": "Stop instance after(in minutes)",
                     "default-value": "10",
                     "required": false,
                     "secure": false,
-                    "display-order": "35"
+                    "display-order": "%d"
                   },
                   "TerminateStoppedWindowsInstanceAfter": {
                     "display-name": "Terminate stopped instance after(in minutes)",
                     "default-value": "5",
                     "required": false,
                     "secure": false,
-                    "display-order": "36"
+                    "display-order": "%d"
                   },
                   "WindowsUserdataScript": {
                     "display-name": "Userdata script",
                     "required": false,
                     "secure": false,
-                    "display-order": "37"
+                    "display-order": "%d"
                   },
                   "PrivateDockerRegistryAuthType": {
                     "display-name": "Default Docker Registry",
                     "required": false,
                     "secure": false,
-                    "display-order": "38"
+                    "display-order": "%d"
                   },
                   "PrivateDockerRegistryUrl": {
                     "display-name": "Private docker registry url",
                     "required": false,
                     "secure": false,
-                    "display-order": "39"
+                    "display-order": "%d"
                   },
                   "PrivateDockerRegistryEmail": {
                     "display-name": "Email",
                     "required": false,
                     "secure": false,
-                    "display-order": "40"
+                    "display-order": "%d"
                   },
                   "PrivateDockerRegistryUsername": {
                     "display-name": "Docker registry username",
                     "required": false,
                     "secure": false,
-                    "display-order": "41"
+                    "display-order": "%d"
                   },
                   "PrivateDockerRegistryPassword": {
                     "display-name": "Docker registry password",
                     "required": false,
                     "secure": true,
-                    "display-order": "42"
+                    "display-order": "%d"
                   },
                   "PrivateDockerRegistryAuthToken": {
                     "display-name": "Docker registry auth token",
                     "required": false,
                     "secure": false,
-                    "display-order": "43"
+                    "display-order": "%d"
                   },
                   "LogDriver": {
                     "display-name": "Log driver name",
                     "required": false,
                     "secure": false,
-                    "display-order": "44"
+                    "display-order": "%d"
                   },
                   "LogOptions": {
                     "display-name": "Log options",
                     "required": false,
                     "secure": false,
-                    "display-order": "45"
+                    "display-order": "%d"
                   },
                   "EfsDnsOrIP": {
                     "display-name": "Additional volume",
                     "default-value": "none",
                     "required": false,
                     "secure": false,
-                    "display-order": "46"
+                    "display-order": "%d"
                   }
-                }""";
+                }""".formatted(IntStream.range(0, expectedFieldNumber).boxed().toArray());
 
-        JSONAssert.assertEquals(expectedJSON, response.responseBody(), true);
+        JSONAssert.assertEquals(expectedJSON, response.responseBody(), JSONCompareMode.STRICT);
     }
 }
