@@ -34,9 +34,10 @@ public class GetPluginConfigurationExecutor implements RequestExecutor {
     private static final String GO_SERVER_URL = "GoServerUrl";
     public static final String AWS_ACCESS_KEY_ID = "AWSAccessKeyId";
     public static final String AWS_SECRET_ACCESS_KEY = "AWSSecretAccessKey";
-    private static final String AWS_REGION = "AWSRegion";
+    public static final String AWS_ASSUME_ROLE_ARN = "AWSAssumeRoleArn";
+    public static final String AWS_REGION = "AWSRegion";
     private static final String ENVIRONMENT_VARIABLES = "EnvironmentVariables";
-    private static final String CLUSTER_NAME = "ClusterName";
+    public static final String CLUSTER_NAME = "ClusterName";
     private static final String CONTAINER_AUTOREGISTER_TIMEOUT = "ContainerAutoregisterTimeout";
     private static final String KEY_PAIR_NAME = "KeyPairName";
 
@@ -72,6 +73,7 @@ public class GetPluginConfigurationExecutor implements RequestExecutor {
             new NonBlankField(GO_SERVER_URL, "Go Server URL", false, next()),
             new Field(AWS_ACCESS_KEY_ID, "AWS Access Key ID", null, false, true, next()),
             new Field(AWS_SECRET_ACCESS_KEY, "AWS Secret Access Key", null, false, true, next()),
+            new Field(AWS_ASSUME_ROLE_ARN, "AWS Assume Role ARN", null, false, false, next()),
             new Field(AWS_REGION, "AWS Region", null, false, false, next()),
             new NonBlankField(CLUSTER_NAME, "AWS Cluster Name", false, next()),
             new Field(ENVIRONMENT_VARIABLES, "Environment Variables", null, false, false, next()),
@@ -79,7 +81,7 @@ public class GetPluginConfigurationExecutor implements RequestExecutor {
 
             // Common configurations for instance
             new Field(KEY_PAIR_NAME, "KeyPair name", null, false, false, next()),
-            new NonBlankField(IAM_INSTANCE_PROFILE, "Iam instance profile", false, next()),
+            new NonBlankField(IAM_INSTANCE_PROFILE, "Agent IAM instance profile", false, next()),
             new Field(SUBNET_IDS, "Subnet id(s)", null, false, false, next()),
             new Field(SECURITY_GROUP_IDS, "Security Group Id(s)", null, false, false, next()),
 
@@ -87,7 +89,7 @@ public class GetPluginConfigurationExecutor implements RequestExecutor {
             new Field(LINUX_AMI, "Ami id", null, false, false, next()),
             new Field(LINUX_INSTANCE_TYPE, "Instance type", null, false, false, next()),
             new PositiveNumberField("LinuxRegisterTimeout", "Instance creation timeout (in minutes)", "5", false, next()),
-            new IntegerRangeField(MIN_LINUX_INSTANCE_COUNT, "Minimum instance required in cluster", "0", false, next()),
+            new IntegerRangeField(MIN_LINUX_INSTANCE_COUNT, "Minimum instances required in cluster", "0", false, next()),
             new IntegerRangeField(MAX_LINUX_INSTANCES_ALLOWED, "Maximum instances allowed", "5", false, next()),
             new Field(LINUX_OS_VOLUME_TYPE, "Additional volume for operating system", "none", false, false, next()),
             new IntegerRangeField(LINUX_OS_VOLUME_SIZE, "Volume size", "8", false, 8, next()),
@@ -96,8 +98,8 @@ public class GetPluginConfigurationExecutor implements RequestExecutor {
             new IntegerRangeField(LINUX_DOCKER_VOLUME_SIZE, "Volume size", "22", false, 22, next()),
             new IntegerRangeField(LINUX_DOCKER_VOLUME_PROVISIONED_IOPS, "Provisioned IOPS", "400", false, 100, next()),
             new Field("LinuxStopPolicy", "Stop instance policy", "StopIdleInstance", false, false, next()),
-            new IntegerRangeField("StopLinuxInstanceAfter", "Stop instance after(in minutes)", "10", false, next()),
-            new IntegerRangeField("TerminateStoppedLinuxInstanceAfter", "Terminate stopped instance after(in minutes)", "5", false, next()),
+            new IntegerRangeField("StopLinuxInstanceAfter", "Stop instance after (in minutes)", "10", false, next()),
+            new IntegerRangeField("TerminateStoppedLinuxInstanceAfter", "Terminate stopped instance after (in minutes)", "5", false, next()),
             new Field("LinuxUserdataScript", "Userdata script", null, false, false, next()),
 
             //windows configurations used for auto scaling
@@ -110,8 +112,8 @@ public class GetPluginConfigurationExecutor implements RequestExecutor {
             new IntegerRangeField(MIN_WINDOWS_INSTANCE_COUNT, "Minimum instances required in cluster", "0", false, next()),
             new IntegerRangeField(MAX_WINDOWS_INSTANCES_ALLOWED, "Maximum instances allowed", "5", false, next()),
             new Field("WindowsStopPolicy", "Stop instance policy", "StopIdleInstance", false, false, next()),
-            new IntegerRangeField("StopWindowsInstanceAfter", "Stop instance after(in minutes)", "10", false, next()),
-            new IntegerRangeField("TerminateStoppedWindowsInstanceAfter", "Terminate stopped instance after(in minutes)", "5", false, next()),
+            new IntegerRangeField("StopWindowsInstanceAfter", "Stop instance after (in minutes)", "10", false, next()),
+            new IntegerRangeField("TerminateStoppedWindowsInstanceAfter", "Terminate stopped instance after (in minutes)", "5", false, next()),
             new Field("WindowsUserdataScript", "Userdata script", null, false, false, next()),
 
             new Field(PRIVATE_DOCKER_REGISTRY_AUTH_TYPE, "Default Docker Registry", null, false, false, next()),

@@ -37,11 +37,12 @@ class GetPluginSettingsViewRequestExecutorTest {
 
     @Test
     void shouldRenderTheTemplateInJSON() throws Exception {
-        GoPluginApiResponse response = new GetClusterProfileViewRequestExecutor().execute();
+        GoPluginApiResponse response = new GetClusterProfileViewRequestExecutor(() -> "some-server-id").execute();
         assertThat(response.responseCode()).isEqualTo(200);
         Map<String, String> hashSet = new Gson().fromJson(response.responseBody(), new TypeToken<HashMap<String, String>>() {
         }.getType());
-        assertThat(hashSet).containsEntry("template", Util.readResource("/cluster-profile.template.html"));
+        assertThat(hashSet).containsEntry("template", Util.readResource("/cluster-profile.template.html")
+                .replace(GetClusterProfileViewRequestExecutor.EXTERNAL_ID_PLACEHOLDER, "gocd:server-id:some-server-id"));
     }
 
     @Test

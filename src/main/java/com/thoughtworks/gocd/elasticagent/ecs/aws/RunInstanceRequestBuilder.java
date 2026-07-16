@@ -83,7 +83,7 @@ public class RunInstanceRequestBuilder {
 
     private void blockDockerVolume(RunInstancesRequest request) {
         if (ec2Config.getPlatform() == Platform.WINDOWS) {
-            LOG.debug("As windows is using root volumes to store everything extra volume for docker is not need.");
+            LOG.debug("As windows is using root volumes to store everything extra volume for docker is not needed.");
             return;
         }
 

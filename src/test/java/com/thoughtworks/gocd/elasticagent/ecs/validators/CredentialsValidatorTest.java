@@ -34,8 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 import static com.amazonaws.SDKGlobalConfiguration.*;
-import static com.thoughtworks.gocd.elasticagent.ecs.executors.GetPluginConfigurationExecutor.AWS_ACCESS_KEY_ID;
-import static com.thoughtworks.gocd.elasticagent.ecs.executors.GetPluginConfigurationExecutor.AWS_SECRET_ACCESS_KEY;
+import static com.thoughtworks.gocd.elasticagent.ecs.executors.GetPluginConfigurationExecutor.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -59,7 +58,7 @@ class CredentialsValidatorTest {
     @BeforeEach
     void setUp() {
         openMocks(this);
-        credentialsValidator = new CredentialsValidator(new AWSCredentialsProviderChain(new EnvironmentVariableCredentialsProvider(), new SystemPropertiesCredentialsProvider()));
+        credentialsValidator = new CredentialsValidator(new AWSCredentialsProviderChain(() -> "my-server-id", new EnvironmentVariableCredentialsProvider(), new SystemPropertiesCredentialsProvider()));
     }
 
     @Test
@@ -70,6 +69,22 @@ class CredentialsValidatorTest {
         final Collection<? extends Map<String, String>> validationResult = credentialsValidator.validate(request);
 
         assertThat(validationResult).isEmpty();
+    }
+
+    @Test
+    void shouldReturnEmptyErrorIfAssumeRoleArnIsProvidedAlongWithAccessKeyAndSecretKey() throws Exception {
+        when(request.get(AWS_ACCESS_KEY_ID)).thenReturn("access-key");
+        when(request.get(AWS_SECRET_ACCESS_KEY)).thenReturn("secret-key");
+        when(request.get(AWS_ASSUME_ROLE_ARN)).thenReturn("arn:aws:iam::111111111111:role/gocd-ecs-plugin-role");
+        when(request.get(CLUSTER_NAME)).thenReturn("GoCD");
+
+        environmentVariables
+                .set("AWS_REGION", "us-east-1")
+                .execute(() -> {
+                    final Collection<? extends Map<String, String>> validationResult = credentialsValidator.validate(request);
+
+                    assertThat(validationResult).isEmpty();
+                });
     }
 
     @Test
@@ -88,12 +103,10 @@ class CredentialsValidatorTest {
     void shouldReturnErrorIfItFailsToAutoDetectCredentials() {
         final List<Map<String, String>> validationResult = credentialsValidator.validate(request);
 
-        assertThat(validationResult).hasSize(2);
-        assertThat(validationResult.get(0)).containsEntry("key", AWS_ACCESS_KEY_ID);
-        assertThat(validationResult.get(0)).containsEntry("message", "Unable to load AWS credentials from any provider in the chain");
-
-        assertThat(validationResult.get(1)).containsEntry("key", AWS_SECRET_ACCESS_KEY);
-        assertThat(validationResult.get(1)).containsEntry("message", "Unable to load AWS credentials from any provider in the chain");
+        assertThat(validationResult).containsExactly(Map.of(
+                "key", AWS_ASSUME_ROLE_ARN,
+                "message", "Unable to load AWS credentials from any provider in the chain")
+        );
     }
 
     @Test

@@ -80,7 +80,7 @@ public class PluginRequest {
         }
     }
 
-    public ServerInfo getSeverInfo() throws ServerRequestFailedException {
+    public ServerInfo getServerInfo() throws ServerRequestFailedException {
         DefaultGoApiRequest request = new DefaultGoApiRequest(REQUEST_SERVER_INFO, SERVER_INFO_API_VERSION, PLUGIN_IDENTIFIER);
         GoApiResponse response = accessor.submit(request);
 

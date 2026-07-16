@@ -82,6 +82,13 @@ class GetClusterProfileMetadataExecutorTest {
                     }
                   },
                   {
+                    "key": "AWSAssumeRoleArn",
+                    "metadata": {
+                      "required": false,
+                      "secure": false
+                    }
+                  },
+                  {
                     "key": "EnvironmentVariables",
                     "metadata": {
                       "required": false,

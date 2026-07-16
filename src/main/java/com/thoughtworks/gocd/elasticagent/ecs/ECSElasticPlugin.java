@@ -35,7 +35,8 @@ import com.thoughtworks.gocd.elasticagent.ecs.events.EventStream;
 import com.thoughtworks.gocd.elasticagent.ecs.executors.*;
 import com.thoughtworks.gocd.elasticagent.ecs.info.PluginProperties;
 import com.thoughtworks.gocd.elasticagent.ecs.requests.*;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.concurrent.ConcurrentException;
+import org.apache.commons.lang3.concurrent.LazyInitializer;
 
 import java.util.HashMap;
 import java.util.List;
@@ -46,23 +47,14 @@ public class ECSElasticPlugin implements GoPlugin {
     private static final Logger LOG = Logger.getLoggerFor(ECSElasticPlugin.class);
 
     private PluginRequest pluginRequest;
-    private static String serverId;
+    private static LazyInitializer<String> serverId;
     private Map<String, ECSTasks> clusterSpecificAgentInstances;
 
     @Override
     public void initializeGoApplicationAccessor(GoApplicationAccessor accessor) {
         pluginRequest = new PluginRequest(accessor);
+        serverId = LazyInitializer.<String>builder().setInitializer(() -> pluginRequest.getServerInfo().getServerId()).get();
         clusterSpecificAgentInstances = new HashMap<>();
-    }
-
-    private void fetchServerIdFromServer() {
-        if (StringUtils.isNotBlank(serverId)) {
-            return;
-        }
-
-        LOG.info("Fetching server id " + StringUtils.isNotBlank(serverId));
-        serverId = pluginRequest.getSeverInfo().getServerId();
-        LOG.info("Got server id from the server: " + StringUtils.isNotBlank(serverId));
     }
 
     @Load
@@ -75,7 +67,6 @@ public class ECSElasticPlugin implements GoPlugin {
     public GoPluginApiResponse handle(GoPluginApiRequest request) {
         ClusterProfileProperties clusterProfileProperties;
         try {
-            fetchServerIdFromServer();
             LOG.debug("Request from server: " + request.requestName());
             switch (Request.fromString(request.requestName())) {
                 case REQUEST_GET_CAPABILITIES:
@@ -169,6 +160,10 @@ public class ECSElasticPlugin implements GoPlugin {
     }
 
     public static String getServerId() {
-        return serverId;
+        try {
+            return serverId == null ? null : serverId.get();
+        } catch (ConcurrentException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

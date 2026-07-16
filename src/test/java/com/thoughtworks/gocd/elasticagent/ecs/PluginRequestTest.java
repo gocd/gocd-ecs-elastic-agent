@@ -50,7 +50,7 @@ class PluginRequestTest {
                   "secure_site_url": "https://your.server.url"\
                 }"""));
 
-        final ServerInfo severInfo = pluginRequest.getSeverInfo();
+        final ServerInfo severInfo = pluginRequest.getServerInfo();
 
         DefaultGoApiRequest request = requestArgumentCaptor.getValue();
         assertThat(request.api()).isEqualTo(REQUEST_SERVER_INFO);

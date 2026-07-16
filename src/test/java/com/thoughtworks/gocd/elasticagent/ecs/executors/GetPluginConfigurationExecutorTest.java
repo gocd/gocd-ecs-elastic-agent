@@ -44,7 +44,7 @@ class GetPluginConfigurationExecutorTest {
 
         assertThat(response.responseCode()).isEqualTo(200);
 
-        int expectedFieldNumber = 47;
+        int expectedFieldNumber = 48;
         String expectedJSON = """
                 {
                   "GoServerUrl": {
@@ -63,6 +63,12 @@ class GetPluginConfigurationExecutorTest {
                     "display-name": "AWS Secret Access Key",
                     "required": false,
                     "secure": true,
+                    "display-order": "%d"
+                  },
+                  "AWSAssumeRoleArn": {
+                    "display-name": "AWS Assume Role ARN",
+                    "required": false,
+                    "secure": false,
                     "display-order": "%d"
                   },
                   "AWSRegion": {
@@ -96,7 +102,7 @@ class GetPluginConfigurationExecutorTest {
                     "display-order": "%d"
                   },
                   "IamInstanceProfile": {
-                    "display-name": "Iam instance profile",
+                    "display-name": "Agent IAM instance profile",
                     "required": true,
                     "secure": false,
                     "display-order": "%d"
@@ -133,7 +139,7 @@ class GetPluginConfigurationExecutorTest {
                     "display-order": "%d"
                   },
                   "MinLinuxInstanceCount": {
-                    "display-name": "Minimum instance required in cluster",
+                    "display-name": "Minimum instances required in cluster",
                     "default-value": "0",
                     "required": false,
                     "secure": false,
@@ -196,14 +202,14 @@ class GetPluginConfigurationExecutorTest {
                     "display-order": "%d"
                   },
                   "StopLinuxInstanceAfter": {
-                    "display-name": "Stop instance after(in minutes)",
+                    "display-name": "Stop instance after (in minutes)",
                     "default-value": "10",
                     "required": false,
                     "secure": false,
                     "display-order": "%d"
                   },
                   "TerminateStoppedLinuxInstanceAfter": {
-                    "display-name": "Terminate stopped instance after(in minutes)",
+                    "display-name": "Terminate stopped instance after (in minutes)",
                     "default-value": "5",
                     "required": false,
                     "secure": false,
@@ -277,14 +283,14 @@ class GetPluginConfigurationExecutorTest {
                     "display-order": "%d"
                   },
                   "StopWindowsInstanceAfter": {
-                    "display-name": "Stop instance after(in minutes)",
+                    "display-name": "Stop instance after (in minutes)",
                     "default-value": "10",
                     "required": false,
                     "secure": false,
                     "display-order": "%d"
                   },
                   "TerminateStoppedWindowsInstanceAfter": {
-                    "display-name": "Terminate stopped instance after(in minutes)",
+                    "display-name": "Terminate stopped instance after (in minutes)",
                     "default-value": "5",
                     "required": false,
                     "secure": false,

@@ -17,10 +17,10 @@
 package com.thoughtworks.gocd.elasticagent.ecs.validators;
 
 import com.thoughtworks.gocd.elasticagent.ecs.aws.AWSCredentialsProviderChain;
+import com.thoughtworks.gocd.elasticagent.ecs.exceptions.AWSCredentialsException;
 import com.thoughtworks.gocd.elasticagent.ecs.requests.ValidateClusterProfileRequest;
 
-import static com.thoughtworks.gocd.elasticagent.ecs.executors.GetPluginConfigurationExecutor.AWS_ACCESS_KEY_ID;
-import static com.thoughtworks.gocd.elasticagent.ecs.executors.GetPluginConfigurationExecutor.AWS_SECRET_ACCESS_KEY;
+import static com.thoughtworks.gocd.elasticagent.ecs.executors.GetPluginConfigurationExecutor.*;
 
 public class CredentialsValidator extends AbstractValidator {
     private final AWSCredentialsProviderChain credentialsProviderChain;
@@ -34,13 +34,19 @@ public class CredentialsValidator extends AbstractValidator {
     }
 
     void validatePluginSettings(ValidateClusterProfileRequest request) {
-        final String accessKey = request.get(AWS_ACCESS_KEY_ID);
-        final String secretKey = request.get(AWS_SECRET_ACCESS_KEY);
+
         try {
-            credentialsProviderChain.getAWSCredentialsProvider(accessKey, secretKey);
-        } catch (Exception e) {
+            credentialsProviderChain.getAWSCredentialsProvider(
+                    request.get(AWS_ACCESS_KEY_ID),
+                    request.get(AWS_SECRET_ACCESS_KEY),
+                    request.get(AWS_ASSUME_ROLE_ARN),
+                    request.get(CLUSTER_NAME));
+        } catch (AWSCredentialsException e) {
             addError(AWS_ACCESS_KEY_ID, e.getMessage());
             addError(AWS_SECRET_ACCESS_KEY, e.getMessage());
+        } catch (Exception e) {
+            // Put other types of errors against all three fields; so effectively against the ARN.
+            addError(AWS_ASSUME_ROLE_ARN, e.getMessage());
         }
     }
 }

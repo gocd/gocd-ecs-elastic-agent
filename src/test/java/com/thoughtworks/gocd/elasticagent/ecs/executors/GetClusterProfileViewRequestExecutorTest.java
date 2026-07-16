@@ -29,11 +29,35 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GetClusterProfileViewRequestExecutorTest {
     @Test
-    void shouldRenderTheTemplateInJSON() throws Exception {
-        GoPluginApiResponse response = new GetClusterProfileViewRequestExecutor().execute();
+    void shouldRenderTheTemplateInJSON() {
+        GoPluginApiResponse response = new GetClusterProfileViewRequestExecutor(() -> "some-server-id").execute();
         assertThat(response.responseCode()).isEqualTo(200);
         Map<String, String> hashSet = new Gson().fromJson(response.responseBody(), new TypeToken<HashMap<String, String>>() {
         }.getType());
-        assertThat(hashSet).containsEntry("template", Util.readResource("/cluster-profile.template.html"));
+        assertThat(hashSet).containsEntry("template", Util.readResource("/cluster-profile.template.html")
+                .replace(GetClusterProfileViewRequestExecutor.EXTERNAL_ID_PLACEHOLDER, "gocd:server-id:some-server-id"));
+    }
+
+    @Test
+    void shouldRenderTheServerIdBasedExternalIdWithinTheTemplate() {
+        String template = templateRenderedWithServerId("some-server-id");
+
+        assertThat(template).contains("<code>sts:ExternalId = \"gocd:server-id:some-server-id\"</code>");
+        assertThat(template).doesNotContain(GetClusterProfileViewRequestExecutor.EXTERNAL_ID_PLACEHOLDER);
+    }
+
+    @Test
+    void shouldRenderAGenericExternalIdIfTheServerIdIsNotAvailable() {
+        String template = templateRenderedWithServerId(null);
+
+        assertThat(template).contains("<code>sts:ExternalId = \"gocd:server-id:&lt;your GoCD server id&gt;\"</code>");
+        assertThat(template).doesNotContain(GetClusterProfileViewRequestExecutor.EXTERNAL_ID_PLACEHOLDER);
+    }
+
+    private String templateRenderedWithServerId(String serverId) {
+        GoPluginApiResponse response = new GetClusterProfileViewRequestExecutor(() -> serverId).execute();
+        Map<String, String> body = new Gson().fromJson(response.responseBody(), new TypeToken<HashMap<String, String>>() {
+        }.getType());
+        return body.get("template");
     }
 }

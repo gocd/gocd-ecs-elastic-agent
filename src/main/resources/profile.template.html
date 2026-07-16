@@ -229,7 +229,7 @@
           <div class="form-help-content-one-line">
             If left unspecified, the default <code>AMI ID</code> configured in the cluster profile will be used. ECS
             optimised AMI are available <a target="_blank" rel="nofollow noreferrer"
-                                           href="http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html">here</a>.
+                                           href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html">here</a>.
           </div>
         </div>
 
@@ -243,7 +243,7 @@
           <div class="form-help-content-one-line">
             The specified <code>InstanceType</code> will be used to spin up new instances. If left unspecified, the
             default <code>InstanceType</code> configured in the cluster profile will be used.
-            <a href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html" rel="nofollow noreferrer"
+            <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html" rel="nofollow noreferrer"
                target="_blank">Read more about Instance Type</a>
           </div>
         </div>
@@ -251,7 +251,7 @@
 
       <div>
         <label ng-class="{'is-invalid-label': GOINPUTNAME[IAMInstanceProfile].$error.server}">
-          IAM Instance Profile
+          Agent IAM Instance Profile
         </label>
         <input ng-class="{'is-invalid-input': GOINPUTNAME[IAMInstanceProfile].$error.server}" type="text"
                ng-model="IAMInstanceProfile" ng-required="true" placeholder="e.g. ecsInstanceRole"/>
@@ -264,16 +264,21 @@
             The name of the IAM Instance Profile that will allow the ECS agent to make calls to AWS on your behalf.
             If left unspecified, the IAM Instance Profile configured in the cluster profile will be used.<br/>
             At the bare minimum your profile must permit the following API calls:
-            <div class="code pre">ecs:discoverPollEndpoint
-              ecs:registerContainerInstance
-              ecs:deregisterContainerInstance
-              ecs:poll
-              ecs:startTelemetrySession
-              ecs:submitContainerStateChange
-              ecs:submitTaskStateChange
-            </div>
-            <a href="http://docs.aws.amazon.com/AmazonECS/latest/developerguide/instance_IAM_role.html"
-               target="_blank" rel="nofollow noreferrer">Read more about IAMInstanceProfile</a>
+            <div class="code">
+              <pre>
+ecs:DiscoverPollEndpoint
+ecs:Poll
+ecs:RegisterContainerInstance
+ecs:DeregisterContainerInstance
+ecs:StartTelemetrySession
+ecs:SubmitContainerStateChange
+ecs:SubmitTaskStateChange
+logs:PutLogEvents
+logs:CreateLogStream
+              </pre>
+            Note that your cluster profile's credentials/role needs permissions to pass this role for the EC2 instance to assume.
+            <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/instance_IAM_role.html"
+               target="_blank" rel="nofollow noreferrer">Read more about IAM Instance Profiles</a>
           </div>
         </div>
       </div>
@@ -290,7 +295,7 @@
         <div class="form-help-content-one-line">
           EC2 instances will be assigned the security groups(s) specified here.
           If left unspecified, the security group(s) configured in the cluster profile will be used.
-          <a href="http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_SecurityGroups.html"
+          <a href="https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_SecurityGroups.html"
              target="_blank" rel="nofollow noreferrer">Read more about SecurityGroup</a>
         </div>
       </div>
@@ -308,7 +313,7 @@
           If multiple subnet ids are specified, the subnet having the least number of EC2 instances will be used to
           spin up a new EC2 instance that will run docker containers with this profile. If left unspecified, the
           subnet id(s) configured in the cluster profile will be used.
-          <a href="http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Subnets.html#vpc-subnet-basics"
+          <a href="https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Subnets.html#vpc-subnet-basics"
              target="_blank" rel="nofollow noreferrer">Read more about subnet ID</a>
         </div>
       </div>
@@ -338,15 +343,15 @@
           </div>
           <div>
             <label ng-class="{'is-invalid-label': GOINPUTNAME[SpotRequestExpiresAfter].$error.server}">
-              Spot Request Expires After(in minutes)
+              Spot Request Expires After (in minutes)
             </label>
             <input ng-class="{'is-invalid-input': GOINPUTNAME[SpotRequestExpiresAfter].$error.server}" type="text" ng-model="SpotRequestExpiresAfter"
                    ng-required="false"/>
             <span class="form_error form-error" ng-class="{'is-visible': GOINPUTNAME[SpotRequestExpiresAfter].$error.server}"
                   ng-show="GOINPUTNAME[SpotRequestExpiresAfter].$error.server">{{GOINPUTNAME[SpotRequestExpiresAfter].$error.server}}</span>
             <div class="form-help-content-one-line">
-              The plugin supports Spot Instance of type <b>one-time</b>.</br>
-              <b>SpotRequestExpiresAfter(in minutes)</b>
+              The plugin supports Spot Instance of type <b>one-time</b>.<br/>
+              <b>SpotRequestExpiresAfter (in minutes)</b>
               property is used to set the validity of the Spot Instance
               request from the time the request is created. Defaults to 5 mins.
             </div>

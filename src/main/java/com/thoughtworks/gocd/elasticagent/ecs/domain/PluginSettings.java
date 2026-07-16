@@ -82,6 +82,11 @@ public class PluginSettings {
     private String secretAccessKey;
 
     @Expose
+    @SerializedName("AWSAssumeRoleArn")
+    @Metadata(key = "AWSAssumeRoleArn", required = false, secure = false)
+    private String assumeRoleArn;
+
+    @Expose
     @SerializedName("EnvironmentVariables")
     @Metadata(key = "EnvironmentVariables", required = false, secure = false)
     private String environmentVariables;
@@ -319,6 +324,10 @@ public class PluginSettings {
         return secretAccessKey;
     }
 
+    public String getAssumeRoleArn() {
+        return assumeRoleArn;
+    }
+
     public String getGoServerUrl() {
         return goServerUrl;
     }
@@ -542,7 +551,7 @@ public class PluginSettings {
     }
 
     private AWSCredentialsProvider credentials() {
-        return new AWSCredentialsProviderChain().getAWSCredentialsProvider(accessKeyId, secretAccessKey);
+        return new AWSCredentialsProviderChain().getAWSCredentialsProvider(accessKeyId, secretAccessKey, assumeRoleArn, clusterName);
     }
 
     private Map<String, String> getLogOptions() {
@@ -573,6 +582,7 @@ public class PluginSettings {
                 Objects.equals(region, that.region) &&
                 Objects.equals(accessKeyId, that.accessKeyId) &&
                 Objects.equals(secretAccessKey, that.secretAccessKey) &&
+                Objects.equals(assumeRoleArn, that.assumeRoleArn) &&
                 Objects.equals(environmentVariables, that.environmentVariables) &&
                 Objects.equals(containerAutoregisterTimeout, that.containerAutoregisterTimeout) &&
                 Objects.equals(keyPairName, that.keyPairName) &&

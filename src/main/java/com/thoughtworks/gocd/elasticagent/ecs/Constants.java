@@ -49,7 +49,6 @@ public interface Constants {
     String CONFIGURATION_LABEL_KEY = "elastic-agent-configuration";
     String LABEL_JOB_IDENTIFIER = "job-identifier";
     String LABEL_SERVER_ID = "server-id";
-    String LABEL_SPOT_REQUEST = "spot-request-name";
 
     String LAST_SEEN_IDLE = "LAST_SEEN_IDLE";
     String STOPPED_AT = "STOPPED_AT";
