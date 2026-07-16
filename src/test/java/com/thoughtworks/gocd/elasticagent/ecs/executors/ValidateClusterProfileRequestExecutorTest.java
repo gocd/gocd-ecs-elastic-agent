@@ -69,7 +69,7 @@ class ValidateClusterProfileRequestExecutorTest {
                                 "key": "ContainerAutoregisterTimeout"
                               },
                               {
-                                "message": "Iam instance profile must not be blank.",
+                                "message": "Agent IAM instance profile must not be blank.",
                                 "key": "IamInstanceProfile"
                               }
                             ]""", response.responseBody(), true);

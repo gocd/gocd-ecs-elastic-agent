@@ -27,6 +27,7 @@ import uk.org.webcompere.systemstubs.jupiter.SystemStubsExtension;
 import uk.org.webcompere.systemstubs.properties.SystemProperties;
 
 import static com.amazonaws.SDKGlobalConfiguration.*;
+import static org.apache.commons.lang3.StringUtils.repeat;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -91,9 +92,74 @@ class AWSCredentialsProviderChainTest {
     }
 
     @Test
+    void shouldAssumeRoleUsingSTSIfAssumeRoleArnIsProvided() throws Exception {
+        environmentVariables
+                .set("AWS_REGION", "us-east-1")
+                .execute(() -> {
+                    final AWSCredentialsProvider credentialsProvider = awsCredentialsProviderChain.getAWSCredentialsProvider("access-key", "secret-key", "arn:aws:iam::111111111111:role/gocd-ecs-plugin-role", "GoCD");
+
+                    assertThat(credentialsProvider).isInstanceOf(STSAssumeRoleSessionCredentialsProvider.class);
+                });
+    }
+
+    @Test
+    void shouldAssumeRoleWithServerIdBasedExternalIdWhenServerIdIsAvailable() throws Exception {
+        environmentVariables
+                .set("AWS_REGION", "us-east-1")
+                .execute(() -> {
+                    final AWSCredentialsProviderChain chain = new AWSCredentialsProviderChain(() -> "some-server-id", new EnvironmentVariableCredentialsProvider(), new SystemPropertiesCredentialsProvider());
+                    final AWSCredentialsProvider credentialsProvider = chain.getAWSCredentialsProvider("access-key", "secret-key", "arn:aws:iam::111111111111:role/gocd-ecs-plugin-role", "GoCD");
+
+                    assertThat(credentialsProvider).isInstanceOf(STSAssumeRoleSessionCredentialsProvider.class);
+                });
+    }
+
+    @Test
+    void shouldNotAssumeRoleIfAssumeRoleArnIsBlank() {
+        final AWSCredentialsProvider credentialsProvider = awsCredentialsProviderChain.getAWSCredentialsProvider("access-key", "secret-key", " ", "GoCD");
+
+        assertThat(credentialsProvider).isInstanceOf(AWSStaticCredentialsProvider.class);
+    }
+
+    @Test
+    void shouldDeriveExternalIdFromGoCDServerId() {
+        assertThat(new AWSCredentialsProviderChain(() -> "some-server-id").externalId()).isEqualTo("gocd:server-id:some-server-id");
+    }
+
+    @Test
+    void shouldHaveNoExternalIdWhenServerIdIsNotAvailable() {
+        assertThat(new AWSCredentialsProviderChain(() -> null).externalId()).isNull();
+        assertThat(new AWSCredentialsProviderChain(() -> " ").externalId()).isNull();
+    }
+
+    @Test
+    void shouldIncludeClusterNameInRoleSessionName() {
+        assertThat(awsCredentialsProviderChain.roleSessionName("my-cluster")).isEqualTo("gocd-ecs-elastic-agent-plugin@my-cluster");
+    }
+
+    @Test
+    void shouldUseBareRoleSessionNameWhenClusterNameIsBlank() {
+        assertThat(awsCredentialsProviderChain.roleSessionName(null)).isEqualTo("gocd-ecs-elastic-agent-plugin");
+        assertThat(awsCredentialsProviderChain.roleSessionName(" ")).isEqualTo("gocd-ecs-elastic-agent-plugin");
+    }
+
+    @Test
+    void shouldSanitizeCharactersNotAllowedInRoleSessionNames() {
+        assertThat(awsCredentialsProviderChain.roleSessionName("my cluster/name")).isEqualTo("gocd-ecs-elastic-agent-plugin@my-cluster-name");
+    }
+
+    @Test
+    void shouldTruncateRoleSessionNameToMaximumAllowedLength() {
+        final String roleSessionName = awsCredentialsProviderChain.roleSessionName(repeat("x", 100));
+
+        assertThat(roleSessionName).hasSize(64);
+        assertThat(roleSessionName).startsWith("gocd-ecs-elastic-agent-plugin@xxx");
+    }
+
+    @Test
     void shouldErrorOutIfItFailsToLoadCredentials() {
         assertThatThrownBy(() -> awsCredentialsProviderChain.getAWSCredentialsProvider(null, null))
-                .isExactlyInstanceOf(AWSCredentialsException.class)
+                .isExactlyInstanceOf(RuntimeException.class)
                 .hasMessage("Unable to load AWS credentials from any provider in the chain");
     }
 

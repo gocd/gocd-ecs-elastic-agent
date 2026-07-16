@@ -318,18 +318,40 @@
   </div>
 
   <div class="ea-panel">
-    <div class="ea-panel_header">AWS Credentials</div>
+    <div class="ea-panel_header">Plugin AWS Credentials</div>
     <div class="ea-panel_body form_item_block">
+      <p class="form-help-content">
+        Credentials used by the plugin on the GoCD server to manage your ECS cluster (create EC2 instances and ECS tasks).
+        Credentials are automatically detected from standard AWS environment variables, Java system properties or
+        an EC2 instance profile via IMDS.
+      </p>
       <div class="col-2">
         <div class="col">
-          <label>AWS Access Key ID</label>
+          <label>AWS Access Key ID
+            <small>(optional - no auto-discovery)</small>
+          </label>
           <input type="password" ng-model="AWSAccessKeyId" ng-required="true"/>
           <span class="form_error" ng-show="GOINPUTNAME[AWSAccessKeyId].$error.server">{{GOINPUTNAME[AWSAccessKeyId].$error.server}}</span>
         </div>
         <div class="col">
-          <label>AWS Secret Access Key</label>
+          <label>AWS Secret Access Key
+            <small>(optional)</small>
+          </label>
           <input type="password" ng-model="AWSSecretAccessKey" ng-required="true"/>
           <span class="form_error" ng-show="GOINPUTNAME[AWSSecretAccessKey].$error.server">{{GOINPUTNAME[AWSSecretAccessKey].$error.server}}</span>
+        </div>
+      </div>
+      <div class="form_item_block">
+        <label>AWS Assume Role ARN
+          <small>(optional - recommended)</small>
+        </label>
+        <input type="text" ng-model="AWSAssumeRoleArn" ng-required="true" placeholder="arn:aws:iam::111111111111:role/gocd-ecs-plugin-role"/>
+        <span class="form_error" ng-show="GOINPUTNAME[AWSAssumeRoleArn].$error.server">{{GOINPUTNAME[AWSAssumeRoleArn].$error.server}}</span>
+        <div class="form-help-content">
+          If specified, the plugin will use the resolved credentials to assume the supplied IAM role
+          via (<code>sts:AssumeRole</code>) and use temporary session credentials for all other AWS API calls.
+          The plugin always supplies the <code>sts:ExternalId = "__GOCD_EXTERNAL_ID__"</code>, so the role's trust policy can
+          bind to this specific GoCD server instance (see Help).
         </div>
       </div>
       <div class="help" ng-init="HelpToggle = false">
@@ -338,49 +360,137 @@
           <p>AWS credentials provider chain that looks for credentials in this order:</p>
           <ol>
             <li><strong>Environment Variables -</strong>
-              <code>AWS_ACCESS_KEY_ID</code> and <code>AWS_SECRET_ACCESS_KEY</code> (RECOMMENDED since they are
-              recognized
-              by all the AWS SDKs and CLI except for .NET), or <code>AWS_ACCESS_KEY</code> and
-              <code>AWS_SECRET_KEY</code>
-              (only recognized by Java SDK)
+              <code>AWS_ACCESS_KEY_ID</code> and <code>AWS_SECRET_ACCESS_KEY</code>
             </li>
             <li><strong>Java System Properties -</strong> aws.accessKeyId and aws.secretKey</li>
             <li>
-              <strong>Instance profile -</strong> Instance profile credentials delivered through the Amazon EC2 metadata
-              service
+              <strong>Instance Profile - (recommended)</strong> Instance profile credentials delivered through the Amazon EC2 instance
+              metadata service (IMDS)
             </li>
           </ol>
           <p>
-            However, the auto-detection of credentials can be disabled by providing the <code>AccessKey</code> and
-            <code>SecretAccessKey</code> of AWS user in above fields. Read more about
-            <a href="http://docs.aws.amazon.com/general/latest/gr/aws-security-credentials.html"
+            Auto-detection of credentials is disabled by providing the <code>AccessKey</code> and
+            <code>SecretAccessKey</code> of an AWS user in the plugin fields. Read more about
+            <a href="https://docs.aws.amazon.com/general/latest/gr/aws-security-credentials.html"
                target="_blank" rel="nofollow noreferrer">AWS credentials</a>
           </p>
-          <p><strong>Required permissions:</strong> Credentials must have permissions to make following api calls. </p>
+          <p>
+            If an <code>Assume Role ARN</code> is provided, the resolved or supplied credentials resolved are used only
+            <code>sts:AssumeRole</code> the supplied role, and the temporary credentials of the assumed role are
+            used for all other AWS API calls. Permissions listed in Help should be granted to the assumed
+            role rather than to the original credentials.
+          </p>
+          <p>
+            When assuming the role, the plugin always supplies an external ID of
+            <code>gocd:server-id:&lt;server-id&gt;</code>, where <code>&lt;server-id&gt;</code> is the unique ID GoCD
+            generated for this server (the <code>serverId</code> attribute in <em>Admin &gt; Config XML</em>). The
+            role's trust policy can use a <code>StringEquals</code> condition on <code>sts:ExternalId</code> to ensure
+            only this GoCD server can assume the role; without such a condition the external ID is ignored.
+          </p>
+          <p><strong>Trust policy</strong> binding the role to this GoCD server, in the case where the server is
+            running on an instance with an IAM instance profile and role:</p>
           <div class="code">
             <pre>
-ec2:RunInstances
-ec2:StartInstances
-ec2:StopInstances
-ec2:CreateTags
-ec2:DeleteTags
-ec2:TerminateInstances
-ec2:DescribeInstances
-ec2:DescribeSubnets
-ec2:CreateVolume
-ec2:AttachVolume
-iam:PassRole
-ecs:ListContainerInstances
-ecs:DescribeContainerInstances
-ecs:DeregisterContainerInstance
-ecs:RegisterTaskDefinition
-ecs:DeregisterTaskDefinition
-ecs:DeleteTaskDefinitions
-ecs:StartTask
-ecs:StopTask
-ecs:ListTasks
-ecs:DescribeTasks
-ecs:DescribeTaskDefinition
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::111111111111:role/gocd-server-instance-role" // the IAM user/role behind the plugin's base credentials
+      },
+      "Action": "sts:AssumeRole",
+      "Condition": {
+        "StringEquals": {
+          "sts:ExternalId": "__GOCD_EXTERNAL_ID__"
+        }
+      }
+    }
+  ]
+}
+            </pre>
+          </div>
+          <p><strong>Required permissions:</strong> The assumed role; instance profile or IAM user must have permissions
+            to make the following api calls: </p>
+          <p>Manage EC2 Instances:</p>
+          <div class="code">
+            <pre>
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ec2:RunInstances",
+        "ec2:StartInstances",
+        "ec2:StopInstances",
+        "ec2:TerminateInstances",
+        "ec2:DescribeInstances",
+        "ec2:DescribeSubnets",
+        "ec2:CreateTags",
+        "ec2:DeleteTags",
+        "ec2:CreateVolume",
+        "ec2:AttachVolume",
+        "ec2:RequestSpotInstances",        // if allowing use of spot instances
+        "ec2:DescribeSpotInstanceRequests" // if allowing use of spot instances
+      ],
+      "Resource": "*" // restrict further if desired
+    },
+    {
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": [
+        "arn:aws:iam::111111111111:role/gocd-ecs-instance-role" // Role within the used Agent IAM Instance Profile
+      ],
+      "Condition": {
+        "StringEquals": {
+          "iam:PassedToService": "ec2.amazonaws.com"
+        }
+      }
+    }
+  ]
+}
+            </pre>
+          </div>
+          <p>Manage ECS tasks for cluster:</p>
+          <div class="code">
+            <pre>
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ecs:DescribeClusters",
+        "ecs:ListContainerInstances",
+        "ecs:DescribeContainerInstances",
+        "ecs:DeregisterContainerInstance",
+        "ecs:DescribeTaskDefinition",
+        "ecs:RegisterTaskDefinition",
+        "ecs:DeregisterTaskDefinition",
+        "ecs:DeleteTaskDefinitions",
+        "ecs:StartTask",
+        "ecs:StopTask",
+        "ecs:ListTasks",
+        "ecs:DescribeTasks"
+      ],
+      "Resource": "*" // restrict further if desired
+    },
+    {
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": [
+        "arn:aws:iam::111111111111:role/gocd-ecs-task-role",  // enumerate any task role ARNs
+        "arn:aws:iam::111111111111:role/gocd-ecs-task-role-2" // enumerate any task role ARNs
+      ],
+      "Condition": {
+        "StringEquals": {
+          "iam:PassedToService": "ecs-tasks.amazonaws.com"
+        }
+      }
+    }
+  ]
+}
             </pre>
           </div>
         </div>
@@ -392,8 +502,47 @@ ecs:DescribeTaskDefinition
     <div class="ea-panel_header">EC2 instance settings</div>
     <div class="ea-panel_body">
       <p class="form-help-content">
-        These settings are common to both windows and linux instances.
+        These settings are common to both Windows and Linux instances.
       </p>
+      <div class="form_item_block">
+        <label class="required">Agent IAM Instance Profile</label>
+        <input type="text" ng-model="IamInstanceProfile" ng-required="true" placeholder="e.g. ecsInstanceRole"/>
+        <span class="form_error" ng-show="GOINPUTNAME[IamInstanceProfile].$error.server">{{GOINPUTNAME[IamInstanceProfile].$error.server}}</span>
+
+        <div class="help" ng-init="HelpToggleIAM = false">
+          <div class="help_header" ng-class="{'expanded': HelpToggleIAM}" ng-click="HelpToggleIAM = !HelpToggleIAM">
+            Help
+          </div>
+          <div class="help_body" ng-show="HelpToggleIAM">
+            <p>The name of the IAM Instance Profile that will allow the ECS agent to make calls to AWS on your behalf.
+              Users can override this from elastic profile. At the bare minimum your profile must permit the following
+              API calls:</p>
+
+            <div class="code">
+              <pre>
+ecs:DiscoverPollEndpoint
+ecs:Poll
+ecs:RegisterContainerInstance
+ecs:DeregisterContainerInstance
+ecs:StartTelemetrySession
+ecs:SubmitContainerStateChange
+ecs:SubmitTaskStateChange
+logs:PutLogEvents
+logs:CreateLogStream
+              </pre>
+            </div>
+            Note that your cluster profile's credentials/role needs permissions to pass this role for the EC2 instance to assume.
+
+            <p>Read more about
+              <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/security-iam.html" target="_blank"
+                 rel="nofollow noreferrer">Amazon ECS IAM Policies, Roles and Permissions </a>
+              and
+              <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/instance_IAM_role.html"
+                 target="_blank" rel="nofollow noreferrer">ECS Container Instance IAM Role</a>.
+            </p>
+          </div>
+        </div>
+      </div>
       <div class="form_item_block">
         <label>AWS keypair name</label>
         <input type="text" ng-model="KeyPairName" ng-required="true"/>
@@ -401,7 +550,7 @@ ecs:DescribeTaskDefinition
               ng-show="GOINPUTNAME[KeyPairName].$error.server">{{GOINPUTNAME[KeyPairName].$error.server}}</span>
         <div class="form-help-content">
           <p>The name of the keypair that you may use to SSH or RDP into the EC2 instance. Read more about
-            <a href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html" target="_blank"
+            <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html" target="_blank"
                rel="nofollow noreferrer">Key Pairs</a></p>
         </div>
       </div>
@@ -418,7 +567,7 @@ ecs:DescribeTaskDefinition
             spin up a new EC2 instance. If left unspecified or the specified subnet(s) are not available at the time of
             launching the EC2 instance, AWS will choose a default subnet from your default VPC for you. User can
             override this from elastic profile. Read more about
-            <a href="http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Subnets.html" target="_blank"
+            <a href="https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Subnets.html" target="_blank"
                rel="nofollow noreferrer">VPCs & Subnets</a>
           </p>
         </div>
@@ -432,48 +581,11 @@ ecs:DescribeTaskDefinition
                placeholder="e.g. sg-45b00b38, sg-30d2694d, ..."/>
         <span class="form_error" ng-show="GOINPUTNAME[SecurityGroupIds].$error.server">{{GOINPUTNAME[SecurityGroupIds].$error.server}}</span>
         <div class="form-help-content">
-          <p> EC2 instances will be assigned the security groups(s) specified here. User can override this from elastic
+          <p> EC2 instances will be assigned the security groups(s) specified here. Users can override this from elastic
             profile. Read more about
-            <a href="http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_SecurityGroups.html" target="_blank"
+            <a href="https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_SecurityGroups.html" target="_blank"
                rel="nofollow noreferrer">SecurityGroup</a>
           </p>
-        </div>
-      </div>
-
-      <div class="form_item_block">
-        <label class="required">IAM Instance Profile</label>
-        <input type="text" ng-model="IamInstanceProfile" ng-required="true" placeholder="e.g. ecsInstanceRole"/>
-        <span class="form_error" ng-show="GOINPUTNAME[IamInstanceProfile].$error.server">{{GOINPUTNAME[IamInstanceProfile].$error.server}}</span>
-
-        <div class="help" ng-init="HelpToggleIAM = false">
-          <div class="help_header" ng-class="{'expanded': HelpToggleIAM}" ng-click="HelpToggleIAM = !HelpToggleIAM">
-            Help
-          </div>
-          <div class="help_body" ng-show="HelpToggleIAM">
-            <p>The name of the IAM Instance Profile that will allow the ECS agent to make calls to AWS on your behalf.
-              User can override this from elastic profile. At the bare minimum your profile must permit the following
-              API calls:</p>
-
-            <div class="code">
-              <pre>
- ecs:discoverPollEndpoint
- ecs:registerContainerInstance
- ecs:deregisterContainerInstance
- ecs:poll
- ecs:startTelemetrySession
- ecs:submitContainerStateChange
- ecs:submitTaskStateChange
-              </pre>
-            </div>
-
-            <p>Read more about
-              <a href="http://docs.aws.amazon.com/AmazonECS/latest/developerguide/IAM_policies.html" target="_blank"
-                 rel="nofollow noreferrer">Amazon ECS IAM Policies, Roles and Permissions </a>
-              and
-              <a href="http://docs.aws.amazon.com/AmazonECS/latest/developerguide/instance_IAM_role.html"
-                 target="_blank" rel="nofollow noreferrer">ECS Container Instance IAM Role</a>.
-            </p>
-          </div>
         </div>
       </div>
     </div>
@@ -487,7 +599,7 @@ ecs:DescribeTaskDefinition
     <div class="ea-h-tab_container">
       <p class="form-help-content">
         This is to configure platform specific defaults for the instance. It will be used to launch new
-        {{SelectedTab | uppercase}} instance. However, user can override these defaults from elastic profile.
+        {{SelectedTab | uppercase}} instance. However, users can override these defaults from elastic profile.
       </p>
       <div class="ea-h-tab_content" ng-show="SelectedTab == 'linux'">
         <div class="form_item_block">
@@ -496,9 +608,9 @@ ecs:DescribeTaskDefinition
           <span class="form_error"
                 ng-show="GOINPUTNAME[LinuxAmi].$error.server">{{GOINPUTNAME[LinuxAmi].$error.server}}</span>
           <div class="form-help-content">
-            <p>The <code>AMI ID</code> will be used to launch a new instance. User can override this from elastic
+            <p>The <code>AMI ID</code> will be used to launch a new instance. Users can override this from elastic
               profile. We recommend using an
-              <a href="http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html"
+              <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html"
                  target="_blank">Amazon ECS-Optimized AMI</a>.
             </p>
           </div>
@@ -508,9 +620,9 @@ ecs:DescribeTaskDefinition
           <input type="text" ng-model="LinuxInstanceType" placeholder="e.g. t2.small"/>
           <span class="form_error" ng-show="GOINPUTNAME[LinuxInstanceType].$error.server">{{GOINPUTNAME[LinuxInstanceType].$error.server}}</span>
           <div class="form-help-content">
-            <p>The specified <code>InstanceType</code> will be used to spin up new instances. User can override this
+            <p>The specified <code>InstanceType</code> will be used to spin up new instances. Users can override this
               from elastic profile.Read more about
-              <a href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html" target="_blank"
+              <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html" target="_blank"
                  rel="nofollow noreferrer">Instance
                 Type</a>
             </p>
@@ -615,7 +727,7 @@ ecs:DescribeTaskDefinition
         <div class="form_item_block">
           <div class="col-2">
             <div class="col">
-              <label>Minimum instance required in cluster</label>
+              <label>Minimum instances required in cluster</label>
               <input type="text" ng-model="MinLinuxInstanceCount" placeholder="default: 0"/>
               <span class="form_error" ng-show="GOINPUTNAME[MinLinuxInstanceCount].$error.server">{{GOINPUTNAME[MinLinuxInstanceCount].$error.server}}</span>
               <p class="form-help-content">
@@ -677,7 +789,7 @@ ecs:DescribeTaskDefinition
         </div>
 
         <div class="form_item_block">
-          <label>Terminate stopped instance after(in minutes)</label>
+          <label>Terminate stopped instance after (in minutes)</label>
           <input type="text" ng-model="TerminateStoppedLinuxInstanceAfter" placeholder="default: 5"/>
           <span class="form_error" ng-show="GOINPUTNAME[TerminateStoppedLinuxInstanceAfter].$error.server">{{GOINPUTNAME[TerminateStoppedLinuxInstanceAfter].$error.server}}</span>
           <p class="form-help-content">
@@ -703,7 +815,7 @@ ecs:DescribeTaskDefinition
               </div>
 
               <div class="col">
-                <label>Terminate Idle Spot Instances after(in minutes) </label>
+                <label>Terminate Idle Spot Instances after (in minutes)</label>
                 <input type="text" ng-model="TerminateIdleLinuxSpotInstanceAfter" placeholder="default: 30"/>
                 <p class="form-help-content">
                   The plugin terminates a Spot Instance which is idle for more than specified period. Defaults to
@@ -754,9 +866,9 @@ ecs:DescribeTaskDefinition
           <span class="form_error"
                 ng-show="GOINPUTNAME[WindowsAmi].$error.server">{{GOINPUTNAME[WindowsAmi].$error.server}}</span>
           <p class="form-help-content">
-            The <code>AMI ID</code> will be used to launch a new instance. User can override this from elastic profile.
+            The <code>AMI ID</code> will be used to launch a new instance. Users can override this from elastic profile.
             We recommend using an
-            <a href="http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html"
+            <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html"
                target="_blank" rel="nofollow noreferrer">Amazon ECS-Optimized AMI</a>.
           </p>
         </div>
@@ -766,9 +878,9 @@ ecs:DescribeTaskDefinition
           <span class="form_error" ng-show="GOINPUTNAME[WindowsInstanceType].$error.server">
             {{GOINPUTNAME[WindowsInstanceType].$error.server}}</span>
           <p class="form-help-content">
-            The specified <code>InstanceType</code> will be used to spin up new instances. User can override this
+            The specified <code>InstanceType</code> will be used to spin up new instances. Users can override this
             from elastic profile. Read more about
-            <a href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html" target="_blank"
+            <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html" target="_blank"
                rel="nofollow noreferrer">
               Instance Type</a>
           </p>
@@ -895,7 +1007,7 @@ ecs:DescribeTaskDefinition
         </div>
 
         <div class="form_item_block">
-          <label>Terminate stopped instance after(in minutes)</label>
+          <label>Terminate stopped instance after (in minutes)</label>
           <input type="text" ng-model="TerminateStoppedWindowsInstanceAfter" placeholder="default: 5"/>
           <span class="form_error" ng-show="GOINPUTNAME[TerminateStoppedWindowsInstanceAfter].$error.server">{{GOINPUTNAME[TerminateStoppedWindowsInstanceAfter].$error.server}}</span>
           <p class="form-help-content">
@@ -921,7 +1033,7 @@ ecs:DescribeTaskDefinition
               </div>
 
               <div class="col">
-                <label>Terminate Idle Spot Instances after(in minutes) </label>
+                <label>Terminate Idle Spot Instances after (in minutes)</label>
                 <input type="text" ng-model="TerminateIdleWindowsSpotInstanceAfter" placeholder="default: 30"/>
                 <p class="form-help-content">
                   The plugin terminates a Spot Instance which is idle for more than specified period. Defaults to
@@ -981,7 +1093,7 @@ ecs:DescribeTaskDefinition
         <span class="form_error"
               ng-show="GOINPUTNAME[ClusterName].$error.server">{{GOINPUTNAME[ClusterName].$error.server}}</span>
         <p class="form-help-content">Name of the
-          <a href="http://docs.aws.amazon.com/AmazonECS/latest/developerguide/ECS_clusters.html" target="_blank"
+          <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ECS_clusters.html" target="_blank"
              rel="nofollow noreferrer">
             ECS cluster</a> that will be managed by the plugin. This cluster must already exist.
         </p>
@@ -994,7 +1106,7 @@ ecs:DescribeTaskDefinition
               ng-show="GOINPUTNAME[AWSRegion].$error.server">{{GOINPUTNAME[AWSRegion].$error.server}}</span>
         <p class="form-help-content">
           If you don't specify an
-          <a href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html"
+          <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html"
              target="_blank" rel="nofollow noreferrer">Availability Zone</a>, AWS will choose one for you.
         </p>
       </div>
@@ -1011,7 +1123,7 @@ ecs:DescribeTaskDefinition
               ng-show="GOINPUTNAME[LogDriver].$error.server">{{GOINPUTNAME[LogDriver].$error.server}}</span>
         <p class="form-help-content">
           Read more about
-          <a href="http://docs.aws.amazon.com/AmazonECS/latest/developerguide/using_awslogs.html#enable_awslogs"
+          <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/using_awslogs.html#enable_awslogs"
              target="_blank" rel="nofollow noreferrer">enabling the awslogs</a> on your Container Instances. Supported
           logging drivers are listed
           <a href="https://docs.docker.com/engine/admin/logging/overview/#supported-logging-drivers"

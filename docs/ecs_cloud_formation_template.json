@@ -5,19 +5,20 @@
       "Description": "The name of the ECS cluster",
       "Type": "String",
       "Default": "GoCD"
+    },
+    "GoCDServerId": {
+      "Description": "The unique ID of the GoCD server that may assume the plugin role, found in the serverId attribute within Admin > Config XML (cruise-config.xml)",
+      "Type": "String",
+      "AllowedPattern": "[a-zA-Z0-9-]+",
+      "ConstraintDescription": "must be a GoCD server id"
     }
   },
   "Outputs": {
-    "AccessKey": {
-      "Value": {
-        "Ref": "AccessKey"
-      }
-    },
-    "SecretKey": {
+    "GoCDECSPluginRole": {
       "Value": {
         "Fn::GetAtt": [
-          "AccessKey",
-          "SecretAccessKey"
+          "GoCDECSPluginRole",
+          "Arn"
         ]
       }
     },
@@ -47,17 +48,48 @@
         }
       }
     },
-    "AccessKey": {
-      "Type": "AWS::IAM::AccessKey",
+    "GoCDECSPluginRole": {
+      "Type": "AWS::IAM::Role",
       "Properties": {
-        "UserName": {
-          "Ref": "GoCDECSPluginUser"
-        }
-      }
-    },
-    "GoCDECSPluginUser": {
-      "Type": "AWS::IAM::User",
-      "Properties": {
+        "Description": "Assumed by the GoCD ECS elastic agent plugin to manage EC2 instances and ECS tasks",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "arn:aws:iam::",
+                      {
+                        "Ref": "AWS::AccountId"
+                      },
+                      ":root"
+                    ]
+                  ]
+                }
+              },
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "sts:ExternalId": {
+                    "Fn::Join": [
+                      "",
+                      [
+                        "gocd:server-id:",
+                        {
+                          "Ref": "GoCDServerId"
+                        }
+                      ]
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        },
         "Policies": [
           {
             "PolicyName": "ManageEC2Instances",
@@ -68,21 +100,38 @@
                   "Effect": "Allow",
                   "Action": [
                     "ec2:RunInstances",
+                    "ec2:StartInstances",
+                    "ec2:StopInstances",
                     "ec2:CreateTags",
+                    "ec2:DeleteTags",
                     "ec2:TerminateInstances",
                     "ec2:DescribeInstances",
                     "ec2:DescribeSubnets",
                     "ec2:CreateVolume",
                     "ec2:AttachVolume",
-                    "ec2:StopInstances",
-                    "ec2:StartInstances",
-                    "ec2:DeleteTags",
-                    "iam:PassRole",
-                    "iam:GetRole"
+                    "ec2:RequestSpotInstances",
+                    "ec2:DescribeSpotInstanceRequests"
                   ],
                   "Resource": [
                     "*"
                   ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "iam:PassRole",
+                  "Resource": [
+                    {
+                      "Fn::GetAtt": [
+                        "GoCDEC2OptimizedRole",
+                        "Arn"
+                      ]
+                    }
+                  ],
+                  "Condition": {
+                    "StringEquals": {
+                      "iam:PassedToService": "ec2.amazonaws.com"
+                    }
+                  }
                 }
               ]
             }
@@ -99,14 +148,14 @@
                     "ecs:DeregisterContainerInstance",
                     "ecs:DescribeContainerInstances",
                     "ecs:ListContainerInstances",
+                    "ecs:DescribeTaskDefinition",
                     "ecs:RegisterTaskDefinition",
                     "ecs:DeregisterTaskDefinition",
                     "ecs:DeleteTaskDefinitions",
                     "ecs:StartTask",
                     "ecs:StopTask",
                     "ecs:ListTasks",
-                    "ecs:DescribeTasks",
-                    "ecs:DescribeTaskDefinition"
+                    "ecs:DescribeTasks"
                   ],
                   "Resource": [
                     "*"
@@ -143,16 +192,15 @@
                 {
                   "Effect": "Allow",
                   "Action": [
-                    "ecs:DescribeClusters",
                     "ecs:DiscoverPollEndpoint",
+                    "ecs:Poll",
                     "ecs:RegisterContainerInstance",
                     "ecs:DeregisterContainerInstance",
-                    "ecs:Poll",
                     "ecs:StartTelemetrySession",
                     "ecs:SubmitContainerStateChange",
                     "ecs:SubmitTaskStateChange",
-                    "logs:CreateLogStream",
-                    "logs:PutLogEvents"
+                    "logs:PutLogEvents",
+                    "logs:CreateLogStream"
                   ],
                   "Resource": [
                     "*"

@@ -88,7 +88,7 @@ Specify the configuration for the EC2 instance. This is optional. If specified, 
 
 2. **Instance type:** This instance type will be used to spin up EC2 instances that will run docker containers with this profile. If left unspecified, the default instance type configured in the cluster profile will be used to spin up an EC2 instance. Read more about [EC2 Instance Type](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html).
 
-3. **IAM instance profile:** The name of the IAM profile that will allow the ECS agent to make calls to AWS on your behalf. Please refer to [pre-requisites](installation.md) for more information. If left unspecified, the `IAM Instance Profile` configured in the cluster profile will be used to spin up an EC2 instance. Read more about [IAM Instance Profiles](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/instance_IAM_role.html).
+3. **Agent IAM instance profile:** The name of the IAM profile that will allow the ECS agent to make calls to AWS on your behalf. Please refer to [pre-requisites](installation.md) for more information. If left unspecified, the `IAM Instance Profile` configured in the cluster profile will be used to spin up an EC2 instance. Read more about [IAM Instance Profiles](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/instance_IAM_role.html).
 
 4. **Subnet id(s):** Enter comma separated subnet ids. If multiple subnet ids are specified, the subnet having the least number of EC2 instances will be used to spin up a new EC2 instance. If left unspecified, the `Subnet id(s)` configured in the cluster profile will be used to spin up an EC2 instance. Read more about [VPCs & Subnets](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Subnets.html).
 

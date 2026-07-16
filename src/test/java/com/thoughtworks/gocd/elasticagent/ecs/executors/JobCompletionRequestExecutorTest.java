@@ -33,6 +33,7 @@ import org.mockito.InOrder;
 import org.mockito.Mock;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -58,8 +59,7 @@ public class JobCompletionRequestExecutorTest {
         ClusterProfileProperties clusterProfileProperties = new ClusterProfileProperties();
         JobCompletionRequest request = new JobCompletionRequest(elasticAgentId, jobIdentifier, new ElasticAgentProfileProperties(), clusterProfileProperties);
         JobCompletionRequestExecutor executor = new JobCompletionRequestExecutor(request, mockAgentInstances, mockPluginRequest);
-        Agents agents = new Agents();
-        agents.add(new Agent(elasticAgentId));
+        Agents agents = new Agents(Set.of(new Agent(elasticAgentId)));
 
         when(mockPluginRequest.listAgents()).thenReturn(agents);
 

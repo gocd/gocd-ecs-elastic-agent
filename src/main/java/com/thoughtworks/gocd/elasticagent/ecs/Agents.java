@@ -69,7 +69,7 @@ public class Agents {
         return new ArrayList<>(agents.values());
     }
 
-    public void add(Agent agent) {
+    private void add(Agent agent) {
         agents.put(agent.elasticAgentId(), agent);
     }
 

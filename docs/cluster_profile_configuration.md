@@ -35,13 +35,13 @@
 
 2. **Container data volume size:** Maximum volume size in GB that container can use to store container data. Defaults to `10G`.
 
-## AWS Credentials
+## Plugin AWS Credentials
 
-Optionally, specify `Access Key` and `Secret Access Key` of AWS account. These are used by plugin to make API calls. Specified API keys must have appropriate privileges to access aws resources. Please refer [pre-requisites](installation.md#prerequisites) for more information.
+All settings in this section are optional. Optionally, specify `Access Key` and `Secret Access Key` of AWS account. These are used by plugin to make API calls. Specified API keys must have appropriate privileges to access aws resources. Please refer [pre-requisites](installation.md#prerequisites) for more information.
 
-![Alt text](images/cluster-profiles/aws_credentials.png "AWS Credentials")
+![Alt text](images/cluster-profiles/aws_credentials.png "Plugin AWS Credentials")
 
-If not specified, the plugin will try to detect it in following order:
+If the access key and secret key are left blank, the plugin will automatically detect credentials from the GoCD server's environment, in the following order:
 
 1. **Environment Variables -** `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` (RECOMMENDED since they are recognized by all the AWS SDKs and CLI except for .NET), or `AWS_ACCESS_KEY` and `AWS_SECRET_KEY` (only recognized by Java SDK)
 
@@ -51,6 +51,57 @@ If not specified, the plugin will try to detect it in following order:
 
 Read more about AWS' access keys [here](https://docs.aws.amazon.com/general/latest/gr/aws-sec-cred-types.html#access-keys-and-secret-access-keys).  
 
+### Assuming an IAM role
+
+Optionally, specify an `Assume Role ARN`. If provided, the plugin will use the credentials resolved as described above only to call [`sts:AssumeRole`](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html) for that role, and will use the temporary credentials of the assumed role for all other AWS API calls. In this case the privileges described in [pre-requisites](installation.md#prerequisites) must be granted to the assumed role rather than to the original credentials, and the original credentials only need permission to assume the role:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "sts:AssumeRole",
+      "Resource": "arn:aws:iam::111111111111:role/gocd-ecs-plugin-role"
+    }
+  ]
+}
+```
+
+#### External ID
+
+When assuming the role, the plugin always supplies an [external ID](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_create_for-user_externalid.html) of the form `gocd:server-id:<server-id>`, where `<server-id>` is the unique ID that GoCD generated for your server. You can find it in the `serverId` attribute of the `<server/>` element in _Admin > Config XML_ (or `cruise-config.xml`).
+
+This allows the role's trust policy to ensure that only this specific GoCD server can assume the role, even if other GoCD servers or tools end up sharing the same base credentials (for example, several servers running with the same EC2 instance profile). A trust policy for the role above might look like:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::111111111111:role/gocd-server-instance-role"
+      },
+      "Action": "sts:AssumeRole",
+      "Condition": {
+        "StringEquals": {
+          "sts:ExternalId": "gocd:server-id:9d4d3bd1-1234-4c9e-b5ef-example00000"
+        }
+      }
+    }
+  ]
+}
+```
+
+Here the `Principal` is the IAM user or role behind the base credentials the plugin resolved — the IAM user of a configured access key, or the role of the GoCD server's EC2 instance profile.
+
+Checking the external ID is optional — `AssumeRole` ignores the supplied external ID unless the trust policy has a condition on `sts:ExternalId`. Note that a GoCD server's ID changes if it is rebuilt without restoring `cruise-config.xml`, in which case a trust policy pinning the external ID must be updated before the new server can assume the role.
+
+#### Role session names in CloudTrail
+
+Sessions created via `AssumeRole` use a role session name of the form `gocd-ecs-elastic-agent-plugin@<cluster-name>` (truncated to 64 characters), where `<cluster-name>` is the ECS cluster name from the cluster profile. The session name appears in CloudTrail as the last segment of the assumed-role ARN on every API call, so activity from different cluster profiles assuming the same role can be told apart. The session name format may change in future plugin versions — pin `sts:ExternalId` in trust policies rather than `sts:RoleSessionName`.
+
 ## EC2 instance settings
 
 These settings are applied to all EC2 instances launched by the plugin irrespective of platform.
@@ -59,11 +110,11 @@ These settings are applied to all EC2 instances launched by the plugin irrespect
 
 1. **AWS keypair name:** The name of the key pair that you may use to SSH or RDP into the EC2 instance. This can be overridden from the elastic profile. Read more about [AWS EC2 Key Pairs](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html).
 
-2. **Subnet id(s):** Enter comma separated subnet ids. If multiple subnet ids are specified, the subnet having the least number of EC2 instances will be used to spin up a new EC2 instance. If left unspecified or the specified subnet ids are not available at the time of launching the EC2 instance, AWS will choose a default subnet from your default VPC for you. User can override this from elastic profile. Read more about [VPCs & Subnets](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Subnets.html).
+2. **Subnet id(s):** Enter comma separated subnet ids. If multiple subnet ids are specified, the subnet having the least number of EC2 instances will be used to spin up a new EC2 instance. If left unspecified or the specified subnet ids are not available at the time of launching the EC2 instance, AWS will choose a default subnet from your default VPC for you. Users can override this from elastic profile. Read more about [VPCs & Subnets](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_Subnets.html).
 
 3. **Security Group Id(s):**  Enter comma separated security group ids. EC2 instances will be assigned the security groups(s) specified here. This can be overridden from the elastic profile. Read more about [AWS' VPC Security Groups](https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html).
 
-4. **IAM instance profile (mandatory):** The name of the IAM profile that will allow the ECS agent to make API calls to AWS on your behalf. Please refer [pre-requisites](../prerequisites/) for the bare minimum privileges your profile must have to allow plugin to make API calls. This can be overridden from the elastic profile.
+4. **Agent IAM instance profile (mandatory):** The name of the IAM profile that will allow the ECS agent to make API calls to AWS on your behalf. Please refer [pre-requisites](../prerequisites/) for the bare minimum privileges your profile must have to allow plugin to make API calls. This can be overridden from the elastic profile.
 
 ## EC2 instance settings for Linux
 
@@ -71,7 +122,7 @@ This is to configure Linux specific defaults for EC2 instance. It will be used t
 
 ![Alt text](images/cluster-profiles/linux_instance_settings.png "EC2 instance settings for Linux")
                                      
-1. **AMI ID:** The AMI ID that will be used when an instance is spun up. The ECS agent will run on this ECS optimized EC2 instance. We recommend using an [Amazon ECS-Optimized AMI](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html). ECS optimized Linux AMIs are available [here](http://docs.aws.amazon.com/AmazonECS/latest/developerguide/launch_container_instance.html). This can be overridden from elastic profiles.
+1. **AMI ID:** The AMI ID that will be used when an instance is spun up. The ECS agent will run on this ECS optimized EC2 instance. We recommend using an [Amazon ECS-Optimized AMI](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-optimized_AMI.html). ECS optimized Linux AMIs are available [here](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/launch_container_instance.html). This can be overridden from elastic profiles.
 
 2. **Instance type:** This instance type will be used to spin up EC2 instances that will run docker containers with this profile. Read more about [EC2 Instance Types](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instance-types.html).
                        
@@ -81,7 +132,7 @@ This is to configure Linux specific defaults for EC2 instance. It will be used t
 
 5. **Instance creation timeout:** If an EC2 instance created by this plugin does not register with the container service within this timeout period, the plugin will assume that the instance has failed to startup and will be terminated. Defaults to `5` minutes.
 
-6. **Minimum instance required in cluster:** Minimum Linux instances you'd like to have running at any point of time. Defaults to `0`.
+6. **Minimum instances required in cluster:** Minimum Linux instances you'd like to have running at any point of time. Defaults to `0`.
 
 7. **Maximum instances allowed:** Restricts maximum number of Linux instances in the cluster. Plugin will not launch a new Linux instance if the cluster is already running the specified number of instances. Defaults to `5`.
 
@@ -118,7 +169,7 @@ This is to configure Windows specific defaults for EC2 instance. It will be used
 
 5. **Instance creation timeout:** If an EC2 instance created by this plugin does not register with the container service within this timeout period, the plugin will assume that the instance has failed to startup and will be terminated. Defaults to `15` minutes.
 
-6. **Minimum instance required in cluster:** Minimum Windows instances you'd like to have running at any point of time. Defaults to `0`.
+6. **Minimum instances required in cluster:** Minimum Windows instances you'd like to have running at any point of time. Defaults to `0`.
 
 7. **Maximum instances allowed:** Restricts maximum number of Windows instances in the cluster. Plugin will not launch new Windows instance if the cluster is already running the specified number of instances. Defaults to `5`.
     
@@ -147,7 +198,7 @@ This is to configure Windows specific defaults for EC2 instance. It will be used
 
 1. **AWS Cluster Name (mandatory):** Name of the [ECS cluster](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/clusters.html) that will be managed by the plugin. This cluster must already exist.
 
-2. **AWS Region:** If you don't specify an [Availability Zone](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html), AWS will choose one for you.
+2. **AWS Region:** If you don't specify an [Availability Zone](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html), AWS will choose one for you.
 
 
 ## Log configuration
