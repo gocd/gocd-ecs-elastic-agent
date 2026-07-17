@@ -16,8 +16,6 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws;
 
-import com.amazonaws.services.ec2.model.*;
-import com.amazonaws.services.ecs.model.ContainerInstance;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.matcher.SpotRequestMatcher;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.strategy.TerminateOperation;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.ConsoleLogAppender;
@@ -32,9 +30,12 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InOrder;
 import org.mockito.Mock;
+import software.amazon.awssdk.services.ec2.model.*;
+import software.amazon.awssdk.services.ecs.model.ContainerInstance;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.aws.InstanceMother.spotInstance;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.Platform.LINUX;
@@ -84,92 +85,93 @@ public class SpotInstanceServiceTest {
             when(elasticAgentProfileProperties.platform()).thenReturn(LINUX);
             when(pluginSettings.getMaxLinuxSpotInstanceAllowed()).thenReturn(2);
             when(spotInstanceHelper.getAllSpotInstances(any(), any(), any())).thenReturn(emptyList());
-            when(configBuilder.withSettings(pluginSettings)).thenReturn(configBuilder);
-            when(configBuilder.withProfile(elasticAgentProfileProperties)).thenReturn(configBuilder);
+            when(configBuilder.settings(pluginSettings)).thenReturn(configBuilder);
+            when(configBuilder.profile(elasticAgentProfileProperties)).thenReturn(configBuilder);
             when(configBuilder.build()).thenReturn(ec2Config);
-            when(spotInstanceHelper.requestSpotInstanceRequest(any(), any(), any()))
-                    .thenReturn(new RequestSpotInstancesResult().withSpotInstanceRequests(new SpotInstanceRequest().withSpotInstanceRequestId("spot_req_id").withState("open").withStatus(new SpotInstanceStatus())));
+            when(spotInstanceHelper.requestSpotInstanceRequest(any(), any()))
+                    .thenReturn(RequestSpotInstancesResponse.builder().spotInstanceRequests(SpotInstanceRequest.builder().spotInstanceRequestId("spot_req_id").state("open").status(SpotInstanceStatus.builder().build()).build()).build());
 
             Optional<ContainerInstance> containerInstance = service.create(pluginSettings, elasticAgentProfileProperties, consoleLogAppender);
 
-            verify(spotInstanceHelper).requestSpotInstanceRequest(pluginSettings, ec2Config, consoleLogAppender);
+            verify(spotInstanceHelper).requestSpotInstanceRequest(pluginSettings, ec2Config);
             assertThat(containerInstance.isPresent()).isFalse();
         }
 
         @Test
         void shouldNotRequestForASpotInstanceIfAOpenSpotRequestMatchingTheProfileExists() throws LimitExceededException {
-            SpotInstanceRequest openSpotInstanceRequest = new SpotInstanceRequest().withSpotInstanceRequestId("spot_req_id").withState("open");
+            SpotInstanceRequest openSpotInstanceRequest = SpotInstanceRequest.builder().spotInstanceRequestId("spot_req_id").state("open").build();
 
             when(elasticAgentProfileProperties.platform()).thenReturn(LINUX);
             when(pluginSettings.getMaxLinuxSpotInstanceAllowed()).thenReturn(2);
             when(spotInstanceHelper.getAllSpotInstances(any(), any(), any())).thenReturn(emptyList());
-            when(configBuilder.withSettings(pluginSettings)).thenReturn(configBuilder);
-            when(configBuilder.withProfile(elasticAgentProfileProperties)).thenReturn(configBuilder);
+            when(configBuilder.settings(pluginSettings)).thenReturn(configBuilder);
+            when(configBuilder.profile(elasticAgentProfileProperties)).thenReturn(configBuilder);
             when(configBuilder.build()).thenReturn(ec2Config);
-            when(spotInstanceHelper.getAllOpenOrSpotRequestsWithRunningInstances(any(), any(), any())).thenReturn(singletonList(openSpotInstanceRequest));
+            when(spotInstanceHelper.getAllOpenOrSpotRequestsWithRunningInstances(any(), any(), any())).thenReturn(Stream.of(openSpotInstanceRequest));
             when(spotRequestMatcher.matches(ec2Config, openSpotInstanceRequest)).thenReturn(true);
 
             Optional<ContainerInstance> containerInstance = service.create(pluginSettings, elasticAgentProfileProperties, consoleLogAppender);
 
-            verify(spotInstanceHelper, never()).requestSpotInstanceRequest(any(), any(), any());
+            verify(spotInstanceHelper, never()).requestSpotInstanceRequest(any(), any());
             assertThat(containerInstance.isPresent()).isFalse();
         }
 
         @Test
         void shouldNotRequestForASpotInstanceIfAUnTaggedSpotRequestMatchingTheProfileExists() throws LimitExceededException {
-            SpotInstanceRequest unTaggedSpotRequest = new SpotInstanceRequest().withSpotInstanceRequestId("spot_req_id")
-                    .withState("open").withStatus(new SpotInstanceStatus());
+            SpotInstanceRequest unTaggedSpotRequest = SpotInstanceRequest.builder().spotInstanceRequestId("spot_req_id")
+                    .state("open").status(SpotInstanceStatus.builder().build()).build();
 
             when(elasticAgentProfileProperties.platform()).thenReturn(LINUX);
             when(pluginSettings.getMaxLinuxSpotInstanceAllowed()).thenReturn(2);
             when(spotInstanceHelper.getAllSpotInstances(any(), any(), any())).thenReturn(emptyList());
-            when(configBuilder.withSettings(pluginSettings)).thenReturn(configBuilder);
-            when(configBuilder.withProfile(elasticAgentProfileProperties)).thenReturn(configBuilder);
+            when(configBuilder.settings(pluginSettings)).thenReturn(configBuilder);
+            when(configBuilder.profile(elasticAgentProfileProperties)).thenReturn(configBuilder);
             when(configBuilder.build()).thenReturn(ec2Config);
-            when(spotInstanceHelper.getAllOpenOrSpotRequestsWithRunningInstances(any(), any(), any())).thenReturn(emptyList());
-            when(spotRequestMatcher.matches(ec2Config, unTaggedSpotRequest)).thenReturn(true);
-            when(spotInstanceHelper.requestSpotInstanceRequest(any(), any(), any()))
-                    .thenReturn(new RequestSpotInstancesResult().withSpotInstanceRequests(unTaggedSpotRequest));
+            when(spotInstanceHelper.getAllOpenOrSpotRequestsWithRunningInstances(any(), any(), any())).thenReturn(Stream.empty(), Stream.empty());
+            // the service stores a rebuilt copy of the request (with the platform tag added), so match any request
+            when(spotRequestMatcher.matches(eq(ec2Config), any(SpotInstanceRequest.class))).thenReturn(true);
+            when(spotInstanceHelper.requestSpotInstanceRequest(any(), any()))
+                    .thenReturn(RequestSpotInstancesResponse.builder().spotInstanceRequests(unTaggedSpotRequest).build());
 
             service.create(pluginSettings, elasticAgentProfileProperties, consoleLogAppender);
             service.create(pluginSettings, elasticAgentProfileProperties, consoleLogAppender);
 
-            verify(spotInstanceHelper, times(1)).requestSpotInstanceRequest(any(), any(), any());
+            verify(spotInstanceHelper, times(1)).requestSpotInstanceRequest(any(), any());
         }
 
         @Test
         void shouldWaitForSpotRequestToBeAbleToLookupByIdBeforeTagging() throws LimitExceededException {
-            SpotInstanceRequest spotInstanceRequest = new SpotInstanceRequest().withSpotInstanceRequestId("spot_req_id").withState("open");
+            SpotInstanceRequest spotInstanceRequest = SpotInstanceRequest.builder().spotInstanceRequestId("spot_req_id").state("open").build();
 
             when(elasticAgentProfileProperties.platform()).thenReturn(LINUX);
             when(pluginSettings.getMaxLinuxSpotInstanceAllowed()).thenReturn(2);
             when(spotInstanceHelper.getAllSpotInstances(any(), any(), any())).thenReturn(emptyList());
-            when(configBuilder.withSettings(pluginSettings)).thenReturn(configBuilder);
-            when(configBuilder.withProfile(elasticAgentProfileProperties)).thenReturn(configBuilder);
+            when(configBuilder.settings(pluginSettings)).thenReturn(configBuilder);
+            when(configBuilder.profile(elasticAgentProfileProperties)).thenReturn(configBuilder);
             when(configBuilder.build()).thenReturn(ec2Config);
-            when(spotInstanceHelper.requestSpotInstanceRequest(any(), any(), any()))
-                    .thenReturn(new RequestSpotInstancesResult().withSpotInstanceRequests(spotInstanceRequest.withStatus(new SpotInstanceStatus())));
+            when(spotInstanceHelper.requestSpotInstanceRequest(any(), any()))
+                    .thenReturn(RequestSpotInstancesResponse.builder().spotInstanceRequests(spotInstanceRequest).build());
 
             Optional<ContainerInstance> containerInstance = service.create(pluginSettings, elasticAgentProfileProperties, consoleLogAppender);
 
             InOrder inOrder = inOrder(spotInstanceHelper);
-            inOrder.verify(spotInstanceHelper).waitTillSpotRequestCanBeLookedUpById(pluginSettings, spotInstanceRequest.getSpotInstanceRequestId());
+            inOrder.verify(spotInstanceHelper).waitTillSpotRequestCanBeLookedUpById(pluginSettings, spotInstanceRequest.spotInstanceRequestId());
             inOrder.verify(spotInstanceHelper).tagSpotResources(pluginSettings, List.of("spot_req_id"), LINUX);
             assertThat(containerInstance.isPresent()).isFalse();
         }
 
         @Test
         void shouldCancelTheSpotRequestIfTaggingItFails() {
-            SpotInstanceRequest spotInstanceRequest = new SpotInstanceRequest().withSpotInstanceRequestId("spot_req_id").withState("open");
+            SpotInstanceRequest spotInstanceRequest = SpotInstanceRequest.builder().spotInstanceRequestId("spot_req_id").state("open").build();
 
             when(elasticAgentProfileProperties.platform()).thenReturn(LINUX);
             when(pluginSettings.getMaxLinuxSpotInstanceAllowed()).thenReturn(2);
             when(spotInstanceHelper.getAllSpotInstances(any(), any(), any())).thenReturn(emptyList());
-            when(configBuilder.withSettings(pluginSettings)).thenReturn(configBuilder);
-            when(configBuilder.withProfile(elasticAgentProfileProperties)).thenReturn(configBuilder);
+            when(configBuilder.settings(pluginSettings)).thenReturn(configBuilder);
+            when(configBuilder.profile(elasticAgentProfileProperties)).thenReturn(configBuilder);
             when(configBuilder.build()).thenReturn(ec2Config);
-            when(spotInstanceHelper.requestSpotInstanceRequest(any(), any(), any()))
-                    .thenReturn(new RequestSpotInstancesResult().withSpotInstanceRequests(spotInstanceRequest.withStatus(new SpotInstanceStatus())));
+            when(spotInstanceHelper.requestSpotInstanceRequest(any(), any()))
+                    .thenReturn(RequestSpotInstancesResponse.builder().spotInstanceRequests(spotInstanceRequest).build());
             doThrow(new RuntimeException()).when(spotInstanceHelper).tagSpotResources(pluginSettings, List.of("spot_req_id"), LINUX);
 
             assertThrows(RuntimeException.class,
@@ -181,15 +183,15 @@ public class SpotInstanceServiceTest {
         @ParameterizedTest
         @EnumSource(Platform.class)
         void shouldTagSpotRequestsPostSpotRequestCreation(Platform platform) throws LimitExceededException {
-            SpotInstanceRequest spotInstanceRequest = new SpotInstanceRequest().withSpotInstanceRequestId("spot_req_id").withState("open").withStatus(new SpotInstanceStatus());
+            SpotInstanceRequest spotInstanceRequest = SpotInstanceRequest.builder().spotInstanceRequestId("spot_req_id").state("open").status(SpotInstanceStatus.builder().build()).build();
 
             when(elasticAgentProfileProperties.platform()).thenReturn(platform);
             when(pluginSettings.getMaxLinuxSpotInstanceAllowed()).thenReturn(2);
-            when(configBuilder.withSettings(pluginSettings)).thenReturn(configBuilder);
-            when(configBuilder.withProfile(elasticAgentProfileProperties)).thenReturn(configBuilder);
+            when(configBuilder.settings(pluginSettings)).thenReturn(configBuilder);
+            when(configBuilder.profile(elasticAgentProfileProperties)).thenReturn(configBuilder);
             when(configBuilder.build()).thenReturn(ec2Config);
-            when(spotInstanceHelper.requestSpotInstanceRequest(any(), any(), any()))
-                    .thenReturn(new RequestSpotInstancesResult().withSpotInstanceRequests(spotInstanceRequest));
+            when(spotInstanceHelper.requestSpotInstanceRequest(any(), any()))
+                    .thenReturn(RequestSpotInstancesResponse.builder().spotInstanceRequests(spotInstanceRequest).build());
 
             service.create(pluginSettings, elasticAgentProfileProperties, consoleLogAppender);
 
@@ -199,72 +201,72 @@ public class SpotInstanceServiceTest {
         @Test
         void shouldErrorOutIfClusterIsMaxedOut() {
 
-            when(configBuilder.withSettings(pluginSettings)).thenReturn(configBuilder);
-            when(configBuilder.withProfile(elasticAgentProfileProperties)).thenReturn(configBuilder);
+            when(configBuilder.settings(pluginSettings)).thenReturn(configBuilder);
+            when(configBuilder.profile(elasticAgentProfileProperties)).thenReturn(configBuilder);
             when(configBuilder.build()).thenReturn(ec2Config);
             when(elasticAgentProfileProperties.platform()).thenReturn(LINUX);
             when(pluginSettings.getMaxLinuxSpotInstanceAllowed()).thenReturn(2);
-            when(spotInstanceHelper.allRegisteredSpotInstancesForPlatform(pluginSettings, LINUX)).thenReturn(asList(new Instance(), new Instance()));
+            when(spotInstanceHelper.allRegisteredSpotInstancesForPlatform(pluginSettings, LINUX)).thenReturn(asList(Instance.builder().build(), Instance.builder().build()));
 
             assertThrows(LimitExceededException.class,
                     () -> service.create(pluginSettings, elasticAgentProfileProperties, consoleLogAppender));
 
-            verify(spotInstanceHelper, never()).requestSpotInstanceRequest(any(), any(), any());
+            verify(spotInstanceHelper, never()).requestSpotInstanceRequest(any(), any());
         }
 
         @Test
         void shouldConsiderAllOpenOrSpotRequestsWithRunningUnRegisteredInstancesToComputeClusterSize() {
             int maxLinuxSpotInstanceAllowed = 4;
 
-            when(configBuilder.withSettings(pluginSettings)).thenReturn(configBuilder);
-            when(configBuilder.withProfile(elasticAgentProfileProperties)).thenReturn(configBuilder);
+            when(configBuilder.settings(pluginSettings)).thenReturn(configBuilder);
+            when(configBuilder.profile(elasticAgentProfileProperties)).thenReturn(configBuilder);
             when(configBuilder.build()).thenReturn(ec2Config);
             when(elasticAgentProfileProperties.platform()).thenReturn(LINUX);
             when(pluginSettings.getMaxLinuxSpotInstanceAllowed()).thenReturn(maxLinuxSpotInstanceAllowed);
             when(spotInstanceHelper.allRegisteredSpotInstancesForPlatform(pluginSettings, LINUX))
-                    .thenReturn(asList(new Instance().withInstanceId("id1"), new Instance().withInstanceId("id2")));
+                    .thenReturn(asList(Instance.builder().instanceId("id1").build(), Instance.builder().instanceId("id2").build()));
             when(spotInstanceHelper.getAllOpenOrSpotRequestsWithRunningInstances(pluginSettings, pluginSettings.getClusterName(), LINUX))
-                    .thenReturn(asList(new SpotInstanceRequest().withInstanceId("new_1"), new SpotInstanceRequest().withInstanceId("new_2")));
+                    .thenReturn(Stream.of(SpotInstanceRequest.builder().instanceId("new_1").build(), SpotInstanceRequest.builder().instanceId("new_2").build()));
 
             assertThrows(LimitExceededException.class,
                     () -> service.create(pluginSettings, elasticAgentProfileProperties, consoleLogAppender));
 
-            verify(spotInstanceHelper, never()).requestSpotInstanceRequest(any(), any(), any());
+            verify(spotInstanceHelper, never()).requestSpotInstanceRequest(any(), any());
         }
 
         @Test
         void shouldNotConsiderActiveOrCancelledSpotRequestsWithRegisteredInstancesToComputeClusterSize() throws LimitExceededException {
             int maxLinuxSpotInstanceAllowed = 3;
 
-            when(configBuilder.withSettings(pluginSettings)).thenReturn(configBuilder);
-            when(configBuilder.withProfile(elasticAgentProfileProperties)).thenReturn(configBuilder);
+            when(configBuilder.settings(pluginSettings)).thenReturn(configBuilder);
+            when(configBuilder.profile(elasticAgentProfileProperties)).thenReturn(configBuilder);
             when(configBuilder.build()).thenReturn(ec2Config);
             when(elasticAgentProfileProperties.platform()).thenReturn(LINUX);
             when(pluginSettings.getMaxLinuxSpotInstanceAllowed()).thenReturn(maxLinuxSpotInstanceAllowed);
             when(spotInstanceHelper.allRegisteredSpotInstancesForPlatform(pluginSettings, LINUX))
-                    .thenReturn(asList(new Instance().withInstanceId("id1"), new Instance().withInstanceId("id2")));
+                    .thenReturn(asList(Instance.builder().instanceId("id1").build(), Instance.builder().instanceId("id2").build()));
             when(spotInstanceHelper.getAllOpenOrSpotRequestsWithRunningInstances(pluginSettings, pluginSettings.getClusterName(), LINUX))
-                    .thenReturn(asList(new SpotInstanceRequest().withInstanceId("id1"), new SpotInstanceRequest().withInstanceId("id1")));
-            when(spotInstanceHelper.requestSpotInstanceRequest(any(), any(), any()))
-                    .thenReturn(new RequestSpotInstancesResult().withSpotInstanceRequests(new SpotInstanceRequest().withSpotInstanceRequestId("spot_req_id").withState("open").withStatus(new SpotInstanceStatus())));
+                    .thenReturn(Stream.of(SpotInstanceRequest.builder().instanceId("id1").build(), SpotInstanceRequest.builder().instanceId("id1").build()));
+            when(spotInstanceHelper.requestSpotInstanceRequest(any(), any()))
+                    .thenReturn(RequestSpotInstancesResponse.builder().spotInstanceRequests(SpotInstanceRequest.builder().spotInstanceRequestId("spot_req_id").state("open").status(SpotInstanceStatus.builder().build()).build()).build());
             service.create(pluginSettings, elasticAgentProfileProperties, consoleLogAppender);
 
-            verify(spotInstanceHelper).requestSpotInstanceRequest(any(), any(), any());
+            verify(spotInstanceHelper).requestSpotInstanceRequest(any(), any());
         }
 
         @Test
         void shouldConsiderUnTaggedSpotRequestsToComputeClusterSize() throws LimitExceededException {
             int maxLinuxSpotInstanceAllowed = 1;
 
-            when(configBuilder.withSettings(pluginSettings)).thenReturn(configBuilder);
-            when(configBuilder.withProfile(elasticAgentProfileProperties)).thenReturn(configBuilder);
+            when(configBuilder.settings(pluginSettings)).thenReturn(configBuilder);
+            when(configBuilder.profile(elasticAgentProfileProperties)).thenReturn(configBuilder);
             when(configBuilder.build()).thenReturn(ec2Config);
             when(elasticAgentProfileProperties.platform()).thenReturn(LINUX);
             when(pluginSettings.getMaxLinuxSpotInstanceAllowed()).thenReturn(maxLinuxSpotInstanceAllowed);
             when(spotInstanceHelper.allRegisteredSpotInstancesForPlatform(pluginSettings, LINUX)).thenReturn(emptyList());
-            when(spotInstanceHelper.getAllOpenOrSpotRequestsWithRunningInstances(pluginSettings, pluginSettings.getClusterName(), LINUX)).thenReturn(emptyList());
-            when(spotInstanceHelper.requestSpotInstanceRequest(any(), any(), any()))
-                    .thenReturn(new RequestSpotInstancesResult().withSpotInstanceRequests(new SpotInstanceRequest().withSpotInstanceRequestId("spot_req_id").withState("open").withStatus(new SpotInstanceStatus())));
+            when(spotInstanceHelper.getAllOpenOrSpotRequestsWithRunningInstances(pluginSettings, pluginSettings.getClusterName(), LINUX)).thenReturn(Stream.empty(), Stream.empty());
+            when(spotInstanceHelper.requestSpotInstanceRequest(any(), any()))
+                    .thenReturn(RequestSpotInstancesResponse.builder().spotInstanceRequests(SpotInstanceRequest.builder().spotInstanceRequestId("spot_req_id").state("open").status(SpotInstanceStatus.builder().build()).build()).build());
 
             service.create(pluginSettings, elasticAgentProfileProperties, consoleLogAppender);
 
@@ -275,24 +277,24 @@ public class SpotInstanceServiceTest {
         @Test
         void shouldRefreshUnTaggedSpotRequestsList() throws LimitExceededException {
             int maxLinuxSpotInstanceAllowed = 1;
-            SpotInstanceRequest spotInstanceRequest = new SpotInstanceRequest().withSpotInstanceRequestId("spot_req_id").withState("open").withStatus(new SpotInstanceStatus());
+            SpotInstanceRequest spotInstanceRequest = SpotInstanceRequest.builder().spotInstanceRequestId("spot_req_id").state("open").status(SpotInstanceStatus.builder().build()).build();
 
-            when(configBuilder.withSettings(pluginSettings)).thenReturn(configBuilder);
-            when(configBuilder.withProfile(elasticAgentProfileProperties)).thenReturn(configBuilder);
+            when(configBuilder.settings(pluginSettings)).thenReturn(configBuilder);
+            when(configBuilder.profile(elasticAgentProfileProperties)).thenReturn(configBuilder);
             when(configBuilder.build()).thenReturn(ec2Config);
             when(elasticAgentProfileProperties.platform()).thenReturn(LINUX);
             when(pluginSettings.getMaxLinuxSpotInstanceAllowed()).thenReturn(maxLinuxSpotInstanceAllowed);
             when(spotInstanceHelper.getAllSpotRequestsForCluster(pluginSettings))
                     .thenReturn(emptyList())
                     .thenReturn(singletonList(spotInstanceRequest));
-            when(spotInstanceHelper.requestSpotInstanceRequest(any(), any(), any()))
-                    .thenReturn(new RequestSpotInstancesResult().withSpotInstanceRequests(spotInstanceRequest));
+            when(spotInstanceHelper.requestSpotInstanceRequest(any(), any()))
+                    .thenReturn(RequestSpotInstancesResponse.builder().spotInstanceRequests(spotInstanceRequest).build());
 
             service.create(pluginSettings, elasticAgentProfileProperties, consoleLogAppender);
 
             service.create(pluginSettings, elasticAgentProfileProperties, consoleLogAppender);
 
-            verify(spotInstanceHelper, times(2)).requestSpotInstanceRequest(any(), any(), any());
+            verify(spotInstanceHelper, times(2)).requestSpotInstanceRequest(any(), any());
         }
     }
 
@@ -300,9 +302,9 @@ public class SpotInstanceServiceTest {
     class tagSpotInstances {
         @Test
         void shouldTagSpotInstances() {
-            SpotInstanceRequest req1 = new SpotInstanceRequest().withTags(tag("Creator", "com.tw.ecs"), tag("platform", "LINUX")).withInstanceId("1");
-            SpotInstanceRequest req2 = new SpotInstanceRequest().withTags(tag("Creator", "com.tw.ecs"), tag("platform", "WINDOWS")).withInstanceId("2");
-            SpotInstanceRequest req3 = new SpotInstanceRequest().withTags(tag("Creator", "com.tw.ecs"), tag("platform", "LINUX")).withInstanceId("3");
+            SpotInstanceRequest req1 = SpotInstanceRequest.builder().tags(tag("Creator", "com.tw.ecs"), tag("platform", "LINUX")).instanceId("1").build();
+            SpotInstanceRequest req2 = SpotInstanceRequest.builder().tags(tag("Creator", "com.tw.ecs"), tag("platform", "WINDOWS")).instanceId("2").build();
+            SpotInstanceRequest req3 = SpotInstanceRequest.builder().tags(tag("Creator", "com.tw.ecs"), tag("platform", "LINUX")).instanceId("3").build();
 
             when(pluginSettings.getClusterName()).thenReturn("gocd");
             when(spotInstanceHelper.getSpotRequestsWithARunningSpotInstance(pluginSettings, "gocd")).thenReturn(asList(req1, req2, req3));
@@ -318,8 +320,8 @@ public class SpotInstanceServiceTest {
     class tagIdleSpotInstances {
         @Test
         void shouldTagAIdleSpotInstance() {
-            Instance idleSpotInstance1 = new Instance().withInstanceId("spot_1");
-            Instance idleSpotInstance2 = new Instance().withInstanceId("spot_2");
+            Instance idleSpotInstance1 = Instance.builder().instanceId("spot_1").build();
+            Instance idleSpotInstance2 = Instance.builder().instanceId("spot_2").build();
 
             when(pluginSettings.getClusterName()).thenReturn("gocd");
             when(spotInstanceHelper.getAllIdleSpotInstances(pluginSettings, "gocd")).thenReturn(asList(idleSpotInstance1, idleSpotInstance2));
@@ -331,8 +333,8 @@ public class SpotInstanceServiceTest {
 
         @Test
         void shouldNotTagIdleInstancesWithExistingIdleTag() {
-            Instance idleSpotInstance1 = new Instance().withInstanceId("spot_1");
-            Instance idleSpotInstance2 = new Instance().withInstanceId("spot_2").withTags(new Tag().withKey("LAST_SEEN_IDLE").withValue("timestamp"));
+            Instance idleSpotInstance1 = Instance.builder().instanceId("spot_1").build();
+            Instance idleSpotInstance2 = Instance.builder().instanceId("spot_2").tags(Tag.builder().key("LAST_SEEN_IDLE").value("timestamp").build()).build();
 
             when(pluginSettings.getClusterName()).thenReturn("gocd");
             when(spotInstanceHelper.getAllIdleSpotInstances(pluginSettings, "gocd")).thenReturn(asList(idleSpotInstance1, idleSpotInstance2));
@@ -357,11 +359,11 @@ public class SpotInstanceServiceTest {
     class terminateIdleSpotInstances {
         @Test
         void shouldTerminateIdleSpotInstances() {
-            Instance idleSpotInstance1 = spotInstance("spot_1", "running", "LINUX");
-            Instance idleSpotInstance2 = spotInstance("spot_2", "running", "LINUX");
+            Instance idleSpotInstance1 = spotInstance("spot_1", InstanceStateName.RUNNING, "LINUX");
+            Instance idleSpotInstance2 = spotInstance("spot_2", InstanceStateName.RUNNING, "LINUX");
 
-            ContainerInstance containerInstance1 = new ContainerInstance().withEc2InstanceId("spot_1");
-            ContainerInstance containerInstance2 = new ContainerInstance().withEc2InstanceId("spot_2");
+            ContainerInstance containerInstance1 = ContainerInstance.builder().ec2InstanceId("spot_1").build();
+            ContainerInstance containerInstance2 = ContainerInstance.builder().ec2InstanceId("spot_2").build();
 
             when(pluginSettings.getClusterName()).thenReturn("gocd");
             when(spotInstanceHelper.getIdleInstancesEligibleForTermination(pluginSettings, "gocd")).thenReturn(asList(idleSpotInstance1, idleSpotInstance2));
@@ -374,11 +376,11 @@ public class SpotInstanceServiceTest {
 
         @Test
         void shouldNotTerminateUnRegisteredIdleSpotInstances() {
-            Instance idleSpotInstance1 = spotInstance("spot_1", "running", "LINUX");
-            Instance idleSpotInstance2 = spotInstance("spot_2", "running", "LINUX");
+            Instance idleSpotInstance1 = spotInstance("spot_1", InstanceStateName.RUNNING, "LINUX");
+            Instance idleSpotInstance2 = spotInstance("spot_2", InstanceStateName.RUNNING, "LINUX");
 
-            ContainerInstance containerInstance1 = new ContainerInstance().withEc2InstanceId("spot_1");
-            ContainerInstance runningSpotInstance = new ContainerInstance().withEc2InstanceId("spot_3");
+            ContainerInstance containerInstance1 = ContainerInstance.builder().ec2InstanceId("spot_1").build();
+            ContainerInstance runningSpotInstance = ContainerInstance.builder().ec2InstanceId("spot_3").build();
 
             when(pluginSettings.getClusterName()).thenReturn("gocd");
             when(spotInstanceHelper.getIdleInstancesEligibleForTermination(pluginSettings, "gocd")).thenReturn(asList(idleSpotInstance1, idleSpotInstance2));
@@ -391,6 +393,6 @@ public class SpotInstanceServiceTest {
     }
 
     private Tag tag(String key, String value) {
-        return new Tag().withKey(key).withValue(value);
+        return Tag.builder().key(key).value(value).build();
     }
 }

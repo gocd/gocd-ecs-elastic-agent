@@ -16,8 +16,13 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws.wait;
 
-import org.joda.time.Period;
 import org.junit.jupiter.api.Test;
+
+import org.junit.jupiter.api.Timeout;
+
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -32,9 +37,9 @@ class PollerTest {
         final Result<Integer> result = new Poller<Integer>()
                 .poll(api::get)
                 .stopWhen(count -> count >= 3)
-                .timeout(Period.seconds(3))
-                .retryAfter(1100)
-                .start();
+                .timeout(Duration.ofSeconds(3))
+                .retryAfter(Duration.ofMillis(1100))
+                .await();
 
         assertThat(result.get()).isEqualTo(3);
         assertThat(result.isFailed()).isFalse();
@@ -49,13 +54,52 @@ class PollerTest {
         final Result<Integer> result = new Poller<Integer>()
                 .poll(api::get)
                 .stopWhen(count -> count >= 3)
-                .timeout(Period.seconds(3))
-                .retryAfter(1100)
-                .start();
+                .timeout(Duration.ofSeconds(3))
+                .retryAfter(Duration.ofMillis(1100))
+                .await();
 
         assertThat(result.get()).isEqualTo(2);
         assertThat(result.isFailed()).isTrue();
-        assertThat(result.getException().getCause().getMessage()).isSameAs("Boom!!");
+        assertThat(result.getException()).isInstanceOf(RuntimeException.class).hasMessage("Boom!!");
+    }
+
+    @Test
+    void shouldFailWithTimeoutWhenStopConditionIsNeverMet() {
+        final Api api = mock(Api.class);
+        when(api.get()).thenReturn(1);
+
+        final Result<Integer> result = new Poller<Integer>()
+                .poll(api::get)
+                .stopWhen(count -> count >= 3)
+                .timeout(Duration.ofMillis(300))
+                .retryAfter(Duration.ofMillis(100))
+                .await();
+
+        assertThat(result.isFailed()).isTrue();
+        assertThat(result.getException()).isInstanceOf(TimeoutException.class);
+        assertThat(result.get()).isEqualTo(1);
+    }
+
+    @Test
+    @Timeout(value = 5, unit = TimeUnit.SECONDS)
+    void shouldReturnPromptlyAtTimeoutEvenWhenSupplierIsBlocked() {
+        final Result<Integer> result = new Poller<Integer>()
+                .poll(() -> {
+                    try {
+                        Thread.sleep(Duration.ofSeconds(30));
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        throw new RuntimeException(e);
+                    }
+                    return 1;
+                })
+                .stopWhen(count -> count >= 1)
+                .timeout(Duration.ofMillis(300))
+                .await();
+
+        assertThat(result.isFailed()).isTrue();
+        assertThat(result.getException()).isInstanceOf(TimeoutException.class);
+        assertThat(result.get()).isNull();
     }
 
     static class Api {

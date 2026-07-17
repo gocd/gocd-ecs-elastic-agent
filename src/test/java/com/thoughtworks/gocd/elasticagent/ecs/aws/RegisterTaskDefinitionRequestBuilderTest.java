@@ -16,7 +16,6 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws;
 
-import com.amazonaws.services.ecs.model.*;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.BindMount;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.ElasticAgentProfileProperties;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.Platform;
@@ -25,6 +24,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import software.amazon.awssdk.services.ecs.model.*;
+
+import java.util.List;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -39,7 +41,7 @@ class RegisterTaskDefinitionRequestBuilderTest {
     @Mock
     private ElasticAgentProfileProperties elasticAgentProfileProperties;
     @Mock
-    private ContainerDefinition containerDefinition;
+    private ContainerDefinition.Builder containerDefinitionBuilder;
     private RegisterTaskDefinitionRequestBuilder builder;
 
     @BeforeEach
@@ -51,22 +53,22 @@ class RegisterTaskDefinitionRequestBuilderTest {
 
     @Test
     void shouldBuildRegisterTaskDefinitionRequest() {
-        final RegisterTaskDefinitionRequest request = builder.build(pluginSettings, elasticAgentProfileProperties, containerDefinition);
+        final RegisterTaskDefinitionRequest request = builder.build(pluginSettings, elasticAgentProfileProperties, containerDefinitionBuilder, "some_task");
 
-        assertThat(request.getContainerDefinitions()).hasSize(1);
-        assertThat(request.getContainerDefinitions()).contains(containerDefinition);
+        assertThat(request.containerDefinitions()).hasSize(1);
+        assertThat(request.containerDefinitions()).contains(containerDefinitionBuilder.build());
 
-        assertThat(request.getVolumes()).hasSize(0);
-        verify(containerDefinition, times(0)).getMountPoints();
+        assertThat(request.volumes()).hasSize(0);
+        verify(containerDefinitionBuilder, times(0)).mountPoints(anyCollection());
     }
 
     @Test
     void shouldRegisterTaskDefinitionRequestWithTaskRoleArn() {
         when(elasticAgentProfileProperties.getTaskRoleArn()).thenReturn("task-role-arn");
 
-        final RegisterTaskDefinitionRequest request = builder.build(pluginSettings, elasticAgentProfileProperties, containerDefinition);
+        final RegisterTaskDefinitionRequest request = builder.build(pluginSettings, elasticAgentProfileProperties, containerDefinitionBuilder, "some_task");
 
-        assertThat(request.getTaskRoleArn()).isEqualTo("task-role-arn");
+        assertThat(request.taskRoleArn()).isEqualTo("task-role-arn");
     }
 
     @Test
@@ -74,20 +76,20 @@ class RegisterTaskDefinitionRequestBuilderTest {
         BindMount bindMount = new BindMount("data", "sourcePath", "containerPath");
         when(elasticAgentProfileProperties.bindMounts()).thenReturn(singletonList(bindMount));
 
-        final RegisterTaskDefinitionRequest request = builder.build(pluginSettings, elasticAgentProfileProperties, new ContainerDefinition());
+        final RegisterTaskDefinitionRequest request = builder.build(pluginSettings, elasticAgentProfileProperties, ContainerDefinition.builder(), "some_task");
 
-        assertThat(request.getVolumes().size()).isEqualTo(1);
+        assertThat(request.volumes().size()).isEqualTo(1);
 
-        Volume volume = request.getVolumes().getFirst();
-        assertThat(volume.getName()).isEqualTo(bindMount.getName());
-        assertThat(volume.getHost().getSourcePath()).isEqualTo(bindMount.getSourcePath());
+        Volume volume = request.volumes().getFirst();
+        assertThat(volume.name()).isEqualTo(bindMount.getName());
+        assertThat(volume.host().sourcePath()).isEqualTo(bindMount.getSourcePath());
 
-        ContainerDefinition containerDefinition = request.getContainerDefinitions().getFirst();
-        assertThat(containerDefinition.getMountPoints().size()).isEqualTo(1);
+        ContainerDefinition containerDefinition = request.containerDefinitions().getFirst();
+        assertThat(containerDefinition.mountPoints().size()).isEqualTo(1);
 
-        MountPoint mountPoint = containerDefinition.getMountPoints().getFirst();
-        assertThat(mountPoint.getContainerPath()).isEqualTo(bindMount.getContainerPath());
-        assertThat(mountPoint.getSourceVolume()).isEqualTo(bindMount.getName());
+        MountPoint mountPoint = containerDefinition.mountPoints().getFirst();
+        assertThat(mountPoint.containerPath()).isEqualTo(bindMount.getContainerPath());
+        assertThat(mountPoint.sourceVolume()).isEqualTo(bindMount.getName());
     }
 
     @Test
@@ -96,28 +98,28 @@ class RegisterTaskDefinitionRequestBuilderTest {
         BindMount bindMount2 = new BindMount("data2", "sourcePath2", "containerPath2");
         when(elasticAgentProfileProperties.bindMounts()).thenReturn(asList(bindMount1, bindMount2));
 
-        final RegisterTaskDefinitionRequest request = builder.build(pluginSettings, elasticAgentProfileProperties, new ContainerDefinition());
+        final RegisterTaskDefinitionRequest request = builder.build(pluginSettings, elasticAgentProfileProperties, ContainerDefinition.builder(), "some_task");
 
-        ContainerDefinition containerDefinition = request.getContainerDefinitions().getFirst();
+        ContainerDefinition containerDefinition = request.containerDefinitions().getFirst();
 
-        assertThat(request.getVolumes().size()).isEqualTo(2);
-        assertThat(containerDefinition.getMountPoints().size()).isEqualTo(2);
+        assertThat(request.volumes().size()).isEqualTo(2);
+        assertThat(containerDefinition.mountPoints().size()).isEqualTo(2);
 
-        Volume volume1 = request.getVolumes().getFirst();
-        assertThat(volume1.getName()).isEqualTo(bindMount1.getName());
-        assertThat(volume1.getHost().getSourcePath()).isEqualTo(bindMount1.getSourcePath());
+        Volume volume1 = request.volumes().getFirst();
+        assertThat(volume1.name()).isEqualTo(bindMount1.getName());
+        assertThat(volume1.host().sourcePath()).isEqualTo(bindMount1.getSourcePath());
 
-        MountPoint mountPoint1 = containerDefinition.getMountPoints().getFirst();
-        assertThat(mountPoint1.getContainerPath()).isEqualTo(bindMount1.getContainerPath());
-        assertThat(mountPoint1.getSourceVolume()).isEqualTo(bindMount1.getName());
+        MountPoint mountPoint1 = containerDefinition.mountPoints().getFirst();
+        assertThat(mountPoint1.containerPath()).isEqualTo(bindMount1.getContainerPath());
+        assertThat(mountPoint1.sourceVolume()).isEqualTo(bindMount1.getName());
 
-        Volume volume2 = request.getVolumes().get(1);
-        assertThat(volume2.getName()).isEqualTo(bindMount2.getName());
-        assertThat(volume2.getHost().getSourcePath()).isEqualTo(bindMount2.getSourcePath());
+        Volume volume2 = request.volumes().get(1);
+        assertThat(volume2.name()).isEqualTo(bindMount2.getName());
+        assertThat(volume2.host().sourcePath()).isEqualTo(bindMount2.getSourcePath());
 
-        MountPoint mountPoint2 = containerDefinition.getMountPoints().get(1);
-        assertThat(mountPoint2.getContainerPath()).isEqualTo(bindMount2.getContainerPath());
-        assertThat(mountPoint2.getSourceVolume()).isEqualTo(bindMount2.getName());
+        MountPoint mountPoint2 = containerDefinition.mountPoints().get(1);
+        assertThat(mountPoint2.containerPath()).isEqualTo(bindMount2.getContainerPath());
+        assertThat(mountPoint2.sourceVolume()).isEqualTo(bindMount2.getName());
     }
 
     @Nested
@@ -132,77 +134,77 @@ class RegisterTaskDefinitionRequestBuilderTest {
         void shouldMountEFSWhenSpecifiedInPluginSettings() {
             when(pluginSettings.efsDnsOrIP()).thenReturn("efs-volume-dns");
 
-            final RegisterTaskDefinitionRequest request = builder.build(pluginSettings, elasticAgentProfileProperties, containerDefinition);
+            final RegisterTaskDefinitionRequest request = builder.build(pluginSettings, elasticAgentProfileProperties, containerDefinitionBuilder, "some_task");
 
-            assertThat(request.getContainerDefinitions()).hasSize(1);
-            assertThat(request.getContainerDefinitions()).contains(containerDefinition);
+            assertThat(request.containerDefinitions()).hasSize(1);
+            assertThat(request.containerDefinitions()).contains(containerDefinitionBuilder.build());
 
-            assertThat(request.getVolumes()).hasSize(1);
-            assertThat(request.getVolumes()).contains(
-                    new Volume()
-                            .withName("efs")
-                            .withHost(
-                                    new HostVolumeProperties().withSourcePath(pluginSettings.efsMountLocation())
-                            )
+            assertThat(request.volumes()).hasSize(1);
+            assertThat(request.volumes()).contains(
+                    Volume.builder()
+                            .name("efs")
+                            .host(HostVolumeProperties.builder().sourcePath(pluginSettings.efsMountLocation()).build())
+                            .build()
             );
 
-            verify(containerDefinition, times(1)).withMountPoints(
-                    new MountPoint()
-                            .withSourceVolume("efs")
-                            .withContainerPath(pluginSettings.efsMountLocation())
-            );
+            verify(containerDefinitionBuilder, times(1)).mountPoints(List.of(
+                    MountPoint.builder()
+                            .sourceVolume("efs")
+                            .containerPath(pluginSettings.efsMountLocation())
+                            .build()
+            ));
         }
 
         @Test
         void shouldNotMountEFSWhenSpecifiedInPluginSettings() {
             when(pluginSettings.efsDnsOrIP()).thenReturn(null);
 
-            final RegisterTaskDefinitionRequest request = builder.build(pluginSettings, elasticAgentProfileProperties, containerDefinition);
+            final RegisterTaskDefinitionRequest request = builder.build(pluginSettings, elasticAgentProfileProperties, containerDefinitionBuilder, "some_task");
 
-            assertThat(request.getContainerDefinitions()).hasSize(1);
-            assertThat(request.getContainerDefinitions()).contains(containerDefinition);
+            assertThat(request.containerDefinitions()).hasSize(1);
+            assertThat(request.containerDefinitions()).contains(containerDefinitionBuilder.build());
 
-            assertThat(request.getVolumes()).hasSize(0);
+            assertThat(request.volumes()).hasSize(0);
 
-            verify(containerDefinition, never()).withMountPoints(anyCollection());
+            verify(containerDefinitionBuilder, never()).mountPoints(anyCollection());
         }
 
         @Test
         void shouldBuildRegisterTaskDefinitionRequestWithDockerSocketMountWhenMountDockerSocketIsSetToTrue() {
             when(elasticAgentProfileProperties.isMountDockerSocket()).thenReturn(true);
 
-            final RegisterTaskDefinitionRequest request = builder.build(pluginSettings, elasticAgentProfileProperties, containerDefinition);
+            final RegisterTaskDefinitionRequest request = builder.build(pluginSettings, elasticAgentProfileProperties, containerDefinitionBuilder, "some_task");
 
-            assertThat(request.getContainerDefinitions()).hasSize(1);
-            assertThat(request.getContainerDefinitions()).contains(containerDefinition);
+            assertThat(request.containerDefinitions()).hasSize(1);
+            assertThat(request.containerDefinitions()).contains(containerDefinitionBuilder.build());
 
-            assertThat(request.getVolumes()).hasSize(1);
-            assertThat(request.getVolumes()).contains(
-                    new Volume()
-                            .withName("DockerSocket")
-                            .withHost(
-                                    new HostVolumeProperties().withSourcePath("/var/run/docker.sock")
-                            )
+            assertThat(request.volumes()).hasSize(1);
+            assertThat(request.volumes()).contains(
+                    Volume.builder()
+                            .name("DockerSocket")
+                            .host(HostVolumeProperties.builder().sourcePath("/var/run/docker.sock").build())
+                            .build()
             );
 
-            verify(containerDefinition, times(1)).withMountPoints(
-                    new MountPoint()
-                            .withSourceVolume("DockerSocket")
-                            .withContainerPath("/var/run/docker.sock")
-            );
+            verify(containerDefinitionBuilder, times(1)).mountPoints(List.of(
+                    MountPoint.builder()
+                            .sourceVolume("DockerSocket")
+                            .containerPath("/var/run/docker.sock")
+                            .build()
+            ));
         }
 
         @Test
         void shouldNotMountDockerSocketWhenMountDockerSocketIsSetToFalse() {
             when(elasticAgentProfileProperties.isMountDockerSocket()).thenReturn(false);
 
-            final RegisterTaskDefinitionRequest request = builder.build(pluginSettings, elasticAgentProfileProperties, containerDefinition);
+            final RegisterTaskDefinitionRequest request = builder.build(pluginSettings, elasticAgentProfileProperties, containerDefinitionBuilder, "some_task");
 
-            assertThat(request.getContainerDefinitions()).hasSize(1);
-            assertThat(request.getContainerDefinitions()).contains(containerDefinition);
+            assertThat(request.containerDefinitions()).hasSize(1);
+            assertThat(request.containerDefinitions()).contains(containerDefinitionBuilder.build());
 
-            assertThat(request.getVolumes()).hasSize(0);
-            verify(containerDefinition, never()).withMountPoints(anyCollection());
+            assertThat(request.volumes()).hasSize(0);
+            verify(containerDefinitionBuilder, never()).mountPoints(anyCollection());
         }
 
 
@@ -211,36 +213,38 @@ class RegisterTaskDefinitionRequestBuilderTest {
             when(elasticAgentProfileProperties.isMountDockerSocket()).thenReturn(true);
             when(pluginSettings.efsDnsOrIP()).thenReturn("efs-volume-dns");
 
-            final RegisterTaskDefinitionRequest request = builder.build(pluginSettings, elasticAgentProfileProperties, containerDefinition);
+            final RegisterTaskDefinitionRequest request = builder.build(pluginSettings, elasticAgentProfileProperties, containerDefinitionBuilder, "some_task");
 
-            assertThat(request.getContainerDefinitions()).hasSize(1);
-            assertThat(request.getContainerDefinitions()).contains(containerDefinition);
+            assertThat(request.containerDefinitions()).hasSize(1);
+            assertThat(request.containerDefinitions()).contains(containerDefinitionBuilder.build());
 
-            assertThat(request.getVolumes()).hasSize(2);
-            assertThat(request.getVolumes()).contains(
-                    new Volume()
-                            .withName("DockerSocket")
-                            .withHost(
-                                    new HostVolumeProperties().withSourcePath("/var/run/docker.sock")
-                            ),
-                    new Volume()
-                            .withName("efs")
-                            .withHost(
-                                    new HostVolumeProperties().withSourcePath(pluginSettings.efsMountLocation())
+            assertThat(request.volumes()).hasSize(2);
+            assertThat(request.volumes()).contains(
+                    Volume.builder()
+                            .name("DockerSocket")
+                            .host(
+                                    HostVolumeProperties.builder().sourcePath("/var/run/docker.sock").build()
                             )
+                            .build(),
+                    Volume.builder()
+                            .name("efs")
+                            .host(
+                                    HostVolumeProperties.builder().sourcePath(pluginSettings.efsMountLocation()).build()
+                            )
+                            .build()
             );
 
-            verify(containerDefinition, times(1)).withMountPoints(
-                    new MountPoint()
-                            .withSourceVolume("DockerSocket")
-                            .withContainerPath("/var/run/docker.sock")
-            );
-
-            verify(containerDefinition, times(1)).withMountPoints(
-                    new MountPoint()
-                            .withSourceVolume("efs")
-                            .withContainerPath(pluginSettings.efsMountLocation())
-            );
+            // the builder collects all mount points and sets them in one call (v2 builders replace, not append)
+            verify(containerDefinitionBuilder, times(1)).mountPoints(List.of(
+                    MountPoint.builder()
+                            .sourceVolume("efs")
+                            .containerPath(pluginSettings.efsMountLocation())
+                            .build(),
+                    MountPoint.builder()
+                            .sourceVolume("DockerSocket")
+                            .containerPath("/var/run/docker.sock")
+                            .build()
+            ));
         }
     }
 
@@ -256,28 +260,28 @@ class RegisterTaskDefinitionRequestBuilderTest {
         void shouldNotMountEFSEvenIfItIsSpecified() {
             when(pluginSettings.efsDnsOrIP()).thenReturn("efs");
 
-            final RegisterTaskDefinitionRequest request = builder.build(pluginSettings, elasticAgentProfileProperties, containerDefinition);
+            final RegisterTaskDefinitionRequest request = builder.build(pluginSettings, elasticAgentProfileProperties, containerDefinitionBuilder, "some_task");
 
-            assertThat(request.getContainerDefinitions()).hasSize(1);
-            assertThat(request.getContainerDefinitions()).contains(containerDefinition);
+            assertThat(request.containerDefinitions()).hasSize(1);
+            assertThat(request.containerDefinitions()).contains(containerDefinitionBuilder.build());
 
-            assertThat(request.getVolumes()).hasSize(0);
+            assertThat(request.volumes()).hasSize(0);
 
-            verify(containerDefinition, never()).withMountPoints(anyCollection());
+            verify(containerDefinitionBuilder, never()).mountPoints(anyCollection());
         }
 
         @Test
         void shouldNotMountDockerSocketEvenItIsSetToTrue() {
             when(elasticAgentProfileProperties.isMountDockerSocket()).thenReturn(true);
 
-            final RegisterTaskDefinitionRequest request = builder.build(pluginSettings, elasticAgentProfileProperties, containerDefinition);
+            final RegisterTaskDefinitionRequest request = builder.build(pluginSettings, elasticAgentProfileProperties, containerDefinitionBuilder, "some_task");
 
-            assertThat(request.getContainerDefinitions()).hasSize(1);
-            assertThat(request.getContainerDefinitions()).contains(containerDefinition);
+            assertThat(request.containerDefinitions()).hasSize(1);
+            assertThat(request.containerDefinitions()).contains(containerDefinitionBuilder.build());
 
-            assertThat(request.getVolumes()).hasSize(0);
+            assertThat(request.volumes()).hasSize(0);
 
-            verify(containerDefinition, never()).withMountPoints(anyCollection());
+            verify(containerDefinitionBuilder, never()).mountPoints(anyCollection());
         }
     }
 }

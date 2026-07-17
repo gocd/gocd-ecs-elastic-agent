@@ -16,9 +16,6 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws;
 
-import com.amazonaws.services.ec2.model.*;
-import com.amazonaws.services.ec2.model.Tag;
-import com.amazonaws.services.ecs.model.*;
 import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.gocd.elasticagent.ecs.Clock;
 import com.thoughtworks.gocd.elasticagent.ecs.Constants;
@@ -34,9 +31,11 @@ import com.thoughtworks.gocd.elasticagent.ecs.domain.Platform;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
 import com.thoughtworks.gocd.elasticagent.ecs.exceptions.ContainerInstanceFailedToRegisterException;
 import com.thoughtworks.gocd.elasticagent.ecs.exceptions.LimitExceededException;
+import com.thoughtworks.gocd.elasticagent.ecs.utils.Util;
 import lombok.NonNull;
-import org.joda.time.format.PeriodFormatter;
-import org.joda.time.format.PeriodFormatterBuilder;
+import software.amazon.awssdk.services.ec2.model.*;
+import software.amazon.awssdk.services.ec2.model.Tag;
+import software.amazon.awssdk.services.ecs.model.*;
 
 import java.util.*;
 import java.util.function.Function;
@@ -48,21 +47,18 @@ import static com.thoughtworks.gocd.elasticagent.ecs.Constants.LABEL_SERVER_ID;
 import static com.thoughtworks.gocd.elasticagent.ecs.Constants.LAST_SEEN_IDLE;
 import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.getServerId;
 import static com.thoughtworks.gocd.elasticagent.ecs.aws.SpotInstanceHelper.SPOT_INSTANCE_NAME_FORMAT;
-import static com.thoughtworks.gocd.elasticagent.ecs.domain.EC2InstanceState.*;
+
 import static java.lang.String.valueOf;
 import static java.text.MessageFormat.format;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.*;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static software.amazon.awssdk.services.ec2.model.InstanceStateName.*;
 
 public class ContainerInstanceHelper {
     private static final Logger LOG = Logger.getLoggerFor(ContainerInstanceHelper.class);
-    private static final PeriodFormatter PERIOD_FORMATTER = new PeriodFormatterBuilder()
-            .appendMinutes().appendSuffix(" minutes")
-            .appendSeconds().appendSuffix(" seconds")
-            .toFormatter();
-    private static final Function<ContainerInstance, Boolean> CONTAINER_INSTANCE_IDLE_FUNCTION = containerInstance -> containerInstance.getPendingTasksCount() == 0 && containerInstance.getRunningTasksCount() == 0;
+    private static final Function<ContainerInstance, Boolean> CONTAINER_INSTANCE_IDLE_FUNCTION = containerInstance -> containerInstance.pendingTasksCount() == 0 && containerInstance.runningTasksCount() == 0;
 
     private final Supplier<String> serverIdSupplier;
     private final InstanceMatcher instanceMatcher;
@@ -79,30 +75,31 @@ public class ContainerInstanceHelper {
     }
 
     public List<ContainerInstance> getContainerInstances(PluginSettings settings) {
-        final List<String> runningContainerArnList = getContainerInstanceArnList(settings);
+        final List<String> runningContainerArnList = containerInstanceArnList(settings);
 
         if (runningContainerArnList.isEmpty()) {
             return emptyList();
         }
 
-        final DescribeContainerInstancesRequest describeContainerInstancesRequest = new DescribeContainerInstancesRequest()
-                .withContainerInstances(runningContainerArnList)
-                .withCluster(settings.getClusterName());
+        final DescribeContainerInstancesRequest describeContainerInstancesRequest = DescribeContainerInstancesRequest.builder()
+                .containerInstances(runningContainerArnList)
+                .cluster(settings.getClusterName())
+                .build();
 
-        DescribeContainerInstancesResult describeContainerInstancesResult = settings.ecsClient()
+        DescribeContainerInstancesResponse describeContainerInstancesResponse = settings.ecsClient()
                 .describeContainerInstances(describeContainerInstancesRequest);
 
-        return describeContainerInstancesResult.getContainerInstances();
+        return describeContainerInstancesResponse.containerInstances();
     }
 
     public List<ContainerInstance> onDemandContainerInstances(PluginSettings pluginSettings) {
         List<ContainerInstance> containerInstances = getContainerInstances(pluginSettings);
         List<Instance> onDemandInstances = getOnDemandInstances(pluginSettings, containerInstances);
 
-        List<String> ids = onDemandInstances.stream().map(Instance::getInstanceId).toList();
+        List<String> ids = onDemandInstances.stream().map(Instance::instanceId).toList();
 
         return containerInstances.stream()
-                .filter(containerInstance -> ids.contains(containerInstance.getEc2InstanceId()))
+                .filter(containerInstance -> ids.contains(containerInstance.ec2InstanceId()))
                 .collect(toList());
     }
 
@@ -110,10 +107,10 @@ public class ContainerInstanceHelper {
         List<ContainerInstance> containerInstances = getContainerInstances(pluginSettings);
         List<Instance> spotInstances = getSpotInstances(pluginSettings, containerInstances);
 
-        List<String> ids = spotInstances.stream().map(Instance::getInstanceId).toList();
+        List<String> ids = spotInstances.stream().map(Instance::instanceId).toList();
 
         return containerInstances.stream()
-                .filter(containerInstance -> ids.contains(containerInstance.getEc2InstanceId()))
+                .filter(containerInstance -> ids.contains(containerInstance.ec2InstanceId()))
                 .collect(toList());
     }
 
@@ -121,7 +118,7 @@ public class ContainerInstanceHelper {
         List<Instance> allEc2Instances = ec2InstancesFromContainerInstances(pluginSettings, containerInstances);
 
         return allEc2Instances.stream()
-                .filter(ec2Instance -> isBlank(ec2Instance.getSpotInstanceRequestId()))
+                .filter(ec2Instance -> isBlank(ec2Instance.spotInstanceRequestId()))
                 .collect(toList());
     }
 
@@ -129,16 +126,16 @@ public class ContainerInstanceHelper {
         List<Instance> allEc2Instances = ec2InstancesFromContainerInstances(pluginSettings, containerInstances);
 
         return allEc2Instances.stream()
-                .filter(ec2Instance -> isNotBlank(ec2Instance.getSpotInstanceRequestId()))
+                .filter(ec2Instance -> isNotBlank(ec2Instance.spotInstanceRequestId()))
                 .collect(toList());
     }
 
     public Cluster getCluster(PluginSettings settings) {
-        final DescribeClustersRequest describeClustersRequest = new DescribeClustersRequest().withClusters(settings.getClusterName());
-        final List<Cluster> clusters = settings.ecsClient().describeClusters(describeClustersRequest).getClusters();
+        final DescribeClustersRequest describeClustersRequest = DescribeClustersRequest.builder().clusters(settings.getClusterName()).build();
+        final List<Cluster> clusters = settings.ecsClient().describeClusters(describeClustersRequest).clusters();
 
         if (clusters.isEmpty()) {
-            throw new ClusterNotFoundException(format("Cluster {0} not found.", settings.getClusterName()));
+            throw ClusterNotFoundException.builder().message(format("Cluster {0} not found.", settings.getClusterName())).build();
         }
 
         return clusters.getFirst();
@@ -149,32 +146,33 @@ public class ContainerInstanceHelper {
             return emptyList();
         }
 
-        final List<String> instanceIds = containerInstanceList.stream().map(ContainerInstance::getEc2InstanceId).collect(toList());
-        DescribeInstancesRequest describeInstancesRequest = new DescribeInstancesRequest().withInstanceIds(instanceIds);
-        final DescribeInstancesResult describeInstancesResult = settings.ec2Client().describeInstances(describeInstancesRequest);
+        final List<String> instanceIds = containerInstanceList.stream().map(ContainerInstance::ec2InstanceId).collect(toList());
+        DescribeInstancesRequest describeInstancesRequest = DescribeInstancesRequest.builder().instanceIds(instanceIds).build();
+        final DescribeInstancesResponse describeInstancesResponse = settings.ec2Client().describeInstances(describeInstancesRequest);
 
-        List<Reservation> reservations = describeInstancesResult.getReservations();
+        List<Reservation> reservations = describeInstancesResponse.reservations();
         List<Instance> instances = new ArrayList<>();
         for (Reservation reservation : reservations) {
-            instances.addAll(reservation.getInstances());
+            instances.addAll(reservation.instances());
         }
 
         return instances;
     }
 
     public List<Instance> getAllInstances(PluginSettings pluginSettings) {
-        final DescribeInstancesRequest describeInstancesRequest = new DescribeInstancesRequest()
-                .withFilters(
-                        new Filter().withName("tag:Creator").withValues(Constants.PLUGIN_ID),
-                        new Filter().withName("instance-state-name").withValues(PENDING, RUNNING, STOPPING, STOPPED)
-                );
+        final DescribeInstancesRequest describeInstancesRequest = DescribeInstancesRequest.builder()
+                .filters(
+                        Filter.builder().name("tag:Creator").values(Constants.PLUGIN_ID).build(),
+                        Filter.builder().name("instance-state-name").values(PENDING.toString(), RUNNING.toString(), STOPPING.toString(), STOPPED.toString()).build()
+                )
+                .build();
 
         final Set<String> registeredInstanceIds = getContainerInstances(pluginSettings).stream()
-                .map(ContainerInstance::getEc2InstanceId)
+                .map(ContainerInstance::ec2InstanceId)
                 .collect(toSet());
 
         return pluginSettings.ec2Client().describeInstances(describeInstancesRequest)
-                .getReservations().stream()
+                .reservations().stream()
                 .flatMap(filterInstances(registeredInstanceIds))
                 .collect(toList());
     }
@@ -183,7 +181,7 @@ public class ContainerInstanceHelper {
         List<Instance> allInstances = getAllInstances(pluginSettings);
 
         return allInstances.stream()
-                .filter(instance -> isBlank(instance.getSpotInstanceRequestId()))
+                .filter(instance -> isBlank(instance.spotInstanceRequestId()))
                 .collect(toList());
     }
 
@@ -195,14 +193,15 @@ public class ContainerInstanceHelper {
         }
 
         final Boolean isIdle = containerInstances.stream()
-                .filter(containerInstance -> containerInstance.getEc2InstanceId().equals(ec2InstanceId))
+                .filter(containerInstance -> containerInstance.ec2InstanceId().equals(ec2InstanceId))
                 .map(CONTAINER_INSTANCE_IDLE_FUNCTION)
                 .findFirst().orElse(false);
 
         if (isIdle) {
-            CreateTagsRequest tag = new CreateTagsRequest()
-                    .withTags(new Tag().withKey(LAST_SEEN_IDLE).withValue(valueOf(System.currentTimeMillis())))
-                    .withResources(ec2InstanceId);
+            final CreateTagsRequest tag = CreateTagsRequest.builder()
+                    .tags(Tag.builder().key(LAST_SEEN_IDLE).value(valueOf(System.currentTimeMillis())).build())
+                    .resources(ec2InstanceId)
+                    .build();
 
             pluginSettings.ec2Client().createTags(tag);
         }
@@ -211,9 +210,10 @@ public class ContainerInstanceHelper {
     public void removeLastSeenIdleTag(PluginSettings pluginSettings, Collection<String> instanceIds) {
         LOG.info("Removing LAST_SEEN_IDLE tag from instances " + instanceIds);
 
-        final DeleteTagsRequest deleteTagsRequest = new DeleteTagsRequest()
-                .withTags(new Tag(LAST_SEEN_IDLE))
-                .withResources(instanceIds);
+        final DeleteTagsRequest deleteTagsRequest = DeleteTagsRequest.builder()
+                .tags(Tag.builder().key(LAST_SEEN_IDLE).build())
+                .resources(instanceIds)
+                .build();
 
         pluginSettings.ec2Client().deleteTags(deleteTagsRequest);
     }
@@ -253,12 +253,12 @@ public class ContainerInstanceHelper {
             LOG.info(format("Found {0} stopped instances.", allStoppedInstances.size()));
 
             final EC2Config ec2Config = new EC2Config.Builder()
-                    .withSettings(pluginSettings).withProfile(elasticAgentProfileProperties)
+                    .settings(pluginSettings).profile(elasticAgentProfileProperties)
                     .build();
 
             final List<String> instancesToStart = allStoppedInstances.stream()
                     .filter(instance -> instanceMatcher.matches(ec2Config, instance))
-                    .map(Instance::getInstanceId)
+                    .map(Instance::instanceId)
                     .limit(numberOfInstanceToStartOrCreate)
                     .collect(toList());
 
@@ -272,7 +272,7 @@ public class ContainerInstanceHelper {
             LOG.info(format("Starting {0} instances.", instancesToStart.size()));
             consoleLogAppender.accept(String.format("Found existing stopped instance(s) matching platform configurations. Starting (%s) instances to schedule ECS Task.", instancesToStart));
 
-            pluginSettings.ec2Client().startInstances(new StartInstancesRequest().withInstanceIds(instancesToStart));
+            pluginSettings.ec2Client().startInstances(StartInstancesRequest.builder().instanceIds(instancesToStart).build());
 
             return waitInstanceToStart(pluginSettings, ec2Config, instancesToStart, consoleLogAppender);
         }
@@ -286,8 +286,8 @@ public class ContainerInstanceHelper {
             }
 
             final EC2Config ec2Config = new EC2Config.Builder()
-                    .withSettings(pluginSettings)
-                    .withProfile(elasticAgentProfileProperties)
+                    .settings(pluginSettings)
+                    .profile(elasticAgentProfileProperties)
                     .build();
 
             final List<Instance> allInstances = allInstances(pluginSettings, elasticAgentProfileProperties.platform());
@@ -306,18 +306,18 @@ public class ContainerInstanceHelper {
             final Subnet selectedSubnet = subnetSelector.selectSubnetWithMinimumEC2Instances(pluginSettings, ec2Config.getSubnetIds(), allInstances);
 
             final RunInstancesRequest runInstancesRequest = new RunInstanceRequestBuilder()
-                    .withEC2Config(ec2Config)
-                    .withSubnet(selectedSubnet)
+                    .eC2Config(ec2Config)
+                    .subnet(selectedSubnet)
                     .instanceToCreate(numberOfInstancesToCreate)
-                    .withServerId(getServerId())
+                    .serverId(getServerId())
                     .build();
 
             consoleLogAppender.accept("Creating a new container instance to schedule ECS Task.");
             LOG.info(format("Creating container instance with configuration: {0}", runInstancesRequest.toString()));
-            RunInstancesResult runInstancesResult = pluginSettings.ec2Client().runInstances(runInstancesRequest);
+            RunInstancesResponse runInstancesResponse = pluginSettings.ec2Client().runInstances(runInstancesRequest);
 
-            List<String> newlyLaunchedInstances = runInstancesResult.getReservation().getInstances().stream()
-                    .map(Instance::getInstanceId).collect(toList());
+            List<String> newlyLaunchedInstances = runInstancesResponse.instances().stream()
+                    .map(Instance::instanceId).collect(toList());
 
             return waitInstanceToStart(pluginSettings, ec2Config, newlyLaunchedInstances, consoleLogAppender);
         }
@@ -335,7 +335,7 @@ public class ContainerInstanceHelper {
     }
 
     public static Map<Platform, List<Instance>> groupByPlatform(List<Instance> instances) {
-        return instances.stream().collect(groupingBy(i -> Platform.from(i.getPlatform())));
+        return instances.stream().collect(groupingBy(i -> Platform.from(i.platformAsString())));
     }
 
     public static List<Instance> filterBy(List<Instance> instances, Predicate<Instance> predicate) {
@@ -347,50 +347,51 @@ public class ContainerInstanceHelper {
     }
 
     private static Predicate<Instance> platformPredicate(Platform platform) {
-        return instance -> Platform.from(instance.getPlatform()) == platform;
+        return instance -> Platform.from(instance.platformAsString()) == platform;
     }
 
-    public static List<Instance> filterByState(List<Instance> instances, String instanceState) {
-        return filterBy(instances, instance -> instance.getState().getName().equalsIgnoreCase(instanceState));
+    public static List<Instance> filterByState(List<Instance> instances, InstanceStateName instanceState) {
+        return filterBy(instances, instance -> instance.state().name().equals(instanceState));
     }
 
     public static Predicate<Instance> hasTag(String name, String value) {
-        return instance -> instance.getTags().stream().anyMatch(getTagPredicate(name, value));
+        return instance -> instance.tags().stream().anyMatch(getTagPredicate(name, value));
     }
 
     public static Predicate<Instance> isOnDemandInstance() {
-        return instance -> isBlank(instance.getSpotInstanceRequestId());
+        return instance -> isBlank(instance.spotInstanceRequestId());
     }
 
     public static Predicate<Instance> isSpotInstance() {
-        return instance -> isNotBlank(instance.getSpotInstanceRequestId());
+        return instance -> isNotBlank(instance.spotInstanceRequestId());
     }
 
     private static Predicate<Tag> getTagPredicate(String tagName, String tagValue) {
-        return tag -> tagName.equals(tag.getKey()) && tagValue.equals(tag.getValue());
+        return tag -> tagName.equals(tag.key()) && tagValue.equals(tag.value());
     }
 
     private Function<Reservation, Stream<? extends Instance>> filterInstances(Set<String> registeredInstanceIds) {
-        return reservation -> reservation.getInstances().stream()
+        return reservation -> reservation.instances().stream()
                 .filter(isRegistered(registeredInstanceIds).or(hasTag(LABEL_SERVER_ID, serverIdSupplier.get())));
     }
 
     private Predicate<Instance> isRegistered(Set<String> registeredInstanceIds) {
-        return instance -> registeredInstanceIds.contains(instance.getInstanceId());
+        return instance -> registeredInstanceIds.contains(instance.instanceId());
     }
 
-    private List<String> getContainerInstanceArnList(PluginSettings settings) {
-        final ListContainerInstancesRequest listContainerInstancesRequest = new ListContainerInstancesRequest()
-                .withCluster(settings.getClusterName());
+    private List<String> containerInstanceArnList(PluginSettings settings) {
+        final ListContainerInstancesRequest listContainerInstancesRequest = ListContainerInstancesRequest.builder()
+                .cluster(settings.getClusterName())
+                .build();
 
-        return settings.ecsClient().listContainerInstances(listContainerInstancesRequest).getContainerInstanceArns();
+        return settings.ecsClient().listContainerInstances(listContainerInstancesRequest).containerInstanceArns();
     }
 
 
     private Supplier<List<ContainerInstance>> waitInstanceToStartSupplier(PluginSettings pluginSettings, List<String> instancesToStart) {
         return () -> getContainerInstances(pluginSettings).stream()
-                .filter(containerInstance -> instancesToStart.contains(containerInstance.getEc2InstanceId()))
-                .filter(ContainerInstance::isAgentConnected)
+                .filter(containerInstance -> instancesToStart.contains(containerInstance.ec2InstanceId()))
+                .filter(ContainerInstance::agentConnected)
                 .collect(toList());
     }
 
@@ -400,17 +401,18 @@ public class ContainerInstanceHelper {
         }
 
         final Set<String> containerInstancesToDeregister = getContainerInstances(pluginSettings).stream()
-                .filter(containerInstance -> instancesFailed.contains(containerInstance.getEc2InstanceId()))
-                .map(ContainerInstance::getContainerInstanceArn)
+                .filter(containerInstance -> instancesFailed.contains(containerInstance.ec2InstanceId()))
+                .map(ContainerInstance::containerInstanceArn)
                 .collect(toSet());
 
         containerInstancesToDeregister.forEach(containerInstanceToDeregister -> {
             try {
                 LOG.info(format("Deregistering container instance {0}.", containerInstanceToDeregister));
-                final DeregisterContainerInstanceRequest deregisterContainerInstanceRequest = new DeregisterContainerInstanceRequest()
-                        .withContainerInstance(containerInstanceToDeregister)
-                        .withCluster(pluginSettings.getClusterName())
-                        .withForce(true);
+                final DeregisterContainerInstanceRequest deregisterContainerInstanceRequest = DeregisterContainerInstanceRequest.builder()
+                        .containerInstance(containerInstanceToDeregister)
+                        .cluster(pluginSettings.getClusterName())
+                        .force(true)
+                        .build();
 
                 pluginSettings.ecsClient().deregisterContainerInstance(deregisterContainerInstanceRequest);
             } catch (Exception e) {
@@ -419,7 +421,7 @@ public class ContainerInstanceHelper {
         });
 
         LOG.info(format("EC2 instances {0} failed to start. Terminating created instances.", instancesFailed));
-        pluginSettings.ec2Client().terminateInstances(new TerminateInstancesRequest().withInstanceIds(instancesFailed));
+        pluginSettings.ec2Client().terminateInstances(TerminateInstancesRequest.builder().instanceIds(instancesFailed).build());
 
         LOG.info(format("EC2 instances({0}) successfully terminated.", instancesFailed));
     }
@@ -432,14 +434,14 @@ public class ContainerInstanceHelper {
                 .timeout(ec2Config.getRegisterTimeOut())
                 .stopWhen(containerInstances -> containerInstances.size() == instanceIds.size())
                 .poll(waitInstanceToStartSupplier(pluginSettings, instanceIds))
-                .start();
+                .await();
 
         if (result.isFailed()) {
             final Collection<String> instancesFailedToRegister = instancesFailedToRegister(result, instanceIds);
             cleanOnFail(pluginSettings, instancesFailedToRegister);
 
             if (result.get() == null || result.get().isEmpty()) {
-                throw new ContainerInstanceFailedToRegisterException(format("EC2Instance failed to register with the ECS cluster: {0} within {1}. Terminated un-registered instance(s).", pluginSettings.getClusterName(), PERIOD_FORMATTER.print(ec2Config.getRegisterTimeOut())));
+                throw new ContainerInstanceFailedToRegisterException(format("EC2Instance failed to register with the ECS cluster: {0} within {1}. Terminated un-registered instance(s).", pluginSettings.getClusterName(), Util.formatDurationWords(ec2Config.getRegisterTimeOut().toMillis())));
             }
         }
 
@@ -448,11 +450,11 @@ public class ContainerInstanceHelper {
 
     private void terminateMostIdleStoppedInstance(PluginSettings pluginSettings, List<Instance> stoppedInstances) {
         stoppedInstances.sort(new MostIdleInstanceComparator(Clock.DEFAULT.now()));
-        final String instanceId = stoppedInstances.getFirst().getInstanceId();
+        final String instanceId = stoppedInstances.getFirst().instanceId();
 
         LOG.info(format("Terminating stopped instance as max cluster limit is reached {0}.", instanceId));
         final Optional<ContainerInstance> containerInstance = getContainerInstances(pluginSettings)
-                .stream().filter(ci -> ci.getEc2InstanceId().equals(instanceId))
+                .stream().filter(ci -> ci.ec2InstanceId().equals(instanceId))
                 .findFirst();
 
         containerInstance.ifPresent(self -> new TerminateOperation().execute(pluginSettings, self));
@@ -464,7 +466,7 @@ public class ContainerInstanceHelper {
         }
 
         final Set<String> instancesRegistered = result.get().stream()
-                .map(ContainerInstance::getEc2InstanceId)
+                .map(ContainerInstance::ec2InstanceId)
                 .collect(toSet());
 
         LOG.info(format("Started {0} instances.", instancesRegistered));

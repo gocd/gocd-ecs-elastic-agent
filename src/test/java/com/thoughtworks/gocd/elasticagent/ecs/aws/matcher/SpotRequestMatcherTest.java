@@ -16,14 +16,14 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws.matcher;
 
-import com.amazonaws.services.ec2.model.GroupIdentifier;
-import com.amazonaws.services.ec2.model.LaunchSpecification;
-import com.amazonaws.services.ec2.model.SpotInstanceRequest;
-import com.amazonaws.services.ec2.model.Tag;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.EC2Config;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.Platform;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import software.amazon.awssdk.services.ec2.model.GroupIdentifier;
+import software.amazon.awssdk.services.ec2.model.LaunchSpecification;
+import software.amazon.awssdk.services.ec2.model.SpotInstanceRequest;
+import software.amazon.awssdk.services.ec2.model.Tag;
 
 import java.util.Collections;
 import java.util.List;
@@ -32,6 +32,8 @@ import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static software.amazon.awssdk.services.ec2.model.InstanceType.T2_MEDIUM;
+import static software.amazon.awssdk.services.ec2.model.InstanceType.T2_SMALL;
 
 class SpotRequestMatcherTest {
 
@@ -47,7 +49,7 @@ class SpotRequestMatcherTest {
         launchSpecification = mock(LaunchSpecification.class);
         spotRequestMatcher = new SpotRequestMatcher();
 
-        when(spotInstanceRequest.getLaunchSpecification()).thenReturn(launchSpecification);
+        when(spotInstanceRequest.launchSpecification()).thenReturn(launchSpecification);
     }
 
     @Test
@@ -57,25 +59,25 @@ class SpotRequestMatcherTest {
 
     @Test
     void shouldReturnTrueIfAllFieldMatches() {
-        when(spotInstanceRequest.getLaunchSpecification()).thenReturn(launchSpecification);
-        when(launchSpecification.getImageId()).thenReturn("i-123456");
+        when(spotInstanceRequest.launchSpecification()).thenReturn(launchSpecification);
+        when(launchSpecification.imageId()).thenReturn("i-123456");
         when(ec2Config.getAmi()).thenReturn("i-123456");
 
-        when(spotInstanceRequest.getTags()).thenReturn(Collections.singletonList(new Tag().withKey("platform").withValue("linux")));
+        when(spotInstanceRequest.tags()).thenReturn(Collections.singletonList(Tag.builder().key("platform").value("linux").build()));
         when(ec2Config.getPlatform()).thenReturn(Platform.LINUX);
 
-        when(launchSpecification.getInstanceType()).thenReturn("t2.small");
-        when(ec2Config.getInstanceType()).thenReturn("t2.small");
+        when(launchSpecification.instanceTypeAsString()).thenReturn(T2_SMALL.toString());
+        when(ec2Config.getInstanceType()).thenReturn(T2_SMALL.toString());
 
-        when(launchSpecification.getSubnetId()).thenReturn("s-foo-id");
+        when(launchSpecification.subnetId()).thenReturn("s-foo-id");
         when(ec2Config.getSubnetIds()).thenReturn(List.of("s-foo-id"));
 
-        when(launchSpecification.getAllSecurityGroups()).thenReturn(Collections.singletonList(
-                new GroupIdentifier().withGroupId("sg-abcde")
+        when(launchSpecification.securityGroups()).thenReturn(Collections.singletonList(
+                GroupIdentifier.builder().groupId("sg-abcde").build()
         ));
         when(ec2Config.getSecurityGroups()).thenReturn(List.of("sg-abcde"));
 
-        when(spotInstanceRequest.getSpotInstanceRequestId()).thenReturn("spot_id");
+        when(spotInstanceRequest.spotInstanceRequestId()).thenReturn("spot_id");
         when(ec2Config.runAsSpotInstance()).thenReturn(true);
 
         assertThat(spotRequestMatcher.matches(ec2Config, spotInstanceRequest)).isTrue();
@@ -83,7 +85,7 @@ class SpotRequestMatcherTest {
 
     @Test
     void shouldFalseIfPlatformDoesNotMatch() {
-        when(spotInstanceRequest.getTags()).thenReturn(Collections.singletonList(new Tag().withKey("platform").withValue("linux")));
+        when(spotInstanceRequest.tags()).thenReturn(Collections.singletonList(Tag.builder().key("platform").value("linux").build()));
         when(ec2Config.getPlatform()).thenReturn(Platform.WINDOWS);
 
         assertThat(spotRequestMatcher.matches(ec2Config, spotInstanceRequest)).isFalse();
@@ -92,20 +94,20 @@ class SpotRequestMatcherTest {
     @Test
     void shouldReturnFalseIfInstanceTypeIsNotMatching() {
 
-        when(spotInstanceRequest.getTags()).thenReturn(Collections.singletonList(new Tag().withKey("platform").withValue("linux")));
+        when(spotInstanceRequest.tags()).thenReturn(Collections.singletonList(Tag.builder().key("platform").value("linux").build()));
         when(ec2Config.getPlatform()).thenReturn(Platform.LINUX);
 
-        when(launchSpecification.getImageId()).thenReturn("i-123456");
+        when(launchSpecification.imageId()).thenReturn("i-123456");
         when(ec2Config.getAmi()).thenReturn("i-123456");
 
-        when(launchSpecification.getInstanceType()).thenReturn("t2.small");
-        when(ec2Config.getInstanceType()).thenReturn("t2.medium");
+        when(launchSpecification.instanceTypeAsString()).thenReturn(T2_SMALL.toString());
+        when(ec2Config.getInstanceType()).thenReturn(T2_MEDIUM.toString());
 
-        when(launchSpecification.getSubnetId()).thenReturn("s-foo-id");
+        when(launchSpecification.subnetId()).thenReturn("s-foo-id");
         when(ec2Config.getSubnetIds()).thenReturn(List.of("s-foo-id"));
 
-        when(launchSpecification.getAllSecurityGroups()).thenReturn(Collections.singletonList(
-                new GroupIdentifier().withGroupId("sg-abcde")
+        when(launchSpecification.securityGroups()).thenReturn(Collections.singletonList(
+                GroupIdentifier.builder().groupId("sg-abcde").build()
         ));
         when(ec2Config.getSecurityGroups()).thenReturn(List.of("sg-abcde"));
 
@@ -114,20 +116,20 @@ class SpotRequestMatcherTest {
 
     @Test
     void shouldReturnFalseIfSecurityGroupsAreNotMatching() {
-        when(spotInstanceRequest.getTags()).thenReturn(Collections.singletonList(new Tag().withKey("platform").withValue("linux")));
+        when(spotInstanceRequest.tags()).thenReturn(Collections.singletonList(Tag.builder().key("platform").value("linux").build()));
         when(ec2Config.getPlatform()).thenReturn(Platform.LINUX);
 
-        when(launchSpecification.getImageId()).thenReturn("i-123456");
+        when(launchSpecification.imageId()).thenReturn("i-123456");
         when(ec2Config.getAmi()).thenReturn("i-123456");
 
-        when(launchSpecification.getInstanceType()).thenReturn("t2.small");
-        when(ec2Config.getInstanceType()).thenReturn("t2.small");
+        when(launchSpecification.instanceTypeAsString()).thenReturn(T2_SMALL.toString());
+        when(ec2Config.getInstanceType()).thenReturn(T2_SMALL.toString());
 
-        when(launchSpecification.getSubnetId()).thenReturn("s-foo-id");
+        when(launchSpecification.subnetId()).thenReturn("s-foo-id");
         when(ec2Config.getSubnetIds()).thenReturn(List.of("s-foo-id"));
 
-        when(launchSpecification.getAllSecurityGroups()).thenReturn(Collections.singletonList(
-                new GroupIdentifier().withGroupId("sg-abcde")
+        when(launchSpecification.securityGroups()).thenReturn(Collections.singletonList(
+                GroupIdentifier.builder().groupId("sg-abcde").build()
         ));
 
         when(ec2Config.getSecurityGroups()).thenReturn(asList("sg-abcde", "sg-xyz"));
@@ -137,20 +139,20 @@ class SpotRequestMatcherTest {
 
     @Test
     void shouldReturnFalseIfSubnetIdIsNotMatching() {
-        when(spotInstanceRequest.getTags()).thenReturn(Collections.singletonList(new Tag().withKey("platform").withValue("linux")));
+        when(spotInstanceRequest.tags()).thenReturn(Collections.singletonList(Tag.builder().key("platform").value("linux").build()));
         when(ec2Config.getPlatform()).thenReturn(Platform.LINUX);
 
-        when(launchSpecification.getImageId()).thenReturn("i-123456");
+        when(launchSpecification.imageId()).thenReturn("i-123456");
         when(ec2Config.getAmi()).thenReturn("i-123456");
 
-        when(launchSpecification.getInstanceType()).thenReturn("t2.small");
-        when(ec2Config.getInstanceType()).thenReturn("t2.small");
+        when(launchSpecification.instanceTypeAsString()).thenReturn(T2_SMALL.toString());
+        when(ec2Config.getInstanceType()).thenReturn(T2_SMALL.toString());
 
-        when(launchSpecification.getSubnetId()).thenReturn("s-foo-id");
+        when(launchSpecification.subnetId()).thenReturn("s-foo-id");
         when(ec2Config.getSubnetIds()).thenReturn(List.of("different-subnet-id"));
 
-        when(launchSpecification.getAllSecurityGroups()).thenReturn(Collections.singletonList(
-                new GroupIdentifier().withGroupId("sg-abcde")
+        when(launchSpecification.securityGroups()).thenReturn(Collections.singletonList(
+                GroupIdentifier.builder().groupId("sg-abcde").build()
         ));
         when(ec2Config.getSecurityGroups()).thenReturn(List.of("sg-abcde"));
 
@@ -159,20 +161,20 @@ class SpotRequestMatcherTest {
 
     @Test
     void shouldReturnFalseIfAMIIsNotMatching() {
-        when(spotInstanceRequest.getTags()).thenReturn(Collections.singletonList(new Tag().withKey("platform").withValue("linux")));
+        when(spotInstanceRequest.tags()).thenReturn(Collections.singletonList(Tag.builder().key("platform").value("linux").build()));
         when(ec2Config.getPlatform()).thenReturn(Platform.LINUX);
 
-        when(launchSpecification.getImageId()).thenReturn("i-123456");
+        when(launchSpecification.imageId()).thenReturn("i-123456");
         when(ec2Config.getAmi()).thenReturn("diffrent-ami");
 
-        when(launchSpecification.getInstanceType()).thenReturn("t2.small");
-        when(ec2Config.getInstanceType()).thenReturn("t2.small");
+        when(launchSpecification.instanceTypeAsString()).thenReturn(T2_SMALL.toString());
+        when(ec2Config.getInstanceType()).thenReturn(T2_SMALL.toString());
 
-        when(launchSpecification.getSubnetId()).thenReturn("s-foo-id");
+        when(launchSpecification.subnetId()).thenReturn("s-foo-id");
         when(ec2Config.getSubnetIds()).thenReturn(List.of("s-foo-id"));
 
-        when(launchSpecification.getAllSecurityGroups()).thenReturn(Collections.singletonList(
-                new GroupIdentifier().withGroupId("sg-abcde")
+        when(launchSpecification.securityGroups()).thenReturn(Collections.singletonList(
+                GroupIdentifier.builder().groupId("sg-abcde").build()
         ));
         when(ec2Config.getSecurityGroups()).thenReturn(List.of("sg-abcde"));
 
@@ -181,24 +183,24 @@ class SpotRequestMatcherTest {
 
     @Test
     void shouldNotMatchAOnDemandInstanceIfProfileRequiresSpot() {
-        when(launchSpecification.getImageId()).thenReturn("i-123456");
+        when(launchSpecification.imageId()).thenReturn("i-123456");
         when(ec2Config.getAmi()).thenReturn("i-123456");
 
-        when(spotInstanceRequest.getTags()).thenReturn(Collections.singletonList(new Tag().withKey("platform").withValue("linux")));
+        when(spotInstanceRequest.tags()).thenReturn(Collections.singletonList(Tag.builder().key("platform").value("linux").build()));
         when(ec2Config.getPlatform()).thenReturn(Platform.LINUX);
 
-        when(launchSpecification.getInstanceType()).thenReturn("t2.small");
-        when(ec2Config.getInstanceType()).thenReturn("t2.small");
+        when(launchSpecification.instanceTypeAsString()).thenReturn(T2_SMALL.toString());
+        when(ec2Config.getInstanceType()).thenReturn(T2_SMALL.toString());
 
-        when(launchSpecification.getSubnetId()).thenReturn("s-foo-id");
+        when(launchSpecification.subnetId()).thenReturn("s-foo-id");
         when(ec2Config.getSubnetIds()).thenReturn(List.of("s-foo-id"));
 
-        when(launchSpecification.getAllSecurityGroups()).thenReturn(Collections.singletonList(
-                new GroupIdentifier().withGroupId("sg-abcde")
+        when(launchSpecification.securityGroups()).thenReturn(Collections.singletonList(
+                GroupIdentifier.builder().groupId("sg-abcde").build()
         ));
         when(ec2Config.getSecurityGroups()).thenReturn(List.of("sg-abcde"));
 
-        when(spotInstanceRequest.getSpotInstanceRequestId()).thenReturn(null);
+        when(spotInstanceRequest.spotInstanceRequestId()).thenReturn(null);
         when(ec2Config.runAsSpotInstance()).thenReturn(true);
     }
 }

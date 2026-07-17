@@ -16,15 +16,15 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws.predicate;
 
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.Tag;
 import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.gocd.elasticagent.ecs.Clock;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.Platform;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
-import org.joda.time.DateTime;
-import org.joda.time.Period;
+import software.amazon.awssdk.services.ec2.model.Instance;
+import software.amazon.awssdk.services.ec2.model.Tag;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -49,23 +49,22 @@ public class SpotInstanceEligibleForTerminationPredicate implements Predicate<In
 
     @Override
     public boolean test(Instance instance) {
-        final Optional<String> idleSince = instance.getTags().stream()
-                .filter(tag -> tag.getKey().equals(LAST_SEEN_IDLE))
+        final Optional<String> idleSince = instance.tags().stream()
+                .filter(tag -> tag.key().equals(LAST_SEEN_IDLE))
                 .findFirst()
-                .map(Tag::getValue);
+                .map(Tag::value);
 
         if (idleSince.isEmpty()) {
-            LOG.info(format("Spot Instance {0} does not have LAST_SEEN_IDLE tag. Instance without this tag is not eligible for termination.", instance.getInstanceId()));
+            LOG.info(format("Spot Instance {0} does not have LAST_SEEN_IDLE tag. Instance without this tag is not eligible for termination.", instance.instanceId()));
             return false;
         }
 
-        Period timeInstanceCanStayIdle = getTimeInstanceCanStayIdle(instance);
-        final DateTime instanceIdleSince = new DateTime(Long.parseLong(idleSince.get()));
+        Duration timeInstanceCanStayIdle = getTimeInstanceCanStayIdle(instance);
 
-        return clock.now().isAfter(instanceIdleSince.plus(timeInstanceCanStayIdle));
+        return clock.now().isAfter(Instant.ofEpochMilli(Long.parseLong(idleSince.get())).plus(timeInstanceCanStayIdle));
     }
 
-    private Period getTimeInstanceCanStayIdle(Instance instance) {
-        return Platform.from(instance.getPlatform()) == LINUX ? pluginSettings.terminateIdleLinuxSpotInstanceAfter() : pluginSettings.terminateIdleWindowsSpotInstanceAfter();
+    private Duration getTimeInstanceCanStayIdle(Instance instance) {
+        return Platform.from(instance.platformAsString()) == LINUX ? pluginSettings.terminateIdleLinuxSpotInstanceAfter() : pluginSettings.terminateIdleWindowsSpotInstanceAfter();
     }
 }

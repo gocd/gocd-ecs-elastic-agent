@@ -36,7 +36,7 @@ public class CredentialsValidator extends AbstractValidator {
     void validatePluginSettings(ValidateClusterProfileRequest request) {
 
         try {
-            credentialsProviderChain.getAWSCredentialsProvider(
+            credentialsProviderChain.getAwsCredentialsProvider(
                     request.get(AWS_ACCESS_KEY_ID),
                     request.get(AWS_SECRET_ACCESS_KEY),
                     request.get(AWS_ASSUME_ROLE_ARN),

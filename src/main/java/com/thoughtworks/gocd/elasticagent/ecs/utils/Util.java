@@ -19,11 +19,11 @@ package com.thoughtworks.gocd.elasticagent.ecs.utils;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.format.PeriodFormatter;
-import org.joda.time.format.PeriodFormatterBuilder;
+import org.apache.commons.lang3.time.DurationFormatUtils;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
 
@@ -31,15 +31,6 @@ import static java.util.Objects.requireNonNull;
 
 public class Util {
     public static final Gson GSON = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
-    public static final PeriodFormatter PERIOD_FORMATTER = new PeriodFormatterBuilder()
-            .appendYears().appendSuffix(" year ", " years ")
-            .appendMonths().appendSuffix(" month ", " months ")
-            .appendWeeks().appendSuffix(" week ", " weeks ")
-            .appendDays().appendSuffix(" day ", " days ")
-            .appendHours().appendSuffix(" hour ", " hours ")
-            .printZeroAlways()
-            .appendMinutes().appendSuffix(" min", " mins")
-            .toFormatter();
 
     public static void checkArgument(boolean expression, Object errorMessage) {
         if (!expression) {
@@ -84,10 +75,6 @@ public class Util {
         return Integer.parseInt(value);
     }
 
-    public static Integer getOrDefault(Integer value, Integer defaultValue) {
-        return value == null ? defaultValue : value;
-    }
-
     public static <T> Collection<T> getOrDefault(Collection<T> value, Collection<T> defaultValue) {
         return value == null || value.isEmpty() ? defaultValue : value;
     }
@@ -98,5 +85,13 @@ public class Util {
             map.put(keyFunction.apply(item), valueFunction.apply(item));
         }
         return map;
+    }
+
+    public static String formatDurationWordsFromNow(Instant date) {
+        return formatDurationWords(Instant.now().toEpochMilli() - date.toEpochMilli());
+    }
+
+    public static String formatDurationWords(long millis) {
+        return DurationFormatUtils.formatDurationWords(Math.max(millis, 0), true, true);
     }
 }

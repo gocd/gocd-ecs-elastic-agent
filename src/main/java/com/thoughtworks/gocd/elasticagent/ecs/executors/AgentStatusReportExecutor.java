@@ -16,7 +16,6 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.executors;
 
-import com.amazonaws.services.ecs.model.Task;
 import com.google.gson.JsonObject;
 import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.go.plugin.api.response.DefaultGoPluginApiResponse;
@@ -32,6 +31,7 @@ import com.thoughtworks.gocd.elasticagent.ecs.reports.StatusReportGenerationErro
 import com.thoughtworks.gocd.elasticagent.ecs.reports.StatusReportGenerationException;
 import com.thoughtworks.gocd.elasticagent.ecs.requests.AgentStatusReportRequest;
 import freemarker.template.Template;
+import software.amazon.awssdk.services.ecs.model.Task;
 
 import java.util.Optional;
 

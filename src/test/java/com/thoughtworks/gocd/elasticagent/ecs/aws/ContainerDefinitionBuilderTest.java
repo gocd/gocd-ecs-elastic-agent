@@ -16,9 +16,6 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws;
 
-import com.amazonaws.services.ecs.model.ContainerDefinition;
-import com.amazonaws.services.ecs.model.KeyValuePair;
-import com.amazonaws.services.ecs.model.LogConfiguration;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.ElasticAgentProfileProperties;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.JobIdentifier;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.Platform;
@@ -26,6 +23,9 @@ import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
 import com.thoughtworks.gocd.elasticagent.ecs.requests.CreateAgentRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import software.amazon.awssdk.services.ecs.model.ContainerDefinition;
+import software.amazon.awssdk.services.ecs.model.KeyValuePair;
+import software.amazon.awssdk.services.ecs.model.LogConfiguration;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -59,9 +59,10 @@ class ContainerDefinitionBuilderTest {
 
     @Test
     void shouldBuildContainerDefinition() {
-        final LogConfiguration logConfiguration = new LogConfiguration()
-                .withLogDriver("awslog")
-                .withOptions(Collections.singletonMap("group", "foo"));
+        final LogConfiguration logConfiguration = LogConfiguration.builder()
+                .logDriver("awslog")
+                .options(Collections.singletonMap("group", "foo"))
+                .build();
 
         when(elasticAgentProfileProperties.getImage()).thenReturn("alpine");
         when(elasticAgentProfileProperties.getMaxMemory()).thenReturn(2048);
@@ -69,19 +70,18 @@ class ContainerDefinitionBuilderTest {
         when(elasticAgentProfileProperties.getCommand()).thenReturn(Arrays.asList("ping x.x.x.x", "-c", "160"));
         when(pluginSettings.logConfiguration()).thenReturn(logConfiguration);
 
-        ContainerDefinitionBuilder builder = new ContainerDefinitionBuilder()
-                .withName("foo")
-                .pluginSettings(pluginSettings)
-                .createAgentRequest(createAgentRequest);
+        ContainerDefinitionBuilder builder = new ContainerDefinitionBuilder(createAgentRequest)
+                .name("foo")
+                .pluginSettings(pluginSettings);
 
-        final ContainerDefinition containerDefinition = builder.build();
+        final ContainerDefinition containerDefinition = builder.build().build();
 
-        assertThat(containerDefinition.getName()).isEqualTo("foo");
-        assertThat(containerDefinition.getImage()).isEqualTo("alpine:latest");
-        assertThat(containerDefinition.getMemory()).isEqualTo(2048);
-        assertThat(containerDefinition.getMemoryReservation()).isEqualTo(1024);
-        assertThat(containerDefinition.getCommand()).contains("ping x.x.x.x", "-c", "160");
-        assertThat(containerDefinition.getLogConfiguration()).isEqualTo(logConfiguration);
+        assertThat(containerDefinition.name()).isEqualTo("foo");
+        assertThat(containerDefinition.image()).isEqualTo("alpine:latest");
+        assertThat(containerDefinition.memory()).isEqualTo(2048);
+        assertThat(containerDefinition.memoryReservation()).isEqualTo(1024);
+        assertThat(containerDefinition.command()).contains("ping x.x.x.x", "-c", "160");
+        assertThat(containerDefinition.logConfiguration()).isEqualTo(logConfiguration);
     }
 
     @Test
@@ -96,21 +96,20 @@ class ContainerDefinitionBuilderTest {
         when(createAgentRequest.environment()).thenReturn("some-environment");
         when(createAgentRequest.autoRegisterPropertiesAsEnvironmentVars("foo")).thenCallRealMethod();
 
-        ContainerDefinitionBuilder builder = new ContainerDefinitionBuilder()
-                .withName("foo")
-                .pluginSettings(pluginSettings)
-                .createAgentRequest(createAgentRequest);
+        ContainerDefinitionBuilder builder = new ContainerDefinitionBuilder(createAgentRequest)
+                .name("foo")
+                .pluginSettings(pluginSettings);
 
-        final ContainerDefinition containerDefinition = builder.build();
+        final ContainerDefinition containerDefinition = builder.build().build();
 
-        assertThat(containerDefinition.getEnvironment()).contains(
-                new KeyValuePair().withName("TZ").withValue("PST"),
-                new KeyValuePair().withName("JAVA_HOME").withValue("/var/lib/java"),
-                new KeyValuePair().withName("GO_EA_SERVER_URL").withValue("https://foo.server/go"),
-                new KeyValuePair().withName("GO_EA_AUTO_REGISTER_KEY").withValue("some-auto-register-key"),
-                new KeyValuePair().withName("GO_EA_AUTO_REGISTER_ENVIRONMENT").withValue("some-environment"),
-                new KeyValuePair().withName("GO_EA_AUTO_REGISTER_ELASTIC_AGENT_ID").withValue("foo"),
-                new KeyValuePair().withName("GO_EA_AUTO_REGISTER_ELASTIC_PLUGIN_ID").withValue(PLUGIN_ID)
+        assertThat(containerDefinition.environment()).contains(
+                KeyValuePair.builder().name("TZ").value("PST").build(),
+                KeyValuePair.builder().name("JAVA_HOME").value("/var/lib/java").build(),
+                KeyValuePair.builder().name("GO_EA_SERVER_URL").value("https://foo.server/go").build(),
+                KeyValuePair.builder().name("GO_EA_AUTO_REGISTER_KEY").value("some-auto-register-key").build(),
+                KeyValuePair.builder().name("GO_EA_AUTO_REGISTER_ENVIRONMENT").value("some-environment").build(),
+                KeyValuePair.builder().name("GO_EA_AUTO_REGISTER_ELASTIC_AGENT_ID").value("foo").build(),
+                KeyValuePair.builder().name("GO_EA_AUTO_REGISTER_ELASTIC_PLUGIN_ID").value(PLUGIN_ID).build()
         );
     }
 
@@ -122,15 +121,14 @@ class ContainerDefinitionBuilderTest {
         when(jobIdentifier.toJson()).thenReturn("job-identifier-in-json");
 
 
-        ContainerDefinitionBuilder builder = new ContainerDefinitionBuilder()
-                .withName("foo")
+        ContainerDefinitionBuilder builder = new ContainerDefinitionBuilder(createAgentRequest)
+                .name("foo")
                 .pluginSettings(pluginSettings)
-                .withServerId("gocd-server-id")
-                .createAgentRequest(createAgentRequest);
+                .serverId("gocd-server-id");
 
-        final ContainerDefinition containerDefinition = builder.build();
+        final ContainerDefinition containerDefinition = builder.build().build();
 
-        assertThat(containerDefinition.getDockerLabels())
+        assertThat(containerDefinition.dockerLabels())
                 .containsEntry(CREATED_BY_LABEL_KEY, PLUGIN_ID)
                 .containsEntry(ENVIRONMENT_LABEL_KEY, "some-environment")
                 .containsEntry(CONFIGURATION_LABEL_KEY, "elastic-profile-in-json")
@@ -145,14 +143,14 @@ class ContainerDefinitionBuilderTest {
         when(elasticAgentProfileProperties.platform()).thenReturn(LINUX);
 
 
-        ContainerDefinitionBuilder builder = new ContainerDefinitionBuilder()
-                .withName("foo")
+        ContainerDefinitionBuilder builder = new ContainerDefinitionBuilder(createAgentRequest)
+                .name("foo")
                 .pluginSettings(pluginSettings)
-                .createAgentRequest(createAgentRequest);
+                .serverId("gocd-server-id");
 
-        final ContainerDefinition containerDefinition = builder.build();
+        final ContainerDefinition containerDefinition = builder.build().build();
 
-        assertThat(containerDefinition.isPrivileged()).isTrue();
+        assertThat(containerDefinition.privileged()).isTrue();
     }
 
     @Test
@@ -162,14 +160,14 @@ class ContainerDefinitionBuilderTest {
         when(elasticAgentProfileProperties.platform()).thenReturn(LINUX);
 
 
-        ContainerDefinitionBuilder builder = new ContainerDefinitionBuilder()
-                .withName("foo")
+        ContainerDefinitionBuilder builder = new ContainerDefinitionBuilder(createAgentRequest)
+                .name("foo")
                 .pluginSettings(pluginSettings)
-                .createAgentRequest(createAgentRequest);
+                .serverId("gocd-server-id");
 
-        final ContainerDefinition containerDefinition = builder.build();
+        final ContainerDefinition containerDefinition = builder.build().build();
 
-        assertThat(containerDefinition.isPrivileged()).isFalse();
+        assertThat(containerDefinition.privileged()).isFalse();
     }
 
     @Test
@@ -179,14 +177,14 @@ class ContainerDefinitionBuilderTest {
         when(elasticAgentProfileProperties.platform()).thenReturn(WINDOWS);
 
 
-        ContainerDefinitionBuilder builder = new ContainerDefinitionBuilder()
-                .withName("foo")
+        ContainerDefinitionBuilder builder = new ContainerDefinitionBuilder(createAgentRequest)
+                .name("foo")
                 .pluginSettings(pluginSettings)
-                .createAgentRequest(createAgentRequest);
+                .serverId("gocd-server-id");
 
-        final ContainerDefinition containerDefinition = builder.build();
+        final ContainerDefinition containerDefinition = builder.build().build();
 
-        assertThat(containerDefinition.isPrivileged()).isFalse();
+        assertThat(containerDefinition.privileged()).isFalse();
     }
 
     @Test
@@ -196,14 +194,14 @@ class ContainerDefinitionBuilderTest {
         when(elasticAgentProfileProperties.getReservedMemory()).thenReturn(1024);
         when(elasticAgentProfileProperties.platform()).thenReturn(Platform.WINDOWS);
 
-        ContainerDefinitionBuilder builder = new ContainerDefinitionBuilder()
-                .withName("foo")
+        ContainerDefinitionBuilder builder = new ContainerDefinitionBuilder(createAgentRequest)
+                .name("foo")
                 .pluginSettings(pluginSettings)
-                .createAgentRequest(createAgentRequest);
+                .serverId("gocd-server-id");
 
-        final ContainerDefinition containerDefinition = builder.build();
+        final ContainerDefinition containerDefinition = builder.build().build();
 
-        assertThat(containerDefinition.getMemory()).isEqualTo(2048);
-        assertThat(containerDefinition.getMemoryReservation()).isNull();
+        assertThat(containerDefinition.memory()).isEqualTo(2048);
+        assertThat(containerDefinition.memoryReservation()).isNull();
     }
 }

@@ -16,13 +16,13 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws.strategy;
 
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ecs.model.ContainerInstance;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerInstanceHelper;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.matcher.ContainerInstanceMatcher;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.matcher.InstanceMatcher;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.Platform;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
+import software.amazon.awssdk.services.ec2.model.Instance;
+import software.amazon.awssdk.services.ecs.model.ContainerInstance;
 
 import java.util.Comparator;
 import java.util.List;
@@ -42,15 +42,15 @@ public class OldestInstanceSelectionStrategy extends InstanceSelectionStrategy {
 
     @Override
     protected List<ContainerInstance> findInstancesToStop(PluginSettings pluginSettings, Platform platform, Map<String, ContainerInstance> instanceIdToContainerInstance, List<Instance> idleInstances) {
-        idleInstances.sort(Comparator.comparing(Instance::getLaunchTime));
+        idleInstances.sort(Comparator.comparing(Instance::launchTime));
 
         final Instance instance = idleInstances.getFirst();
 
-        return singletonList(instanceIdToContainerInstance.get(instance.getInstanceId()));
+        return singletonList(instanceIdToContainerInstance.get(instance.instanceId()));
     }
 
     @Override
     protected void sortInstancesForScheduling(List<Instance> ec2Instances) {
-        ec2Instances.sort(Comparator.comparing(Instance::getLaunchTime).reversed());
+        ec2Instances.sort(Comparator.comparing(Instance::launchTime).reversed());
     }
 }

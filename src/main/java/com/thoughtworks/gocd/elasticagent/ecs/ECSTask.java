@@ -16,17 +16,18 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs;
 
-import com.amazonaws.services.ecs.model.Task;
-import com.amazonaws.services.ecs.model.TaskDefinition;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.ElasticAgentProfileProperties;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.JobIdentifier;
 import lombok.EqualsAndHashCode;
-import org.joda.time.DateTime;
+import software.amazon.awssdk.services.ecs.model.Task;
+import software.amazon.awssdk.services.ecs.model.TaskDefinition;
+
+import java.time.Instant;
 
 @EqualsAndHashCode
 public class ECSTask {
     private final Task task;
-    private final DateTime createdAt;
+    private final Instant createdAt;
     private final String environment;
     private final JobIdentifier jobIdentifier;
     private final TaskDefinition taskDefinition;
@@ -41,14 +42,15 @@ public class ECSTask {
         this.taskDefinition = taskDefinition;
         this.elasticAgentProfileProperties = elasticAgentProfileProperties;
         this.ec2InstanceId = ec2InstanceId;
-        this.createdAt = new DateTime(this.task.getStartedAt());
+        // startedAt may be absent for a task that has not started yet; treat as "now" as the v1 (Joda) code did
+        this.createdAt = this.task.startedAt() == null ? Instant.now() : this.task.startedAt();
     }
 
     public String name() {
-        return taskDefinition.getFamily();
+        return taskDefinition.family();
     }
 
-    public DateTime createdAt() {
+    public Instant createdAt() {
         return createdAt;
     }
 
@@ -65,11 +67,11 @@ public class ECSTask {
     }
 
     public String taskArn() {
-        return task.getTaskArn();
+        return task.taskArn();
     }
 
     public String taskDefinitionArn() {
-        return task.getTaskDefinitionArn();
+        return task.taskDefinitionArn();
     }
 
     public JobIdentifier getJobIdentifier() {

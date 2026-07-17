@@ -16,9 +16,6 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.executors;
 
-import com.amazonaws.services.ec2.model.AmazonEC2Exception;
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ecs.model.ContainerInstance;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import com.thoughtworks.gocd.elasticagent.ecs.*;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerInstanceHelper;
@@ -32,26 +29,30 @@ import com.thoughtworks.gocd.elasticagent.ecs.domain.*;
 import com.thoughtworks.gocd.elasticagent.ecs.events.EventStream;
 import com.thoughtworks.gocd.elasticagent.ecs.requests.CreateAgentRequest;
 import com.thoughtworks.gocd.elasticagent.ecs.requests.ServerPingRequest;
-import org.joda.time.Period;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentMatcher;
+import software.amazon.awssdk.services.ec2.model.Ec2Exception;
+import software.amazon.awssdk.services.ec2.model.Instance;
+import software.amazon.awssdk.services.ecs.model.ContainerInstance;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerInstanceMother.containerInstance;
 import static com.thoughtworks.gocd.elasticagent.ecs.aws.InstanceMother.*;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.Agent.ConfigState.Disabled;
-import static com.thoughtworks.gocd.elasticagent.ecs.domain.EC2InstanceState.RUNNING;
-import static com.thoughtworks.gocd.elasticagent.ecs.domain.EC2InstanceState.STOPPED;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.Platform.LINUX;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.Platform.WINDOWS;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
+import static software.amazon.awssdk.services.ec2.model.InstanceStateName.RUNNING;
+import static software.amazon.awssdk.services.ec2.model.InstanceStateName.STOPPED;
 
 class ServerPingRequestExecutorTest {
 
@@ -103,7 +104,7 @@ class ServerPingRequestExecutorTest {
     }
 
     @Test
-    void testShouldDisableIdleAgents() throws Exception {
+    void testShouldDisableIdleAgents() {
         final Agents agents = new Agents(List.of(new Agent("agent-id", Agent.AgentState.Idle, Agent.BuildState.Idle, Agent.ConfigState.Enabled)));
 
         when(pluginRequest.listAgents()).thenReturn(agents);
@@ -115,7 +116,7 @@ class ServerPingRequestExecutorTest {
     }
 
     @Test
-    void testShouldTerminateDisabledAgents() throws Exception {
+    void testShouldTerminateDisabledAgents() {
         final Agents agents = new Agents(List.of(new Agent("agent-id", Agent.AgentState.Idle, Agent.BuildState.Idle, Disabled)));
 
         when(pluginRequest.listAgents()).thenReturn(agents, agents, new Agents());
@@ -131,11 +132,13 @@ class ServerPingRequestExecutorTest {
         final ECSTask task = mock(ECSTask.class);
 
         when(task.name()).thenReturn("task-name");
+        when(task.createdAt()).thenReturn(Instant.now());
+        when(clusterProfileProperties.getContainerAutoregisterTimeout()).thenReturn(Duration.ofMinutes(10));
         when(pluginRequest.listAgents()).thenReturn(new Agents(new ArrayList<>()));
         verifyNoMoreInteractions(pluginRequest);
 
         when(taskHelper.create(any(CreateAgentRequest.class), eq(clusterProfileProperties), any(ConsoleLogAppender.class))).thenReturn(Optional.of(task));
-        agentInstances.clock = new Clock.TestClock().forward(Period.minutes(11));
+        agentInstances.clock = new Clock.TestClock().forward(Duration.ofMinutes(11));
 
         Optional<ECSTask> container = agentInstances.create(new CreateAgentRequest(null, elasticAgentProfileProperties, null, null), clusterProfileProperties, consoleLogAppender);
 
@@ -145,7 +148,7 @@ class ServerPingRequestExecutorTest {
     }
 
     @Test
-    void shouldDeleteAgentFromConfigWhenCorrespondingContainerIsNotPresent() throws Exception {
+    void shouldDeleteAgentFromConfigWhenCorrespondingContainerIsNotPresent() {
         when(pluginRequest.listAgents()).thenReturn(new Agents(List.of(new Agent("foo", Agent.AgentState.Idle, Agent.BuildState.Idle, Agent.ConfigState.Enabled))));
         verifyNoMoreInteractions(pluginRequest);
 
@@ -160,7 +163,7 @@ class ServerPingRequestExecutorTest {
     }
 
     @Test
-    void shouldNotScaleUpIfRunningInstancesAreAboveMinimumRequiredInstanceCount() throws Exception {
+    void shouldNotScaleUpIfRunningInstancesAreAboveMinimumRequiredInstanceCount() {
         final Agents agents = new Agents(new ArrayList<>());
         final List<Instance> runningInstances = Arrays.asList(
                 runningLinuxInstance("i-linux1"),
@@ -183,7 +186,7 @@ class ServerPingRequestExecutorTest {
 
     @ParameterizedTest
     @EnumSource(Platform.class)
-    void shouldTerminateStoppedIdleInstance(Platform platform) throws Exception {
+    void shouldTerminateStoppedIdleInstance(Platform platform) {
         final List<Instance> allInstances = Arrays.asList(
                 instance("i-abcdxyz", RUNNING, platform.name()),
                 instance("i-abcd123", STOPPED, platform.name())
@@ -205,7 +208,7 @@ class ServerPingRequestExecutorTest {
     }
 
     @Test
-    void shouldCompleteServerPingWhenTerminationOfStoppedInstancesFails() throws Exception {
+    void shouldCompleteServerPingWhenTerminationOfStoppedInstancesFails() {
         final List<Instance> allInstances = Arrays.asList(
                 instance("i-abcdxyz", RUNNING, LINUX.name()),
                 instance("i-abcd123", STOPPED, LINUX.name())
@@ -220,7 +223,7 @@ class ServerPingRequestExecutorTest {
         when(containerInstanceHelper.getAllOnDemandInstances(clusterProfileProperties)).thenReturn(allInstances);
         when(containerInstanceHelper.onDemandContainerInstances(clusterProfileProperties)).thenReturn(containerInstances);
         when(pluginRequest.listAgents()).thenReturn(new Agents(new ArrayList<>()));
-        doThrow(new AmazonEC2Exception("instance is no longer available"))
+        doThrow(Ec2Exception.builder().message("instance is no longer available").build())
                 .when(terminationOperation).execute(eq(clusterProfileProperties), anyList());
 
         final GoPluginApiResponse response = executor.execute();
@@ -229,12 +232,12 @@ class ServerPingRequestExecutorTest {
     }
 
     @Test
-    void shouldContinueWithRemainingClustersWhenCleanupForOneClusterFails() throws Exception {
+    void shouldContinueWithRemainingClustersWhenCleanupForOneClusterFails() {
         final ClusterProfileProperties otherClusterProfileProperties = mock(ClusterProfileProperties.class);
         when(otherClusterProfileProperties.uuid()).thenReturn("id2");
         final ECSTasks failingAgentInstances = mock(ECSTasks.class);
         final ECSTasks otherAgentInstances = mock(ECSTasks.class);
-        when(failingAgentInstances.instancesCreatedAfterTimeout(any(), any())).thenThrow(new AmazonEC2Exception("service unavailable"));
+        when(failingAgentInstances.instancesCreatedAfterTimeout(any(), any())).thenThrow(Ec2Exception.builder().message("service unavailable").build());
         when(otherAgentInstances.instancesCreatedAfterTimeout(any(), any())).thenReturn(new Agents());
         when(otherAgentInstances.getEventStream()).thenReturn(eventStream);
         when(pluginRequest.listAgents()).thenReturn(new Agents());
@@ -249,7 +252,7 @@ class ServerPingRequestExecutorTest {
     }
 
     @Test
-    void shouldTagSpotInstances() throws Exception {
+    void shouldTagSpotInstances() {
         when(pluginRequest.listAgents()).thenReturn(new Agents());
 
         executor.execute();
@@ -258,7 +261,7 @@ class ServerPingRequestExecutorTest {
     }
 
     @Test
-    void shouldTagIdleSpotInstances() throws Exception {
+    void shouldTagIdleSpotInstances() {
         when(pluginRequest.listAgents()).thenReturn(new Agents());
 
         executor.execute();
@@ -267,7 +270,7 @@ class ServerPingRequestExecutorTest {
     }
 
     @Test
-    void shouldTerminateIdleSpotInstances() throws Exception {
+    void shouldTerminateIdleSpotInstances() {
         when(pluginRequest.listAgents()).thenReturn(new Agents());
 
         executor.execute();
@@ -296,7 +299,7 @@ class ServerPingRequestExecutorTest {
         }
 
         @Test
-        void shouldStopIdleInstanceWhenIdleTimeOutIsReached() throws Exception {
+        void shouldStopIdleInstanceWhenIdleTimeOutIsReached() {
             final List<Instance> runningInstances = singletonList(runningLinuxInstance("i-abcded1"));
             final List<ContainerInstance> containerInstances = singletonList(containerInstance("i-abcded1"));
 
@@ -334,7 +337,7 @@ class ServerPingRequestExecutorTest {
         }
 
         @Test
-        void shouldStopIdleInstanceWhenIdleTimeOutIsReached() throws Exception {
+        void shouldStopIdleInstanceWhenIdleTimeOutIsReached() {
             final List<Instance> runningInstances = singletonList(runningWindowsInstance("i-abcded1"));
             final List<ContainerInstance> containerInstances = singletonList(containerInstance("i-abcded1"));
 

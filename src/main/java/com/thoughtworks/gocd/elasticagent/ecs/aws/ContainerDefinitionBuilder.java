@@ -16,14 +16,13 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws;
 
-import com.amazonaws.services.ecs.model.ContainerDefinition;
-import com.amazonaws.services.ecs.model.KeyValuePair;
 import com.thoughtworks.go.plugin.api.logging.Logger;
-import com.thoughtworks.gocd.elasticagent.ecs.domain.ElasticAgentProfileProperties;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
 import com.thoughtworks.gocd.elasticagent.ecs.requests.CreateAgentRequest;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
+import software.amazon.awssdk.services.ecs.model.ContainerDefinition;
+import software.amazon.awssdk.services.ecs.model.KeyValuePair;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -38,25 +37,38 @@ import static java.text.MessageFormat.format;
 public class ContainerDefinitionBuilder {
     private static final Logger LOG = Logger.getLoggerFor(ContainerDefinitionBuilder.class);
 
+    private CreateAgentRequest request;
+
     private String taskName;
     private PluginSettings pluginSettings;
-    private CreateAgentRequest request;
     private String serverId;
 
-    public ContainerDefinition build() {
-        final ElasticAgentProfileProperties elasticAgentProfileProperties = request.elasticProfile();
-        final Integer memoryReservation = elasticAgentProfileProperties.platform() == LINUX ? elasticAgentProfileProperties.getReservedMemory() : null;
+    public ContainerDefinitionBuilder(CreateAgentRequest createAgentRequest) {
+        this.request = createAgentRequest;
+    }
 
-        return new ContainerDefinition().withName(taskName)
-                .withImage(image(elasticAgentProfileProperties.getImage()))
-                .withMemory(elasticAgentProfileProperties.getMaxMemory())
-                .withMemoryReservation(memoryReservation)
-                .withEnvironment(environmentFrom())
-                .withDockerLabels(labelsFrom())
-                .withCommand(elasticAgentProfileProperties.getCommand())
-                .withCpu(elasticAgentProfileProperties.getCpu())
-                .withPrivileged(elasticAgentProfileProperties.platform() != WINDOWS && elasticAgentProfileProperties.isPrivileged())
-                .withLogConfiguration(pluginSettings.logConfiguration());
+    public ContainerDefinition.Builder build() {
+        final PlacementRequirement placementRequirement = buildPlacementRequirement();
+
+        return ContainerDefinition.builder()
+                .name(taskName)
+                .image(image(request.elasticProfile().getImage()))
+                .cpu(placementRequirement.cpu())
+                .memory(placementRequirement.memory())
+                .memoryReservation(placementRequirement.memoryReservation())
+                .environment(environmentFrom())
+                .dockerLabels(labelsFrom())
+                .command(request.elasticProfile().getCommand())
+                .privileged(request.elasticProfile().platform() != WINDOWS && request.elasticProfile().isPrivileged())
+                .logConfiguration(pluginSettings.logConfiguration());
+    }
+
+    public PlacementRequirement buildPlacementRequirement() {
+        return new PlacementRequirement(
+                request.elasticProfile().getCpu(),
+                request.elasticProfile().getMaxMemory(),
+                request.elasticProfile().platform() == LINUX ? request.elasticProfile().getReservedMemory() : null
+        );
     }
 
     public ContainerDefinitionBuilder pluginSettings(PluginSettings pluginSettings) {
@@ -64,15 +76,10 @@ public class ContainerDefinitionBuilder {
         return this;
     }
 
-    public ContainerDefinitionBuilder createAgentRequest(CreateAgentRequest request) {
-        this.request = request;
-        return this;
-    }
-
     private Collection<KeyValuePair> environmentFrom() {
         Collection<KeyValuePair> env = getKeyValuePairs(pluginSettings.getEnvironmentVariables());
         env.addAll(getKeyValuePairs(request.elasticProfile().getEnvironment()));
-        env.add(new KeyValuePair().withName("GO_EA_SERVER_URL").withValue(pluginSettings.getGoServerUrl()));
+        env.add(KeyValuePair.builder().name("GO_EA_SERVER_URL").value(pluginSettings.getGoServerUrl()).build());
         env.addAll(request.autoRegisterPropertiesAsEnvironmentVars(taskName));
 
         return env;
@@ -83,7 +90,7 @@ public class ContainerDefinitionBuilder {
         for (String variable : lines) {
             if (Strings.CS.contains(variable, "=")) {
                 String[] pair = variable.split("=", 2);
-                env.add(new KeyValuePair().withName(pair[0]).withValue(pair[1]));
+                env.add(KeyValuePair.builder().name(pair[0]).value(pair[1]).build());
             } else {
                 LOG.warn(format("Ignoring variable {0} as it is not in acceptable format, Variable must follow `VARIABLE_NAME=VARIABLE_VALUE` format.", variable));
             }
@@ -115,13 +122,19 @@ public class ContainerDefinitionBuilder {
         return labels;
     }
 
-    public ContainerDefinitionBuilder withName(String taskName) {
+    public ContainerDefinitionBuilder name(String taskName) {
         this.taskName = taskName;
         return this;
     }
 
-    public ContainerDefinitionBuilder withServerId(String serverId) {
+    public ContainerDefinitionBuilder serverId(String serverId) {
         this.serverId = serverId;
         return this;
+    }
+
+    public record PlacementRequirement(Integer cpu, Integer memory, Integer memoryReservation) {
+        public PlacementRequirement() {
+            this(null, null, null);
+        }
     }
 }

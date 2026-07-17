@@ -16,9 +16,7 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws;
 
-import com.amazonaws.util.EncodingSchemeEnum;
 import com.google.gson.GsonBuilder;
-import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.gocd.elasticagent.ecs.builders.ScriptBuilder;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.DockerRegistryAuthData;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.DockerRegistryAuthType;
@@ -26,11 +24,10 @@ import com.thoughtworks.gocd.elasticagent.ecs.domain.Platform;
 import com.thoughtworks.gocd.elasticagent.ecs.utils.Util;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-import static com.amazonaws.util.EncodingSchemeEnum.BASE64;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.DockerRegistryAuthType.AUTH_TOKEN;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.DockerRegistryAuthType.USERNAME_PASSWORD;
 
@@ -63,7 +60,7 @@ public class Userdata {
     public String toBase64() {
         addCustomAttributesToECSConfig();
         final String userdataScript = platform == Platform.LINUX ? toLinux() : toWindows();
-        return BASE64.encodeAsString(userdataScript.getBytes());
+        return Base64.getEncoder().encodeToString(userdataScript.getBytes());
     }
 
     private void addCustomAttributesToECSConfig() {
@@ -73,7 +70,7 @@ public class Userdata {
     }
 
     public static String decodeBase64(String userData) {
-        return new String(EncodingSchemeEnum.BASE64.decode(userData));
+        return new String(Base64.getDecoder().decode(userData));
     }
 
     public Userdata clusterName(String clusterName) {

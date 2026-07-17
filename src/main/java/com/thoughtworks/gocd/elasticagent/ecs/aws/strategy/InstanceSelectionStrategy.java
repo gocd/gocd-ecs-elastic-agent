@@ -16,10 +16,8 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws.strategy;
 
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ecs.model.ContainerDefinition;
-import com.amazonaws.services.ecs.model.ContainerInstance;
 import com.thoughtworks.go.plugin.api.logging.Logger;
+import com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerDefinitionBuilder;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerInstanceHelper;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.EC2Config;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.matcher.ContainerInstanceMatcher;
@@ -28,21 +26,24 @@ import com.thoughtworks.gocd.elasticagent.ecs.domain.ElasticAgentProfileProperti
 import com.thoughtworks.gocd.elasticagent.ecs.domain.Platform;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
 import com.thoughtworks.gocd.elasticagent.ecs.utils.Util;
+import software.amazon.awssdk.services.ec2.model.Instance;
+import software.amazon.awssdk.services.ec2.model.InstanceStateName;
+import software.amazon.awssdk.services.ecs.model.ContainerInstance;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.thoughtworks.gocd.elasticagent.ecs.domain.EC2InstanceState.PENDING;
-import static com.thoughtworks.gocd.elasticagent.ecs.domain.EC2InstanceState.RUNNING;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.Platform.WINDOWS;
 import static com.thoughtworks.gocd.elasticagent.ecs.utils.Util.toMap;
 import static java.text.MessageFormat.format;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
+import static software.amazon.awssdk.services.ec2.model.InstanceStateName.PENDING;
+import static software.amazon.awssdk.services.ec2.model.InstanceStateName.RUNNING;
 
 public abstract class InstanceSelectionStrategy {
+    public static final Set<InstanceStateName> ACCEPTABLE_STATES = Set.of(PENDING, RUNNING);
     private static final Logger LOG = Logger.getLoggerFor(InstanceSelectionStrategy.class);
-    private static final Set<String> ACCEPTABLE_STATES = Set.of(PENDING, RUNNING);
 
     protected final ContainerInstanceHelper containerInstanceHelper;
     final InstanceMatcher instanceMatcher;
@@ -62,12 +63,12 @@ public abstract class InstanceSelectionStrategy {
 
     protected abstract void sortInstancesForScheduling(List<Instance> ec2Instances);
 
-    public Optional<ContainerInstance> instanceForScheduling(PluginSettings pluginSettings, ElasticAgentProfileProperties elasticAgentProfileProperties, ContainerDefinition containerDefinition) {
+    public Optional<ContainerInstance> instanceForScheduling(PluginSettings pluginSettings, ElasticAgentProfileProperties elasticAgentProfileProperties, ContainerDefinitionBuilder.PlacementRequirement placementRequirement) {
         List<ContainerInstance> containerInstanceList = containerInstanceHelper.getContainerInstances(pluginSettings);
 
         final EC2Config ec2Config = new EC2Config.Builder()
-                .withProfile(elasticAgentProfileProperties)
-                .withSettings(pluginSettings)
+                .profile(elasticAgentProfileProperties)
+                .settings(pluginSettings)
                 .build();
 
         if (containerInstanceList.isEmpty()) {
@@ -75,22 +76,22 @@ public abstract class InstanceSelectionStrategy {
         }
 
         final List<Instance> ec2Instances = containerInstanceHelper.ec2InstancesFromContainerInstances(pluginSettings, containerInstanceList)
-                .stream().filter(instance -> ACCEPTABLE_STATES.contains(instance.getState().getName().toLowerCase()))
+                .stream().filter(instance -> ACCEPTABLE_STATES.contains(instance.state().name()))
                 .collect(toList());
 
-        final Map<String, ContainerInstance> instanceMap = toMap(containerInstanceList, ContainerInstance::getEc2InstanceId, containerInstance -> containerInstance);
+        final Map<String, ContainerInstance> instanceMap = toMap(containerInstanceList, ContainerInstance::ec2InstanceId, containerInstance -> containerInstance);
 
         sortInstancesForScheduling(ec2Instances);
 
         for (Instance instance : ec2Instances) {
-            final ContainerInstance containerInstance = instanceMap.get(instance.getInstanceId());
-            if (instanceMatcher.matches(ec2Config, instance) && containerInstanceMatcher.matches(containerInstance, containerDefinition)) {
+            final ContainerInstance containerInstance = instanceMap.get(instance.instanceId());
+            if (instanceMatcher.matches(ec2Config, instance) && containerInstanceMatcher.matches(containerInstance, placementRequirement)) {
                 if (isSpotInstance(instance)) {
-                    containerInstanceHelper.removeLastSeenIdleTag(pluginSettings, Collections.singletonList(instance.getInstanceId()));
+                    containerInstanceHelper.removeLastSeenIdleTag(pluginSettings, Collections.singletonList(instance.instanceId()));
                 }
                 return Optional.of(containerInstance);
             } else {
-                LOG.info(format("Skipped container creation on container instance {0}: required resources are not available.", instance.getInstanceId()));
+                LOG.info(format("Skipped container creation on container instance {0}: required resources are not available.", instance.instanceId()));
             }
         }
 
@@ -98,7 +99,7 @@ public abstract class InstanceSelectionStrategy {
     }
 
     private boolean isSpotInstance(Instance instance) {
-        return isNotEmpty(instance.getSpotInstanceRequestId());
+        return isNotEmpty(instance.spotInstanceRequestId());
     }
 
     public Optional<List<ContainerInstance>> instancesToStop(PluginSettings pluginSettings, Platform platform) {
@@ -111,8 +112,8 @@ public abstract class InstanceSelectionStrategy {
 
         final List<Instance> instancesWithPlatform = containerInstanceHelper.ec2InstancesFromContainerInstances(pluginSettings, allContainerInstances)
                 .stream()
-                .filter(instance -> ACCEPTABLE_STATES.contains(instance.getState().getName().toLowerCase()))
-                .filter(instance -> Platform.from(instance.getPlatform()) == platform)
+                .filter(instance -> ACCEPTABLE_STATES.contains(instance.state().name()))
+                .filter(instance -> Platform.from(instance.platformAsString()) == platform)
                 .collect(toList());
 
         if (instancesWithPlatform.size() <= minInstanceCount(platform, pluginSettings)) {
@@ -120,7 +121,7 @@ public abstract class InstanceSelectionStrategy {
             return Optional.empty();
         }
 
-        final Map<String, ContainerInstance> instanceIdToContainerInstance = Util.toMap(allContainerInstances, ContainerInstance::getEc2InstanceId, self -> self);
+        final Map<String, ContainerInstance> instanceIdToContainerInstance = Util.toMap(allContainerInstances, ContainerInstance::ec2InstanceId, self -> self);
 
         final List<Instance> idleInstances = idleContainerInstances(instancesWithPlatform, instanceIdToContainerInstance);
         if (idleInstances.isEmpty()) {
@@ -134,12 +135,12 @@ public abstract class InstanceSelectionStrategy {
 
 
     private List<Instance> idleContainerInstances(List<Instance> instances, Map<String, ContainerInstance> containerInstanceMap) {
-        return instances.stream().filter(instance -> isIdle(containerInstanceMap.get(instance.getInstanceId())))
+        return instances.stream().filter(instance -> isIdle(containerInstanceMap.get(instance.instanceId())))
                 .collect(Collectors.toList());
     }
 
     private boolean isIdle(ContainerInstance containerInstance) {
-        return containerInstance.getPendingTasksCount() == 0 && containerInstance.getRunningTasksCount() == 0;
+        return containerInstance.pendingTasksCount() == 0 && containerInstance.runningTasksCount() == 0;
     }
 
     private int minInstanceCount(Platform platform, PluginSettings pluginSettings) {

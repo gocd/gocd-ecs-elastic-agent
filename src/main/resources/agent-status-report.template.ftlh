@@ -227,7 +227,7 @@
               ng-click="currenttab='container-environment-vars'">
             <a href="#">Environment Variables</a>
           </li>
-          <#if logConfiguration??>
+          <#if logDriver??>
           <li ng-class="{'current_tab' : currenttab == 'container-log-configuration' }"
               ng-click="currenttab='container-log-configuration'">
             <a href="#">Log Configuration</a>
@@ -286,16 +286,16 @@
 
               <label>Created At</label>
               <span>
-              <#if createdAt??>
-                {{ ${createdAt?long?c!} | date:"MMM dd, yyyy hh:mm:ss a"}}
+              <#if createdAtMillis??>
+                {{ ${createdAtMillis?c} | date:"MMM dd, yyyy hh:mm:ss a"}}
               </#if>
               </span>
             </li>
             <li class="name-value_pair">
               <label>Started At</label>
               <span>
-              <#if startedAt??>
-                {{ ${startedAt?long?c!} | date:"MMM dd, yyyy hh:mm:ss a"}}
+              <#if startedAtMillis??>
+                {{ ${startedAtMillis?c} | date:"MMM dd, yyyy hh:mm:ss a"}}
               </#if>
               </span>
             </li>
@@ -338,31 +338,31 @@
         </div>
         <div class="tab-content container-environment-vars" ng-show="currenttab == 'container-environment-vars'">
           <ul class="name-value">
-                <#list environments as environment>
+                <#list environments?keys as name>
                   <li class="name-value_pair">
-                    <label>${environment.name}</label>
-                    <span>${environment.value!}</span>
+                    <label>${name}</label>
+                    <span>${environments[name]!}</span>
                   </li>
                 <#else>
                     <li>No environment variable specified.</li>
                 </#list>
           </ul>
         </div>
-        <#if logConfiguration??>
+        <#if logDriver??>
         <div class="tab-content container-log-configuration" ng-show="currenttab == 'container-log-configuration'">
           <ul class="name-value">
             <li class="name-value_pair">
               <label>Log Driver</label>
-              <span>${ logConfiguration.logDriver !}</span>
+              <span>${ logDriver !}</span>
             </li>
 
             <li class="name-value_pair">
               <label>Log Options</label>
               <table>
-                <#list logConfiguration.options?keys as key>
+                <#list logOptions?keys as key>
                   <tr>
                     <th><strong>${key}</strong></th>
-                    <td>${logConfiguration.options[key]!}</td>
+                    <td>${logOptions[key]!}</td>
                   </tr>
                 </#list>
               </table>

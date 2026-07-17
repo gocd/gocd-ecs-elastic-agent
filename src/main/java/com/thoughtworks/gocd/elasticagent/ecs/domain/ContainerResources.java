@@ -16,8 +16,8 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.domain;
 
-import com.amazonaws.services.ecs.model.Resource;
 import lombok.EqualsAndHashCode;
+import software.amazon.awssdk.services.ecs.model.Resource;
 
 import java.util.List;
 
@@ -32,19 +32,20 @@ public class ContainerResources {
     public ContainerResources(List<Resource> resources) {
 
         for (Resource resource : resources) {
-            if ("CPU".equalsIgnoreCase(resource.getName()))
-                cpu = "INTEGER".equalsIgnoreCase(resource.getType()) ? resource.getIntegerValue() : "LONG".equalsIgnoreCase(resource.getType()) ? resource.getLongValue() : resource.getDoubleValue();
-
-            if ("MEMORY".equalsIgnoreCase(resource.getName()))
-                memory = "INTEGER".equalsIgnoreCase(resource.getType()) ? resource.getIntegerValue() : "LONG".equalsIgnoreCase(resource.getType()) ? resource.getLongValue() : resource.getDoubleValue();
-
-            if ("PORTS".equalsIgnoreCase(resource.getName()))
-                ports = resource.getStringSetValue();
-
-            if ("PORTS_UDP".equalsIgnoreCase(resource.getName()))
-                portsUDP = resource.getStringSetValue();
-
+            if ("CPU".equalsIgnoreCase(resource.name())) {
+                cpu = numeric(resource);
+            } else if ("MEMORY".equalsIgnoreCase(resource.name())) {
+                memory = numeric(resource);
+            } else if ("PORTS".equalsIgnoreCase(resource.name())) {
+                ports = resource.stringSetValue();
+            } else if ("PORTS_UDP".equalsIgnoreCase(resource.name())) {
+                portsUDP = resource.stringSetValue();
+            }
         }
+    }
+
+    private static double numeric(Resource resource) {
+        return "INTEGER".equalsIgnoreCase(resource.type()) ? resource.integerValue() : "LONG".equalsIgnoreCase(resource.type()) ? resource.longValue() : resource.doubleValue();
     }
 
     public double getCpu() {

@@ -16,7 +16,6 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs;
 
-import com.amazonaws.services.ec2.model.AmazonEC2Exception;
 import com.thoughtworks.go.plugin.api.GoApplicationAccessor;
 import com.thoughtworks.go.plugin.api.GoPlugin;
 import com.thoughtworks.go.plugin.api.GoPluginIdentifier;
@@ -37,6 +36,7 @@ import com.thoughtworks.gocd.elasticagent.ecs.info.PluginProperties;
 import com.thoughtworks.gocd.elasticagent.ecs.requests.*;
 import org.apache.commons.lang3.concurrent.ConcurrentException;
 import org.apache.commons.lang3.concurrent.LazyInitializer;
+import software.amazon.awssdk.services.ec2.model.Ec2Exception;
 
 import java.util.HashMap;
 import java.util.List;
@@ -124,7 +124,7 @@ public class ECSElasticPlugin implements GoPlugin {
                 default:
                     throw new UnhandledRequestTypeException(request.requestName());
             }
-        } catch (AmazonEC2Exception e) {
+        } catch (Ec2Exception e) {
             LOG.error("Failed to handle request " + request.requestName() + " due to:" + e.getMessage());
             return DefaultGoPluginApiResponse.error("Failed to handle request " + request.requestName() + " due to:" + e.getMessage());
         } catch (Exception e) {

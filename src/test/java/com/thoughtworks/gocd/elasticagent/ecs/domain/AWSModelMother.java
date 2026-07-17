@@ -16,16 +16,16 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.domain;
 
-import com.amazonaws.services.ecs.model.*;
+import software.amazon.awssdk.services.ecs.model.*;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.Collections;
-import java.util.Date;
 
-import static com.amazonaws.services.ecs.model.TaskDefinitionStatus.ACTIVE;
 import static com.thoughtworks.gocd.elasticagent.ecs.Constants.LABEL_JOB_IDENTIFIER;
 import static org.apache.commons.lang3.StringUtils.isBlank;
+import static software.amazon.awssdk.services.ecs.model.TaskDefinitionStatus.ACTIVE;
 
 public class AWSModelMother {
     private final static SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss");
@@ -35,43 +35,52 @@ public class AWSModelMother {
     }
 
     public static ECSContainer containerWith(String containerInstanceArn, String name, String image, int memoryReservation, int memory, String createdAt, String startedAt, JobIdentifier jobIdentifier) throws ParseException {
-        final Container container = new Container()
-                .withName(name)
-                .withContainerArn("foo")
-                .withLastStatus("Running");
+        final Container container = Container.builder()
+                .name(name)
+                .containerArn("foo")
+                .lastStatus("Running")
+                .build();
 
-        final Task task = new Task()
-                .withContainerInstanceArn(containerInstanceArn)
-                .withCreatedAt(toDate(createdAt))
-                .withStartedAt(toDate(startedAt))
-                .withContainers(container)
-                .withLastStatus("Running")
-                .withTaskArn("task-arn/" + name);
+        final Task task = Task.builder()
+                .containerInstanceArn(containerInstanceArn)
+                .createdAt(toInstant(createdAt))
+                .startedAt(toInstant(startedAt))
+                .containers(container)
+                .lastStatus("Running")
+                .taskArn("task-arn/" + name)
+                .build();
 
-        final ContainerDefinition containerDefinition = new ContainerDefinition()
-                .withMemory(memory)
-                .withMemoryReservation(memoryReservation)
-                .withImage(image)
-                .withCpu(0)
-                .withPrivileged(false)
-                .withHostname("hostname")
-                .withEnvironment(new KeyValuePair().withName("ENV_FOO").withValue("ENV_FOO_VALUE"))
-                .withDockerLabels(Collections.singletonMap(LABEL_JOB_IDENTIFIER, jobIdentifier.toJson()))
-                .withLogConfiguration(new LogConfiguration().withLogDriver("awslogs").withOptions(Collections.singletonMap("log-group", "build-logs")))
-                .withName(name);
+        final ContainerDefinition containerDefinition = ContainerDefinition.builder()
+                .memory(memory)
+                .memoryReservation(memoryReservation)
+                .image(image)
+                .cpu(0)
+                .privileged(false)
+                .hostname("hostname")
+                .environment(KeyValuePair.builder().name("ENV_FOO").value("ENV_FOO_VALUE").build())
+                .dockerLabels(Collections.singletonMap(LABEL_JOB_IDENTIFIER, jobIdentifier.toJson()))
+                .logConfiguration(LogConfiguration.builder().logDriver("awslogs").options(Collections.singletonMap("log-group", "build-logs")).build())
+                .name(name)
+                .build();
 
-        final TaskDefinition taskDefinition = new TaskDefinition()
-                .withStatus(ACTIVE)
-                .withContainerDefinitions(containerDefinition);
+        final TaskDefinition taskDefinition = TaskDefinition.builder()
+                .status(ACTIVE)
+                .containerDefinitions(containerDefinition)
+                .build();
 
         return new ECSContainer(task, taskDefinition);
     }
 
-    public static Date toDate(String date) throws ParseException {
-        return isBlank(date) ? null : sdf.parse(date);
+    public static Instant toInstant(String date) throws ParseException {
+        return isBlank(date) ? null : sdf.parse(date).toInstant();
     }
 
     public static Cluster clusterWith(String name, int containerInstancesCount, int runningTasksCount, int pendingTasksCount) {
-        return new Cluster().withClusterName(name).withRegisteredContainerInstancesCount(containerInstancesCount).withRunningTasksCount(runningTasksCount).withPendingTasksCount(pendingTasksCount);
+        return Cluster.builder()
+                .clusterName(name)
+                .registeredContainerInstancesCount(containerInstancesCount)
+                .runningTasksCount(runningTasksCount)
+                .pendingTasksCount(pendingTasksCount)
+                .build();
     }
 }

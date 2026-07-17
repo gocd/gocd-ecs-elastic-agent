@@ -16,80 +16,82 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws;
 
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.InstanceState;
-import com.amazonaws.services.ec2.model.InstanceType;
-import com.amazonaws.services.ec2.model.Tag;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.Platform;
+import software.amazon.awssdk.services.ec2.model.*;
 
-import java.util.Date;
+import java.time.Instant;
 
-import static com.thoughtworks.gocd.elasticagent.ecs.domain.EC2InstanceState.RUNNING;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.Platform.LINUX;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.Platform.WINDOWS;
 import static java.lang.String.format;
+import static software.amazon.awssdk.services.ec2.model.InstanceStateName.RUNNING;
 
 public class InstanceMother {
     public static Instance instance(String instanceId) {
-        return new Instance().withInstanceId(instanceId);
+        return instanceBuilder(instanceId).build();
     }
 
-    public static Instance instance(String instanceId, String state, String platform) {
-        return instance(instanceId)
-                .withPlatform(platform)
-                .withTags(new Tag("Name", format("GoCD_%s_INSTANCE", platform.toUpperCase())))
-                .withState(new InstanceState().withName(state));
+    public static Instance instance(String instanceId, InstanceStateName state, String platform) {
+        return instanceBuilder(instanceId, state, platform)
+                .build();
     }
 
     public static Instance runningInstance(String instanceId, Platform platform, Tag... tags) {
-        return instance(instanceId)
-                .withPlatform(platform.name())
-                .withTags(tags)
-                .withState(new InstanceState().withName(RUNNING));
+        return instanceBuilder(instanceId)
+                .platform(platform.name())
+                .tags(tags)
+                .state(InstanceState.builder().name(RUNNING).build())
+                .build();
     }
 
-    public static Instance instance(String instanceId, InstanceType type, String imageId, Date launchTime) {
-        return linuxInstance(instanceId, launchTime).withInstanceType(type).withImageId(imageId);
+    public static Instance instance(String instanceId, InstanceType type, String imageId, Instant launchTime) {
+        return linuxInstanceBuilder(instanceId, RUNNING, launchTime).instanceType(type).imageId(imageId).build();
     }
 
-    public static Instance spotInstance(String instanceId, String state, String platform) {
-        return instance(instanceId)
-                .withState(new InstanceState().withName(state))
-                .withPlatform(platform)
-                .withTags(new Tag("Name", format("GoCD_%s_SPOT_INSTANCE", platform.toUpperCase())))
-                .withSpotInstanceRequestId("request_id");
+    public static Instance spotInstance(String instanceId, InstanceStateName state, String platform) {
+        return spotInstanceBuilder(instanceId, state, platform)
+                .build();
     }
 
-    public static Instance linuxInstance(String instanceId, String state) {
-        return instance(instanceId, state, LINUX.name());
+    public static Instance.Builder spotInstanceBuilder(String instanceId, InstanceStateName state, String platform) {
+        return instanceBuilder(instanceId)
+                .state(InstanceState.builder().name(state).build())
+                .platform(platform)
+                .tags(Tag.builder().key("Name").value(format("GoCD_%s_SPOT_INSTANCE", platform.toUpperCase())).build())
+                .spotInstanceRequestId("request_id");
     }
+
+    public static Instance linuxInstance(String instanceId, InstanceStateName state) {
+        return linuxInstanceBuilder(instanceId, state).build();
+    }
+
 
     public static Instance runningLinuxInstance(String instanceId) {
         return linuxInstance(instanceId, RUNNING);
     }
 
     public static Instance runningLinuxSpotInstance(String instanceId) {
-        return linuxInstance(instanceId, RUNNING).withSpotInstanceRequestId("req_id");
+        return linuxInstanceBuilder(instanceId, RUNNING).spotInstanceRequestId("req_id").build();
     }
 
-    public static Instance linuxInstance(String instanceId, Date launchTime) {
-        return linuxInstance(instanceId, RUNNING).withLaunchTime(launchTime);
+    public static Instance linuxInstance(String instanceId, Instant launchTime) {
+        return linuxInstanceBuilder(instanceId, RUNNING).launchTime(launchTime).build();
     }
 
-    public static Instance linuxInstance(String instanceId, String state, Date launchTime) {
-        return linuxInstance(instanceId, launchTime).withState(new InstanceState().withName(state));
+    public static Instance linuxInstance(String instanceId, InstanceStateName state, Instant launchTime) {
+        return linuxInstanceBuilder(instanceId, state, launchTime).state(InstanceState.builder().name(state).build()).build();
     }
 
     public static Instance linuxInstanceWithTag(String instanceId, Tag... tag) {
-        return linuxInstance(instanceId, RUNNING).withTags(tag);
+        return linuxInstanceBuilder(instanceId, RUNNING).tags(tag).build();
     }
 
-    public static Instance linuxInstanceWithTag(String instanceId, String state, Tag... tag) {
-        return linuxInstance(instanceId, state).withTags(tag);
+    public static Instance linuxInstanceWithTag(String instanceId, InstanceStateName state, Tag... tag) {
+        return linuxInstanceBuilder(instanceId, state).tags(tag).build();
     }
 
-    public static Instance windowsInstance(String instanceId, String state) {
-        return instance(instanceId, state, WINDOWS.name());
+    public static Instance windowsInstance(String instanceId, InstanceStateName state) {
+        return windowsInstanceBuilder(instanceId, state).build();
     }
 
     public static Instance runningWindowsInstance(String instanceId) {
@@ -97,14 +99,37 @@ public class InstanceMother {
     }
 
     public static Instance runningWindowsSpotInstance(String instanceId) {
-        return windowsInstance(instanceId, RUNNING).withSpotInstanceRequestId("req_id");
+        return windowsInstanceBuilder(instanceId, RUNNING).spotInstanceRequestId("req_id").build();
     }
 
-    public static Instance windowsInstance(String instanceId, Date launchTime) {
-        return windowsInstance(instanceId, RUNNING).withLaunchTime(launchTime);
+    public static Instance windowsInstance(String instanceId, Instant launchTime) {
+        return windowsInstanceBuilder(instanceId, RUNNING).launchTime(launchTime).build();
     }
 
     public static Instance windowsInstanceWithTag(String instanceId, Tag... tag) {
-        return windowsInstance(instanceId, RUNNING).withTags(tag);
+        return windowsInstanceBuilder(instanceId, RUNNING).tags(tag).build();
+    }
+
+    private static Instance.Builder instanceBuilder(String instanceId) {
+        return Instance.builder().instanceId(instanceId);
+    }
+
+    public static Instance.Builder instanceBuilder(String instanceId, InstanceStateName state, String platform) {
+        return instanceBuilder(instanceId)
+                .platform(platform)
+                .tags(Tag.builder().key("Name").value(format("GoCD_%s_INSTANCE", platform.toUpperCase())).build())
+                .state(InstanceState.builder().name(state).build());
+    }
+
+    private static Instance.Builder linuxInstanceBuilder(String instanceId, InstanceStateName state) {
+        return instanceBuilder(instanceId, state, LINUX.name());
+    }
+
+    private static Instance.Builder linuxInstanceBuilder(String instanceId, InstanceStateName state, Instant launchTime) {
+        return linuxInstanceBuilder(instanceId, state).launchTime(launchTime);
+    }
+
+    private static Instance.Builder windowsInstanceBuilder(String instanceId, InstanceStateName state) {
+        return instanceBuilder(instanceId, state, WINDOWS.name());
     }
 }

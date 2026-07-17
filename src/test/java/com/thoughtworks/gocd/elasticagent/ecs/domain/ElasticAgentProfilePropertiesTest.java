@@ -21,6 +21,7 @@ import org.skyscreamer.jsonassert.JSONAssert;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.utils.Util.GSON;
 import static org.assertj.core.api.Assertions.assertThat;
+import static software.amazon.awssdk.services.ec2.model.InstanceType.T2_SMALL;
 
 class ElasticAgentProfilePropertiesTest {
 
@@ -197,7 +198,7 @@ class ElasticAgentProfilePropertiesTest {
         assertThat(elasticAgentProfileProperties.getMaxMemory()).isEqualTo(204800);
         assertThat(elasticAgentProfileProperties.getReservedMemory()).isEqualTo(150);
         assertThat(elasticAgentProfileProperties.getAmiID()).isEqualTo("ami-123456");
-        assertThat(elasticAgentProfileProperties.getInstanceType()).isEqualTo("t2.small");
+        assertThat(elasticAgentProfileProperties.getInstanceType()).isEqualTo(T2_SMALL.toString());
         assertThat(elasticAgentProfileProperties.getSubnetIds()).contains("subnet-abc045we");
         assertThat(elasticAgentProfileProperties.getSecurityGroupIds()).contains("sg-ec33sl0", "sg-ec33sl2", "sg-ec33sl1");
         assertThat(elasticAgentProfileProperties.getEC2IamInstanceProfile()).isEqualTo("ecsInstanceRole");

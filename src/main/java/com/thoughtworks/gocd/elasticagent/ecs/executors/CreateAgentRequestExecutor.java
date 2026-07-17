@@ -29,15 +29,15 @@ import com.thoughtworks.gocd.elasticagent.ecs.events.EventFingerprint;
 import com.thoughtworks.gocd.elasticagent.ecs.events.EventStream;
 import com.thoughtworks.gocd.elasticagent.ecs.exceptions.LimitExceededException;
 import com.thoughtworks.gocd.elasticagent.ecs.requests.CreateAgentRequest;
-import org.joda.time.LocalTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
+
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 import static java.text.MessageFormat.format;
 
 public class CreateAgentRequestExecutor implements RequestExecutor {
     private static final Logger LOG = Logger.getLoggerFor(CreateAgentRequestExecutor.class);
-    private static final DateTimeFormatter MESSAGE_PREFIX_FORMATTER = DateTimeFormat.forPattern("'##|'HH:mm:ss.SSS '[go]'");
+    private static final DateTimeFormatter MESSAGE_PREFIX_FORMATTER = DateTimeFormatter.ofPattern("'##|'HH:mm:ss.SSS '[go]'");
 
     private final AgentInstances<ECSTask> agentInstances;
     private final PluginRequest pluginRequest;
@@ -54,7 +54,7 @@ public class CreateAgentRequestExecutor implements RequestExecutor {
     @Override
     public GoPluginApiResponse execute() {
         ConsoleLogAppender consoleLogAppender = text -> {
-            final String message = String.format("%s %s\n", LocalTime.now().toString(MESSAGE_PREFIX_FORMATTER), text);
+            final String message = String.format("%s %s\n", MESSAGE_PREFIX_FORMATTER.format(LocalTime.now()), text);
             pluginRequest.appendToConsoleLog(request.getJobIdentifier(), message);
         };
 

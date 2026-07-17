@@ -16,22 +16,22 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws.strategy;
 
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.Tag;
-import com.amazonaws.services.ecs.model.ContainerDefinition;
-import com.amazonaws.services.ecs.model.ContainerInstance;
 import com.thoughtworks.gocd.elasticagent.ecs.Clock;
+import com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerDefinitionBuilder.PlacementRequirement;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerInstanceHelper;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.ElasticAgentProfileProperties;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.Platform;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
-import org.joda.time.Period;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import software.amazon.awssdk.services.ec2.model.Instance;
+import software.amazon.awssdk.services.ec2.model.Tag;
+import software.amazon.awssdk.services.ecs.model.ContainerInstance;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -41,6 +41,7 @@ import static com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerInstanceMother
 import static com.thoughtworks.gocd.elasticagent.ecs.aws.InstanceMother.runningInstance;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.Platform.LINUX;
 import static java.lang.String.valueOf;
+import static java.time.temporal.ChronoUnit.MINUTES;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -71,19 +72,19 @@ class StopIdleInstanceSelectionStrategyTest {
             );
 
             final List<Instance> instances = Arrays.asList(
-                    runningInstance("i-abcde", platform, new Tag(LAST_SEEN_IDLE, valueOf(testClock.now().getMillis()))),
+                    runningInstance("i-abcde", platform, Tag.builder().key(LAST_SEEN_IDLE).value(valueOf(testClock.now().toEpochMilli())).build()),
                     runningInstance("i-12345", platform)
             );
 
-            testClock.forward(new Period().withMinutes(1));
+            testClock.forward(Duration.ofMinutes(1));
 
             when(containerInstanceHelper.getContainerInstances(pluginSettings)).thenReturn(containerInstances);
             when(containerInstanceHelper.ec2InstancesFromContainerInstances(pluginSettings, containerInstances)).thenReturn(instances);
 
-            final Optional<ContainerInstance> containerInstance = stopIdleInstanceSelectionStrategy.instanceForScheduling(pluginSettings, ElasticAgentProfileProperties.empty(platform), new ContainerDefinition());
+            final Optional<ContainerInstance> containerInstance = stopIdleInstanceSelectionStrategy.instanceForScheduling(pluginSettings, ElasticAgentProfileProperties.empty(platform), new PlacementRequirement());
 
             assertThat(containerInstance.isPresent()).isTrue();
-            assertThat(containerInstance.get().getEc2InstanceId()).isEqualTo("i-12345");
+            assertThat(containerInstance.get().ec2InstanceId()).isEqualTo("i-12345");
         }
 
         @ParameterizedTest
@@ -96,20 +97,20 @@ class StopIdleInstanceSelectionStrategyTest {
             );
 
             final List<Instance> instances = Arrays.asList(
-                    runningInstance("i-abcde", platform, new Tag(LAST_SEEN_IDLE, "2")),
-                    runningInstance("i-12345", platform, new Tag(LAST_SEEN_IDLE, "1")),
-                    runningInstance("i-foobar", platform, new Tag(LAST_SEEN_IDLE, "3"))
+                    runningInstance("i-abcde", platform, Tag.builder().key(LAST_SEEN_IDLE).value("2").build()),
+                    runningInstance("i-12345", platform, Tag.builder().key(LAST_SEEN_IDLE).value("1").build()),
+                    runningInstance("i-foobar", platform, Tag.builder().key(LAST_SEEN_IDLE).value("3").build())
             );
 
-            testClock.forward(new Period().withMinutes(4));
+            testClock.forward(Duration.ofMinutes(4));
 
             when(containerInstanceHelper.getContainerInstances(pluginSettings)).thenReturn(containerInstances);
             when(containerInstanceHelper.ec2InstancesFromContainerInstances(pluginSettings, containerInstances)).thenReturn(instances);
 
-            final Optional<ContainerInstance> containerInstance = stopIdleInstanceSelectionStrategy.instanceForScheduling(pluginSettings, ElasticAgentProfileProperties.empty(platform), new ContainerDefinition());
+            final Optional<ContainerInstance> containerInstance = stopIdleInstanceSelectionStrategy.instanceForScheduling(pluginSettings, ElasticAgentProfileProperties.empty(platform), new PlacementRequirement());
 
             assertThat(containerInstance.isPresent()).isTrue();
-            assertThat(containerInstance.get().getEc2InstanceId()).isEqualTo("i-foobar");
+            assertThat(containerInstance.get().ec2InstanceId()).isEqualTo("i-foobar");
         }
     }
 
@@ -134,16 +135,16 @@ class StopIdleInstanceSelectionStrategyTest {
             );
 
             final List<Instance> instances = Arrays.asList(
-                    runningInstance("i-abcde", platform, new Tag(LAST_SEEN_IDLE, valueOf(testClock.now().getMillis()))),
-                    runningInstance("i-12345", platform, new Tag(LAST_SEEN_IDLE, valueOf(testClock.now().getMillis())))
+                    runningInstance("i-abcde", platform, Tag.builder().key(LAST_SEEN_IDLE).value(valueOf(testClock.now().toEpochMilli())).build()),
+                    runningInstance("i-12345", platform, Tag.builder().key(LAST_SEEN_IDLE).value(valueOf(testClock.now().toEpochMilli())).build())
             );
 
-            when(pluginSettings.stopLinuxInstanceAfter()).thenReturn(new Period().withMinutes(6));
-            when(pluginSettings.stopWindowsInstanceAfter()).thenReturn(new Period().withMinutes(6));
+            when(pluginSettings.stopLinuxInstanceAfter()).thenReturn(Duration.ofMinutes(6));
+            when(pluginSettings.stopWindowsInstanceAfter()).thenReturn(Duration.ofMinutes(6));
             when(containerInstanceHelper.onDemandContainerInstances(pluginSettings)).thenReturn(containerInstances);
             when(containerInstanceHelper.ec2InstancesFromContainerInstances(pluginSettings, containerInstances)).thenReturn(instances);
 
-            testClock.forward(new Period().withMinutes(5));
+            testClock.forward(Duration.ofMinutes(5));
 
             final Optional<List<ContainerInstance>> containerInstance = stopIdleInstanceSelectionStrategy.instancesToStop(pluginSettings, platform);
 
@@ -161,17 +162,17 @@ class StopIdleInstanceSelectionStrategyTest {
             );
 
             final List<Instance> instances = Arrays.asList(
-                    runningInstance("i-abcde1", platform, new Tag(LAST_SEEN_IDLE, valueOf(testClock.now().getMillis()))),
-                    runningInstance("i-abcde2", platform, new Tag(LAST_SEEN_IDLE, valueOf(testClock.now().getMillis()))),
-                    runningInstance("i-12345", platform, new Tag(LAST_SEEN_IDLE, valueOf(testClock.now().plusMinutes(3).getMillis())))
+                    runningInstance("i-abcde1", platform, Tag.builder().key(LAST_SEEN_IDLE).value(valueOf(testClock.now().toEpochMilli())).build()),
+                    runningInstance("i-abcde2", platform, Tag.builder().key(LAST_SEEN_IDLE).value(valueOf(testClock.now().toEpochMilli())).build()),
+                    runningInstance("i-12345", platform, Tag.builder().key(LAST_SEEN_IDLE).value(valueOf(testClock.now().plus(3, MINUTES).toEpochMilli())).build())
             );
 
-            when(pluginSettings.stopLinuxInstanceAfter()).thenReturn(new Period().withMinutes(6));
-            when(pluginSettings.stopWindowsInstanceAfter()).thenReturn(new Period().withMinutes(6));
+            when(pluginSettings.stopLinuxInstanceAfter()).thenReturn(Duration.ofMinutes(6));
+            when(pluginSettings.stopWindowsInstanceAfter()).thenReturn(Duration.ofMinutes(6));
             when(containerInstanceHelper.onDemandContainerInstances(pluginSettings)).thenReturn(containerInstances);
             when(containerInstanceHelper.ec2InstancesFromContainerInstances(pluginSettings, containerInstances)).thenReturn(instances);
 
-            testClock.forward(new Period().withMinutes(7));
+            testClock.forward(Duration.ofMinutes(7));
 
             final Optional<List<ContainerInstance>> containerInstance = stopIdleInstanceSelectionStrategy.instancesToStop(pluginSettings, platform);
 
@@ -190,14 +191,14 @@ class StopIdleInstanceSelectionStrategyTest {
             );
 
             final List<Instance> instances = Arrays.asList(
-                    runningInstance("i-abcde", platform, new Tag(LAST_SEEN_IDLE, valueOf(testClock.now().getMillis()))),
-                    runningInstance("i-12345", platform, new Tag(LAST_SEEN_IDLE, valueOf(testClock.now().getMillis())))
+                    runningInstance("i-abcde", platform, Tag.builder().key(LAST_SEEN_IDLE).value(valueOf(testClock.now().toEpochMilli())).build()),
+                    runningInstance("i-12345", platform, Tag.builder().key(LAST_SEEN_IDLE).value(valueOf(testClock.now().toEpochMilli())).build())
             );
 
             when(containerInstanceHelper.onDemandContainerInstances(pluginSettings)).thenReturn(containerInstances);
             when(containerInstanceHelper.ec2InstancesFromContainerInstances(pluginSettings, containerInstances)).thenReturn(instances);
 
-            testClock.forward(new Period().withMinutes(7));
+            testClock.forward(Duration.ofMinutes(7));
 
             final Optional<List<ContainerInstance>> containerInstance = stopIdleInstanceSelectionStrategy.instancesToStop(pluginSettings, LINUX);
 

@@ -16,9 +16,6 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.builders;
 
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ecs.model.Cluster;
-import com.amazonaws.services.ecs.model.ContainerInstance;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.ECSCluster;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.ECSContainer;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.ECSContainerInstance;
@@ -31,12 +28,19 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.junit.jupiter.api.Test;
+import software.amazon.awssdk.services.ec2.model.Instance;
+import software.amazon.awssdk.services.ec2.model.InstanceType;
+import software.amazon.awssdk.services.ecs.model.Cluster;
+import software.amazon.awssdk.services.ecs.model.ContainerInstance;
 
-import java.util.*;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static com.amazonaws.services.ec2.model.InstanceType.C3Large;
 import static com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerInstanceMother.containerInstance;
 import static com.thoughtworks.gocd.elasticagent.ecs.aws.InstanceMother.instance;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.AWSModelMother.*;
@@ -45,6 +49,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang3.StringUtils.capitalize;
 import static org.assertj.core.api.Assertions.assertThat;
+import static software.amazon.awssdk.services.ec2.model.InstanceType.C3_LARGE;
 
 class PluginStatusReportViewTest {
 
@@ -77,7 +82,7 @@ class PluginStatusReportViewTest {
                 4,
                 1024
         );
-        final Instance instance = instance("instance-id-1", C3Large, "ami-2dad3da", toDate("13/05/2017 12:50:20"));
+        final Instance instance = instance("instance-id-1", C3_LARGE, "ami-2dad3da", toInstant("13/05/2017 12:50:20"));
         final ECSContainer alpineContainer = containerWith("arn/container-instance-1", "alpine-container", "alpine", 100, 200, "13/05/2017 12:55:00", "13/05/2017 12:56:30",
                 new JobIdentifier("up42", 1L, "foo", "up42_stage", "2", "up42_job", 25632868237L));
 
@@ -107,7 +112,7 @@ class PluginStatusReportViewTest {
                 0,
                 0
         );
-        final Instance instance = instance("instance-id", C3Large, "ami-23456", toDate("13/05/2017 12:50:20"));
+        final Instance instance = instance("instance-id", C3_LARGE, "ami-23456", toInstant("13/05/2017 12:50:20"));
         final ECSContainer alpineContainer = containerWith("arn/container-instance-1", "container-name", "alpine", 100, 200, "13/05/2017 12:55:20", null);
 
         final ECSCluster ecsCluster = new ECSCluster(cluster, singletonList(containerInstance), singletonList(instance), singletonList(alpineContainer), 2, 3, 0, 0);
@@ -122,6 +127,34 @@ class PluginStatusReportViewTest {
         final String view = statusReportViewBuilder.build(template, dataModel);
 
         assertView(view, ecsCluster);
+    }
+
+    @Test
+    void shouldBuildStatusReportViewWhenInstanceHasNoStateOrLaunchTime() throws Exception {
+        final Cluster cluster = clusterWith("GoCD", 0, 0, 0);
+        final ContainerInstance containerInstance = containerInstance(
+                "instance-id",
+                "arn/container-instance-1",
+                "ACTIVE",
+                0,
+                0,
+                0,
+                0
+        );
+        final Instance instance = Instance.builder().instanceId("instance-id").imageId("ami-23456").build();
+
+        final ECSCluster ecsCluster = new ECSCluster(cluster, singletonList(containerInstance), singletonList(instance), Collections.emptyList(), 2, 3, 0, 0);
+        Map<String, Object> dataModel = new HashMap<>();
+        dataModel.put("cluster", ecsCluster);
+        dataModel.put("maxAllowedInstances", 5);
+        dataModel.put("errors", Collections.emptyList());
+        dataModel.put("region", "us-east-2");
+
+        final PluginStatusReportViewBuilder statusReportViewBuilder = PluginStatusReportViewBuilder.instance();
+        final Template template = statusReportViewBuilder.getTemplate("status-report.template.ftlh");
+        final String view = statusReportViewBuilder.build(template, dataModel);
+
+        assertThat(view).contains("arn/container-instance-1");
     }
 
     @Test
@@ -189,7 +222,7 @@ class PluginStatusReportViewTest {
     private void assertContainerInstanceView(Document document, ECSContainerInstance containerInstance) {
         final Elements containerInstanceHeader = document.select(".cluster .ea-panel_body .ea-c-collapse_header");
 
-        final String expectedHeader = format("Container Instance ARN %s Platform %s State %s", containerInstance.getContainerInstanceArn(), capitalize(containerInstance.getPlatform().toLowerCase()), capitalize(containerInstance.getInstance().getState().getName()));
+        final String expectedHeader = format("Container Instance ARN %s Platform %s State %s", containerInstance.getContainerInstanceArn(), capitalize(containerInstance.getPlatform().toLowerCase()), capitalize(containerInstance.getInstanceState()));
 
         assertThat(containerInstanceHeader.getFirst().text()).contains(expectedHeader);
 
@@ -201,10 +234,10 @@ class PluginStatusReportViewTest {
     private void assertEC2InstanceProperties(Document document, ECSContainerInstance containerInstance) {
         final Elements ec2InstanceProperties = document.select(".cluster .ea-c-collapse_body .properties");
 
-        assertProperty(ec2InstanceProperties, "EC2 Instance ID", containerInstance.getInstance().getInstanceId());
-        assertProperty(ec2InstanceProperties, "AMI", containerInstance.getInstance().getImageId());
-        assertProperty(ec2InstanceProperties, "Instance Type", containerInstance.getInstance().getInstanceType());
-        assertPropertyStartWith(ec2InstanceProperties, "Launch Time", toDateTimeString(containerInstance.getInstance().getLaunchTime()));
+        assertProperty(ec2InstanceProperties, "EC2 Instance ID", containerInstance.getEc2InstanceId());
+        assertProperty(ec2InstanceProperties, "AMI", containerInstance.getImageId());
+        assertProperty(ec2InstanceProperties, "Instance Type", containerInstance.getInstanceType());
+        assertPropertyStartWith(ec2InstanceProperties, "Launch Time", toDateTimeString(Instant.ofEpochMilli(containerInstance.getLaunchTimeMillis())));
     }
 
     private void assertContainerInstanceProperties(Document document, ECSContainerInstance containerInstance) {
@@ -216,8 +249,8 @@ class PluginStatusReportViewTest {
         assertProperty(containerInstanceProperties, "Remaining CPU", containerInstance.getRemainingResources().getCpu());
         assertProperty(containerInstanceProperties, "Registered Memory", containerInstance.getRegisteredResources().getMemory());
         assertProperty(containerInstanceProperties, "Remaining Memory", containerInstance.getRemainingResources().getMemory());
-        assertProperty(containerInstanceProperties, "Docker Version", containerInstance.getDockerInfo().getDockerVersion());
-        assertProperty(containerInstanceProperties, "ECS Agent Version", containerInstance.getDockerInfo().getAgentVersion());
+        assertProperty(containerInstanceProperties, "Docker Version", containerInstance.getDockerVersion());
+        assertProperty(containerInstanceProperties, "ECS Agent Version", containerInstance.getAgentVersion());
     }
 
     private void assertContainersView(Document document, List<ECSContainer> containers) {
@@ -268,7 +301,7 @@ class PluginStatusReportViewTest {
         assertThat(Double.parseDouble(keyElements.next().text().replace(",", ""))).describedAs("Asserting property %s", key).isEqualTo(value);
     }
 
-    private String toDateTimeString(Date date) {
-        return date == null ? "" : format("{{ %s | date:\"MMM dd, yyyy hh:mm a\"}}", date.getTime());
+    private String toDateTimeString(Instant date) {
+        return date == null ? "" : format("{{ %s | date:\"MMM dd, yyyy hh:mm a\"}}", date.toEpochMilli());
     }
 }

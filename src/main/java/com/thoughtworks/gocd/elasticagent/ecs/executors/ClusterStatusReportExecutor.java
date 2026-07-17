@@ -16,9 +16,6 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.executors;
 
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ecs.model.Cluster;
-import com.amazonaws.services.ecs.model.ContainerInstance;
 import com.google.gson.JsonObject;
 import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.go.plugin.api.response.DefaultGoPluginApiResponse;
@@ -38,6 +35,9 @@ import com.thoughtworks.gocd.elasticagent.ecs.info.PluginProperties;
 import com.thoughtworks.gocd.elasticagent.ecs.requests.ClusterStatusReportRequest;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
+import software.amazon.awssdk.services.ec2.model.Instance;
+import software.amazon.awssdk.services.ecs.model.Cluster;
+import software.amazon.awssdk.services.ecs.model.ContainerInstance;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -84,7 +84,7 @@ public class ClusterStatusReportExecutor implements RequestExecutor {
             final List<Instance> instances = new ArrayList<>();
             final List<ECSContainer> ecsContainers = new ArrayList<>();
 
-            if (cluster.getRegisteredContainerInstancesCount() != 0) {
+            if (cluster.registeredContainerInstancesCount() != 0) {
                 containerInstances.addAll(helper.getContainerInstances(clusterProfileProperties));
                 instances.addAll(helper.ec2InstancesFromContainerInstances(clusterProfileProperties, containerInstances));
                 ecsContainers.addAll(taskHelper.allRunningContainers(clusterProfileProperties));

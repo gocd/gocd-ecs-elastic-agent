@@ -17,9 +17,11 @@
 package com.thoughtworks.gocd.elasticagent.ecs.aws.wait;
 
 public class Result<V> {
-    private V object = null;
-    private boolean isFailed = false;
-    private Throwable exception;
+    // written by the poll thread, read by the awaiting thread; on the timeout path there is
+    // no join() happens-before edge, so these must be volatile
+    private volatile V object = null;
+    private volatile boolean isFailed = false;
+    private volatile Throwable exception;
 
     public boolean isFailed() {
         return isFailed;

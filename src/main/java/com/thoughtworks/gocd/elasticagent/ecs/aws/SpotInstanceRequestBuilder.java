@@ -16,14 +16,14 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws;
 
-import com.amazonaws.services.ec2.model.*;
 import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.Platform;
+import software.amazon.awssdk.services.ec2.model.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.validators.VolumeSettingsValidator.VOLUME_TYPE_IO_1;
-import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 public class SpotInstanceRequestBuilder {
@@ -38,72 +38,70 @@ public class SpotInstanceRequestBuilder {
 
     public RequestSpotInstancesRequest build() {
         return buildWithBaseConfiguration()
-                .withLaunchSpecification(launchSpecifications());
+                .launchSpecification(launchSpecifications())
+                .build();
     }
 
-    public SpotInstanceRequestBuilder withEC2Config(EC2Config ec2Config) {
+    public SpotInstanceRequestBuilder eC2Config(EC2Config ec2Config) {
         this.ec2Config = ec2Config;
         return this;
     }
 
-    public SpotInstanceRequestBuilder withSubnet(Subnet subnet) {
+    public SpotInstanceRequestBuilder subnet(Subnet subnet) {
         this.subnet = subnet;
         return this;
     }
 
-    private RequestSpotInstancesRequest buildWithBaseConfiguration() {
-        final RequestSpotInstancesRequest request = new RequestSpotInstancesRequest()
-                .withSpotPrice(ec2Config.getSpotPrice())
-                .withValidUntil(ec2Config.getSpotRequestValidUntil());
-
-        return request;
+    private RequestSpotInstancesRequest.Builder buildWithBaseConfiguration() {
+        return RequestSpotInstancesRequest.builder()
+                .spotPrice(ec2Config.getSpotPrice())
+                .validUntil(ec2Config.getSpotRequestValidUntil());
     }
 
-    private LaunchSpecification launchSpecifications() {
-        final String subnetId = this.subnet != null ? this.subnet.getSubnetId() : null;
-        LaunchSpecification launchSpecification = new LaunchSpecification();
+    private RequestSpotLaunchSpecification launchSpecifications() {
+        final String subnetId = this.subnet != null ? this.subnet.subnetId() : null;
+        RequestSpotLaunchSpecification.Builder launchSpecification = RequestSpotLaunchSpecification.builder();
         launchSpecification
-                .withImageId(this.ec2Config.getAmi())
-                .withInstanceType(this.ec2Config.getInstanceType())
-                .withAllSecurityGroups(securityGroups())
-                .withIamInstanceProfile(this.ec2Config.getIamInstanceProfile())
-                .withKeyName(ec2Config.getSSHKeyName())
-                .withSubnetId(subnetId)
-                .withUserData(ec2Config.getUserdata());
+                .imageId(this.ec2Config.getAmi())
+                .instanceType(this.ec2Config.getInstanceType())
+                .securityGroupIds(ec2Config.getSecurityGroups())
+                .iamInstanceProfile(this.ec2Config.getIamInstanceProfile())
+                .keyName(ec2Config.getSSHKeyName())
+                .subnetId(subnetId)
+                .userData(ec2Config.getUserdata());
 
-        blockOperatingSystemVolume(launchSpecification);
-        blockDockerVolume(launchSpecification);
+        final List<BlockDeviceMapping> blockDeviceMappings = new ArrayList<>();
+        blockOperatingSystemVolume(blockDeviceMappings);
+        blockDockerVolume(blockDeviceMappings);
+        if (!blockDeviceMappings.isEmpty()) {
+            launchSpecification.blockDeviceMappings(blockDeviceMappings);
+        }
 
-        return launchSpecification;
+        return launchSpecification.build();
     }
 
-    private List<GroupIdentifier> securityGroups() {
-        return ec2Config.getSecurityGroups().stream()
-                .map(s -> new GroupIdentifier().withGroupId(s))
-                .collect(toList());
-    }
-
-    private void blockOperatingSystemVolume(LaunchSpecification launchSpecification) {
+    private void blockOperatingSystemVolume(List<BlockDeviceMapping> blockDeviceMappings) {
         if (isBlank(ec2Config.getOperatingSystemVolumeType()) || "none".equals(ec2Config.getOperatingSystemVolumeType())) {
             return;
         }
 
-        launchSpecification.withBlockDeviceMappings(
+        blockDeviceMappings.add(
                 blockDeviceMapping(osDeviceName(), ec2Config.getOperatingSystemVolumeType(), Integer.parseInt(ec2Config.getOperationSystemVolumeSize()), ec2Config.getOperationSystemVolumeProvisionedIOPS())
         );
     }
 
     private BlockDeviceMapping blockDeviceMapping(String deviceName, String volumeType, int volumeSize, Integer provisionedIOPS) {
-        EbsBlockDevice ebsBlockDevice = new EbsBlockDevice()
-                .withDeleteOnTermination(true)
-                .withVolumeType(volumeType)
-                .withVolumeSize(volumeSize);
-        return new BlockDeviceMapping()
-                .withEbs(withIops(ebsBlockDevice, volumeType, provisionedIOPS))
-                .withDeviceName(deviceName);
+        EbsBlockDevice.Builder ebsBlockDevice = EbsBlockDevice.builder()
+                .deleteOnTermination(true)
+                .volumeType(volumeType)
+                .volumeSize(volumeSize);
+        return BlockDeviceMapping.builder()
+                .ebs(withIops(ebsBlockDevice, volumeType, provisionedIOPS))
+                .deviceName(deviceName)
+                .build();
     }
 
-    private void blockDockerVolume(LaunchSpecification launchSpecification) {
+    private void blockDockerVolume(List<BlockDeviceMapping> blockDeviceMappings) {
         if (ec2Config.getPlatform() == Platform.WINDOWS) {
             LOG.debug("As windows is using root volumes to store everything extra volume for docker is not need.");
             return;
@@ -113,13 +111,13 @@ public class SpotInstanceRequestBuilder {
             return;
         }
 
-        launchSpecification.withBlockDeviceMappings(
+        blockDeviceMappings.add(
                 blockDeviceMapping(DEFAULT_LINUX_DOCKER_DEVICE_NAME, ec2Config.getDockerVolumeType(), Integer.parseInt(ec2Config.getDockerVolumeSize()), ec2Config.getDockerVolumeProvisionedIOPS())
         );
     }
 
-    private EbsBlockDevice withIops(EbsBlockDevice ebsBlockDevice, String volumeType, Integer provisionedIOPS) {
-        return volumeType.equals(VOLUME_TYPE_IO_1) ? ebsBlockDevice.withIops(provisionedIOPS) : ebsBlockDevice;
+    private EbsBlockDevice withIops(EbsBlockDevice.Builder ebsBlockDevice, String volumeType, Integer provisionedIOPS) {
+        return volumeType.equals(VOLUME_TYPE_IO_1) ? ebsBlockDevice.iops(provisionedIOPS).build() : ebsBlockDevice.build();
     }
 
     private String osDeviceName() {

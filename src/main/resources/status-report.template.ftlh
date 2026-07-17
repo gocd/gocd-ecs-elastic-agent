@@ -440,15 +440,15 @@
           <div class="right instance-state">
             <div>
               <label class="key inline">Platform</label>
-              <span class="value">${containerInstance.platform?capitalize!}</span>
+              <span class="value">${(containerInstance.platform?capitalize)!}</span>
             </div>
             <div>
               <label class="key inline">State</label>
-              <span class="value">${containerInstance.instance.state.name?capitalize!}</span>
+              <span class="value">${(containerInstance.instanceState?capitalize)!}</span>
             </div>
             <div>
               <label class="key inline">Instance Type</label>
-              <span class="value">${cluster.ec2InstanceType[containerInstance.instance.instanceId]} &nbsp;&nbsp;</span>
+              <span class="value">${cluster.ec2InstanceType[containerInstance.ec2InstanceId]} &nbsp;&nbsp;</span>
             </div>
           </div>
         </div>
@@ -456,9 +456,9 @@
           <ul class="properties inline">
             <li class="property">
               <label class="key">EC2 Instance ID</label>
-              <span class="value">${containerInstance.instance.instanceId!}
+              <span class="value">${containerInstance.ec2InstanceId!}
                 <a
-                  href="https://${region}.console.aws.amazon.com/ec2/v2/home?region=${region}#Instances:instanceId=${containerInstance.instance.instanceId};sort=instanceId"
+                  href="https://${region}.console.aws.amazon.com/ec2/v2/home?region=${region}#Instances:instanceId=${containerInstance.ec2InstanceId};sort=instanceId"
                   rel="nofollow noreferrer" target="_blank">
                   <i class="fa fa-external-link" aria-hispanen="true"></i>
                 </a>
@@ -474,7 +474,7 @@
             </li>
             <li class="property">
               <label class="key">AMI</label>
-              <span class="value">${containerInstance.instance.imageId!}</span>
+              <span class="value">${containerInstance.imageId!}</span>
             </li>
             <li class="property">
               <label class="key">ECS Agent Connected</label>
@@ -486,11 +486,11 @@
             </li>
             <li class="property">
               <label class="key">Instance Type</label>
-              <span class="value">${containerInstance.instance.instanceType!}</span>
+              <span class="value">${containerInstance.instanceType!}</span>
             </li>
             <li class="property">
               <label class="key">Docker Version</label>
-              <span class="value">${containerInstance.dockerInfo.dockerVersion!}</span>
+              <span class="value">${containerInstance.dockerVersion!}</span>
             </li>
             <li class="property">
               <label class="key">Registered Memory</label>
@@ -499,14 +499,14 @@
             <li class="property">
               <label class="key">Launch Time</label>
               <span class="value">
-                <#if containerInstance.instance.launchTime??>
-                  {{ ${containerInstance.instance.launchTime?long?c!} | date:"MMM dd, yyyy hh:mm a"}}
+                <#if containerInstance.launchTimeMillis??>
+                  {{ ${containerInstance.launchTimeMillis?c} | date:"MMM dd, yyyy hh:mm a"}}
                 </#if>
               </span>
             </li>
             <li class="property">
               <label class="key">ECS Agent Version</label>
-              <span class="value">${containerInstance.dockerInfo.agentVersion!}</span>
+              <span class="value">${containerInstance.agentVersion!}</span>
             </li>
             <li class="property">
               <label class="key">Remaining Memory</label>
@@ -558,16 +558,16 @@
                       <td>${container.cpu!}</td>
                       <td>
                         <span class="${container.createdSince!}">
-                          <#if container.createdAt??>
-                            {{ ${container.createdAt?long?c!} | date:"MMM dd, yyyy hh:mm a"}}
+                          <#if container.createdAtMillis??>
+                            {{ ${container.createdAtMillis?c} | date:"MMM dd, yyyy hh:mm a"}}
                             <span class="relative-time">(${container.createdSince!})</span>
                           </#if>
                         </span>
                       </td>
                       <td>
                           <span title="${container.startedSince!}">
-                          <#if container.startedAt??>
-                            {{ ${container.startedAt?long?c!} | date:"MMM dd, yyyy hh:mm a"}}
+                          <#if container.startedAtMillis??>
+                            {{ ${container.startedAtMillis?c} | date:"MMM dd, yyyy hh:mm a"}}
                             <span class="relative-time">(${container.startedSince!})</span>
                           </#if>
                           </span>

@@ -16,24 +16,27 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws.matcher;
 
-import com.amazonaws.services.ec2.model.GroupIdentifier;
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.InstanceState;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.EC2Config;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.Platform;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.EnumSource;
+import software.amazon.awssdk.services.ec2.model.GroupIdentifier;
+import software.amazon.awssdk.services.ec2.model.Instance;
+import software.amazon.awssdk.services.ec2.model.InstanceState;
+import software.amazon.awssdk.services.ec2.model.InstanceStateName;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static com.thoughtworks.gocd.elasticagent.ecs.domain.EC2InstanceState.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static software.amazon.awssdk.services.ec2.model.InstanceStateName.RUNNING;
+import static software.amazon.awssdk.services.ec2.model.InstanceType.T2_MEDIUM;
+import static software.amazon.awssdk.services.ec2.model.InstanceType.T2_SMALL;
 
 class InstanceMatcherTest {
 
@@ -55,25 +58,25 @@ class InstanceMatcherTest {
 
     @Test
     void shouldReturnTrueIfAllFieldMatches() {
-        when(instance.getState()).thenReturn(new InstanceState().withName(RUNNING));
-        when(instance.getImageId()).thenReturn("i-123456");
+        when(instance.state()).thenReturn(InstanceState.builder().name(RUNNING).build());
+        when(instance.imageId()).thenReturn("i-123456");
         when(ec2Config.getAmi()).thenReturn("i-123456");
 
-        when(instance.getPlatform()).thenReturn("linux");
+        when(instance.platformAsString()).thenReturn("linux");
         when(ec2Config.getPlatform()).thenReturn(Platform.LINUX);
 
-        when(instance.getInstanceType()).thenReturn("t2.small");
-        when(ec2Config.getInstanceType()).thenReturn("t2.small");
+        when(instance.instanceTypeAsString()).thenReturn(T2_SMALL.toString());
+        when(ec2Config.getInstanceType()).thenReturn(T2_SMALL.toString());
 
-        when(instance.getSubnetId()).thenReturn("s-foo-id");
+        when(instance.subnetId()).thenReturn("s-foo-id");
         when(ec2Config.getSubnetIds()).thenReturn(List.of("s-foo-id"));
 
-        when(instance.getSecurityGroups()).thenReturn(Collections.singletonList(
-                new GroupIdentifier().withGroupId("sg-abcde")
+        when(instance.securityGroups()).thenReturn(Collections.singletonList(
+                GroupIdentifier.builder().groupId("sg-abcde").build()
         ));
         when(ec2Config.getSecurityGroups()).thenReturn(List.of("sg-abcde"));
 
-        when(instance.getSpotInstanceRequestId()).thenReturn("spot_id");
+        when(instance.spotInstanceRequestId()).thenReturn("spot_id");
         when(ec2Config.runAsSpotInstance()).thenReturn(true);
 
         assertThat(instanceMatcher.matches(ec2Config, instance)).isTrue();
@@ -81,8 +84,8 @@ class InstanceMatcherTest {
 
     @Test
     void shouldFalseIfPlatformDoesNotMatch() {
-        when(instance.getState()).thenReturn(new InstanceState().withName(RUNNING));
-        when(instance.getPlatform()).thenReturn("linux");
+        when(instance.state()).thenReturn(InstanceState.builder().name(RUNNING).build());
+        when(instance.platformAsString()).thenReturn("linux");
         when(ec2Config.getPlatform()).thenReturn(Platform.WINDOWS);
 
         assertThat(instanceMatcher.matches(ec2Config, instance)).isFalse();
@@ -90,21 +93,21 @@ class InstanceMatcherTest {
 
     @Test
     void shouldReturnFalseIfInstanceTypeIsNotMatching() {
-        when(instance.getState()).thenReturn(new InstanceState().withName(RUNNING));
-        when(instance.getPlatform()).thenReturn("linux");
+        when(instance.state()).thenReturn(InstanceState.builder().name(RUNNING).build());
+        when(instance.platformAsString()).thenReturn("linux");
         when(ec2Config.getPlatform()).thenReturn(Platform.LINUX);
 
-        when(instance.getImageId()).thenReturn("i-123456");
+        when(instance.imageId()).thenReturn("i-123456");
         when(ec2Config.getAmi()).thenReturn("i-123456");
 
-        when(instance.getInstanceType()).thenReturn("t2.small");
-        when(ec2Config.getInstanceType()).thenReturn("t2.medium");
+        when(instance.instanceTypeAsString()).thenReturn(T2_SMALL.toString());
+        when(ec2Config.getInstanceType()).thenReturn(T2_MEDIUM.toString());
 
-        when(instance.getSubnetId()).thenReturn("s-foo-id");
+        when(instance.subnetId()).thenReturn("s-foo-id");
         when(ec2Config.getSubnetIds()).thenReturn(List.of("s-foo-id"));
 
-        when(instance.getSecurityGroups()).thenReturn(Collections.singletonList(
-                new GroupIdentifier().withGroupId("sg-abcde")
+        when(instance.securityGroups()).thenReturn(Collections.singletonList(
+                GroupIdentifier.builder().groupId("sg-abcde").build()
         ));
         when(ec2Config.getSecurityGroups()).thenReturn(List.of("sg-abcde"));
 
@@ -113,21 +116,21 @@ class InstanceMatcherTest {
 
     @Test
     void shouldReturnFalseIfSecurityGroupsAreNotMatching() {
-        when(instance.getState()).thenReturn(new InstanceState().withName(RUNNING));
-        when(instance.getPlatform()).thenReturn("linux");
+        when(instance.state()).thenReturn(InstanceState.builder().name(RUNNING).build());
+        when(instance.platformAsString()).thenReturn("linux");
         when(ec2Config.getPlatform()).thenReturn(Platform.LINUX);
 
-        when(instance.getImageId()).thenReturn("i-123456");
+        when(instance.imageId()).thenReturn("i-123456");
         when(ec2Config.getAmi()).thenReturn("i-123456");
 
-        when(instance.getInstanceType()).thenReturn("t2.small");
-        when(ec2Config.getInstanceType()).thenReturn("t2.small");
+        when(instance.instanceTypeAsString()).thenReturn(T2_SMALL.toString());
+        when(ec2Config.getInstanceType()).thenReturn(T2_SMALL.toString());
 
-        when(instance.getSubnetId()).thenReturn("s-foo-id");
+        when(instance.subnetId()).thenReturn("s-foo-id");
         when(ec2Config.getSubnetIds()).thenReturn(List.of("s-foo-id"));
 
-        when(instance.getSecurityGroups()).thenReturn(Collections.singletonList(
-                new GroupIdentifier().withGroupId("sg-abcde")
+        when(instance.securityGroups()).thenReturn(Collections.singletonList(
+                GroupIdentifier.builder().groupId("sg-abcde").build()
         ));
 
         when(ec2Config.getSecurityGroups()).thenReturn(Arrays.asList("sg-abcde", "sg-xyz"));
@@ -137,21 +140,21 @@ class InstanceMatcherTest {
 
     @Test
     void shouldReturnFalseIfSubnetIdIsNotMatching() {
-        when(instance.getState()).thenReturn(new InstanceState().withName(RUNNING));
-        when(instance.getPlatform()).thenReturn("linux");
+        when(instance.state()).thenReturn(InstanceState.builder().name(RUNNING).build());
+        when(instance.platformAsString()).thenReturn("linux");
         when(ec2Config.getPlatform()).thenReturn(Platform.LINUX);
 
-        when(instance.getImageId()).thenReturn("i-123456");
+        when(instance.imageId()).thenReturn("i-123456");
         when(ec2Config.getAmi()).thenReturn("i-123456");
 
-        when(instance.getInstanceType()).thenReturn("t2.small");
-        when(ec2Config.getInstanceType()).thenReturn("t2.small");
+        when(instance.instanceTypeAsString()).thenReturn(T2_SMALL.toString());
+        when(ec2Config.getInstanceType()).thenReturn(T2_SMALL.toString());
 
-        when(instance.getSubnetId()).thenReturn("s-foo-id");
+        when(instance.subnetId()).thenReturn("s-foo-id");
         when(ec2Config.getSubnetIds()).thenReturn(List.of("different-subnet-id"));
 
-        when(instance.getSecurityGroups()).thenReturn(Collections.singletonList(
-                new GroupIdentifier().withGroupId("sg-abcde")
+        when(instance.securityGroups()).thenReturn(Collections.singletonList(
+                GroupIdentifier.builder().groupId("sg-abcde").build()
         ));
         when(ec2Config.getSecurityGroups()).thenReturn(List.of("sg-abcde"));
 
@@ -160,21 +163,21 @@ class InstanceMatcherTest {
 
     @Test
     void shouldReturnFalseIfAMIIsNotMatching() {
-        when(instance.getState()).thenReturn(new InstanceState().withName(RUNNING));
-        when(instance.getPlatform()).thenReturn("linux");
+        when(instance.state()).thenReturn(InstanceState.builder().name(RUNNING).build());
+        when(instance.platformAsString()).thenReturn("linux");
         when(ec2Config.getPlatform()).thenReturn(Platform.LINUX);
 
-        when(instance.getImageId()).thenReturn("i-123456");
+        when(instance.imageId()).thenReturn("i-123456");
         when(ec2Config.getAmi()).thenReturn("diffrent-ami");
 
-        when(instance.getInstanceType()).thenReturn("t2.small");
-        when(ec2Config.getInstanceType()).thenReturn("t2.small");
+        when(instance.instanceTypeAsString()).thenReturn(T2_SMALL.toString());
+        when(ec2Config.getInstanceType()).thenReturn(T2_SMALL.toString());
 
-        when(instance.getSubnetId()).thenReturn("s-foo-id");
+        when(instance.subnetId()).thenReturn("s-foo-id");
         when(ec2Config.getSubnetIds()).thenReturn(List.of("s-foo-id"));
 
-        when(instance.getSecurityGroups()).thenReturn(Collections.singletonList(
-                new GroupIdentifier().withGroupId("sg-abcde")
+        when(instance.securityGroups()).thenReturn(Collections.singletonList(
+                GroupIdentifier.builder().groupId("sg-abcde").build()
         ));
         when(ec2Config.getSecurityGroups()).thenReturn(List.of("sg-abcde"));
 
@@ -183,34 +186,34 @@ class InstanceMatcherTest {
 
     @Test
     void shouldNotMatchAOnDemandInstanceIfProfileRequiresSpot() {
-        when(instance.getState()).thenReturn(new InstanceState().withName(RUNNING));
-        when(instance.getImageId()).thenReturn("i-123456");
+        when(instance.state()).thenReturn(InstanceState.builder().name(RUNNING).build());
+        when(instance.imageId()).thenReturn("i-123456");
         when(ec2Config.getAmi()).thenReturn("i-123456");
 
-        when(instance.getPlatform()).thenReturn("linux");
+        when(instance.platformAsString()).thenReturn("linux");
         when(ec2Config.getPlatform()).thenReturn(Platform.LINUX);
 
-        when(instance.getInstanceType()).thenReturn("t2.small");
-        when(ec2Config.getInstanceType()).thenReturn("t2.small");
+        when(instance.instanceTypeAsString()).thenReturn(T2_SMALL.toString());
+        when(ec2Config.getInstanceType()).thenReturn(T2_SMALL.toString());
 
-        when(instance.getSubnetId()).thenReturn("s-foo-id");
+        when(instance.subnetId()).thenReturn("s-foo-id");
         when(ec2Config.getSubnetIds()).thenReturn(List.of("s-foo-id"));
 
-        when(instance.getSecurityGroups()).thenReturn(Collections.singletonList(
-                new GroupIdentifier().withGroupId("sg-abcde")
+        when(instance.securityGroups()).thenReturn(Collections.singletonList(
+                GroupIdentifier.builder().groupId("sg-abcde").build()
         ));
         when(ec2Config.getSecurityGroups()).thenReturn(List.of("sg-abcde"));
 
-        when(instance.getSpotInstanceRequestId()).thenReturn(null);
+        when(instance.spotInstanceRequestId()).thenReturn(null);
         when(ec2Config.runAsSpotInstance()).thenReturn(true);
 
         assertThat(instanceMatcher.matches(ec2Config, instance)).isFalse();
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {STOPPING, STOPPED, SHUTTING_DOWN, TERMINATED})
-    void shouldReturnFalseIfInstanceIsInState(String instanceState) {
-        when(instance.getState()).thenReturn(new InstanceState().withName(instanceState));
+    @EnumSource(value = InstanceStateName.class, names = {"STOPPING", "STOPPED", "SHUTTING_DOWN", "TERMINATED"})
+    void shouldReturnFalseIfInstanceIsInState(InstanceStateName instanceState) {
+        when(instance.state()).thenReturn(InstanceState.builder().name(instanceState).build());
 
         assertThat(instanceMatcher.matches(ec2Config, instance)).isFalse();
     }

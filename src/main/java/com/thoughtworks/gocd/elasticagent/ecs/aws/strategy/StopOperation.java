@@ -16,13 +16,13 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws.strategy;
 
-import com.amazonaws.services.ec2.model.CreateTagsRequest;
-import com.amazonaws.services.ec2.model.StopInstancesRequest;
-import com.amazonaws.services.ec2.model.Tag;
-import com.amazonaws.services.ecs.model.ContainerInstance;
 import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.gocd.elasticagent.ecs.Clock;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
+import software.amazon.awssdk.services.ec2.model.CreateTagsRequest;
+import software.amazon.awssdk.services.ec2.model.StopInstancesRequest;
+import software.amazon.awssdk.services.ec2.model.Tag;
+import software.amazon.awssdk.services.ecs.model.ContainerInstance;
 
 import java.util.Collection;
 import java.util.Set;
@@ -42,19 +42,21 @@ public class StopOperation implements Operation<ContainerInstance> {
         }
 
         final Set<String> instanceIds = containerInstanceToStop.stream()
-                .map(ContainerInstance::getEc2InstanceId).collect(Collectors.toSet());
+                .map(ContainerInstance::ec2InstanceId).collect(Collectors.toSet());
 
 
         LOG.info(format("Adding STOPPED_AT tag to container instances {0}.", instanceIds));
         pluginSettings.ec2Client().createTags(
-                new CreateTagsRequest()
-                        .withTags(new Tag(STOPPED_AT, String.valueOf(Clock.DEFAULT.now().getMillis())))
-                        .withResources(instanceIds)
+                CreateTagsRequest.builder()
+                        .tags(Tag.builder().key(STOPPED_AT).value(String.valueOf(Clock.DEFAULT.now().toEpochMilli())).build())
+                        .resources(instanceIds)
+                        .build()
         );
 
         LOG.info(format("Stopping idle container instances {0}.", instanceIds));
-        final StopInstancesRequest stopInstancesRequest = new StopInstancesRequest()
-                .withInstanceIds(instanceIds);
+        final StopInstancesRequest stopInstancesRequest = StopInstancesRequest.builder()
+                .instanceIds(instanceIds)
+                .build();
         pluginSettings.ec2Client().stopInstances(stopInstancesRequest);
         LOG.info(format("Container instances {0} stopped.", instanceIds));
     }

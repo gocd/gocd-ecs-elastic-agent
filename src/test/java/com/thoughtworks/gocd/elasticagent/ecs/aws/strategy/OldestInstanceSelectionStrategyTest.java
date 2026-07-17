@@ -16,28 +16,29 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws.strategy;
 
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ecs.model.ContainerDefinition;
-import com.amazonaws.services.ecs.model.ContainerInstance;
 import com.thoughtworks.gocd.elasticagent.ecs.Clock;
+import com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerDefinitionBuilder;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerInstanceHelper;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.matcher.ContainerInstanceMatcher;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.matcher.InstanceMatcher;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.ElasticAgentProfileProperties;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
-import org.joda.time.Period;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.EnumSource;
+import software.amazon.awssdk.services.ec2.model.Instance;
+import software.amazon.awssdk.services.ec2.model.InstanceStateName;
+import software.amazon.awssdk.services.ecs.model.ContainerInstance;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerInstanceMother.containerInstance;
 import static com.thoughtworks.gocd.elasticagent.ecs.aws.InstanceMother.linuxInstance;
-import static com.thoughtworks.gocd.elasticagent.ecs.domain.EC2InstanceState.*;
+
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.Platform.LINUX;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
@@ -65,19 +66,19 @@ class OldestInstanceSelectionStrategyTest {
     @Nested
     class InstanceForScheduling {
         private ElasticAgentProfileProperties elasticAgentProfileProperties;
-        private ContainerDefinition containerDefinition;
+        private ContainerDefinitionBuilder.PlacementRequirement placementRequirement;
 
         @BeforeEach
         void setUp() {
             elasticAgentProfileProperties = mock(ElasticAgentProfileProperties.class);
-            containerDefinition = mock(ContainerDefinition.class);
+            placementRequirement = mock(ContainerDefinitionBuilder.PlacementRequirement.class);
 
             when(elasticAgentProfileProperties.platform()).thenReturn(LINUX);
         }
 
         @ParameterizedTest
-        @ValueSource(strings = {RUNNING, PENDING})
-        void shouldReturnMostRecentlyLaunchedInstanceWithState(String validState) {
+        @EnumSource(value = InstanceStateName.class, names = {"RUNNING", "PENDING"})
+        void shouldReturnMostRecentlyLaunchedInstanceWithState(InstanceStateName validState) {
             final List<ContainerInstance> containerInstances = asList(
                     containerInstance("i-stopped", 0, 0),
                     containerInstance("i-abcde", 0, 0),
@@ -86,9 +87,9 @@ class OldestInstanceSelectionStrategyTest {
 
             final Clock.TestClock testClock = new Clock.TestClock();
             final List<Instance> instances = asList(
-                    linuxInstance("i-stopped", STOPPED, testClock.now().toDate()),
-                    linuxInstance("i-abcde", validState, testClock.now().toDate()),
-                    linuxInstance("i-12345", testClock.forward(Period.minutes(2)).now().toDate())
+                    linuxInstance("i-stopped", InstanceStateName.STOPPED, testClock.now()),
+                    linuxInstance("i-abcde", validState, testClock.now()),
+                    linuxInstance("i-12345", validState, testClock.forward(Duration.ofMinutes(2)).now())
             );
 
             when(containerInstanceHelper.getContainerInstances(pluginSettings)).thenReturn(containerInstances);
@@ -96,10 +97,10 @@ class OldestInstanceSelectionStrategyTest {
             when(instanceMatcher.matches(any(), any())).thenReturn(true);
             when(containerInstanceMatcher.matches(any(), any())).thenReturn(true);
 
-            final Optional<ContainerInstance> containerInstance = oldestInstanceSelectionStrategy.instanceForScheduling(pluginSettings, elasticAgentProfileProperties, containerDefinition);
+            final Optional<ContainerInstance> containerInstance = oldestInstanceSelectionStrategy.instanceForScheduling(pluginSettings, elasticAgentProfileProperties, placementRequirement);
 
             assertThat(containerInstance.isPresent()).isTrue();
-            assertThat(containerInstance.get().getEc2InstanceId()).isEqualTo("i-12345");
+            assertThat(containerInstance.get().ec2InstanceId()).isEqualTo("i-12345");
         }
     }
 
@@ -114,8 +115,8 @@ class OldestInstanceSelectionStrategyTest {
 
             final Clock.TestClock testClock = new Clock.TestClock();
             final List<Instance> instances = asList(
-                    linuxInstance("i-abcde", testClock.now().toDate()),
-                    linuxInstance("i-12345", testClock.forward(Period.minutes(2)).now().toDate())
+                    linuxInstance("i-abcde", testClock.now()),
+                    linuxInstance("i-12345", testClock.forward(Duration.ofMinutes(2)).now())
             );
 
             when(containerInstanceHelper.onDemandContainerInstances(pluginSettings)).thenReturn(containerInstances);
@@ -124,7 +125,7 @@ class OldestInstanceSelectionStrategyTest {
             final Optional<List<ContainerInstance>> containerInstance = oldestInstanceSelectionStrategy.instancesToStop(pluginSettings, LINUX);
 
             assertThat(containerInstance.isPresent()).isTrue();
-            assertThat(containerInstance.get().getFirst().getEc2InstanceId()).isEqualTo("i-abcde");
+            assertThat(containerInstance.get().getFirst().ec2InstanceId()).isEqualTo("i-abcde");
         }
 
         @Test

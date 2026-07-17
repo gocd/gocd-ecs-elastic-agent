@@ -16,41 +16,37 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws;
 
-import com.amazonaws.services.ec2.model.IamInstanceProfileSpecification;
-import com.amazonaws.services.ec2.model.ResourceType;
-import com.amazonaws.services.ec2.model.Tag;
-import com.amazonaws.services.ec2.model.TagSpecification;
 import com.thoughtworks.gocd.elasticagent.ecs.Constants;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.ElasticAgentProfileProperties;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.Platform;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
 import lombok.ToString;
 import org.apache.commons.lang3.StringUtils;
-import org.joda.time.Period;
+import software.amazon.awssdk.services.ec2.model.*;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
-import java.util.Date;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin.getServerId;
 import static com.thoughtworks.gocd.elasticagent.ecs.utils.Util.getOrDefault;
-import static org.joda.time.DateTime.now;
 
 @ToString
 public class EC2Config {
-    private String instanceName;
     private String ami;
     private String instanceType;
     private String keyPair;
     private Collection<String> securityGroups;
     private String iamInstanceProfile;
     private Collection<String> subnetIds;
-    private TagSpecification tagSpecification;
+    private TagSpecification.Builder tagSpecification;
     private String userdata;
     private String operatingSystemVolumeType;
     private String operationSystemVolumeSize;
     private Integer operationSystemVolumeProvisionedIOPS;
     private Platform platform;
-    private Period registerTimeOut;
+    private Duration registerTimeOut;
     private Integer maxInstancesAllowed;
     private Integer minInstanceCount;
     private String dockerVolumeType;
@@ -77,14 +73,14 @@ public class EC2Config {
     }
 
     public IamInstanceProfileSpecification getIamInstanceProfile() {
-        return new IamInstanceProfileSpecification().withName(iamInstanceProfile);
+        return IamInstanceProfileSpecification.builder().name(iamInstanceProfile).build();
     }
 
     public Collection<String> getSubnetIds() {
         return subnetIds;
     }
 
-    public TagSpecification getTagSpecification() {
+    public TagSpecification.Builder getTagSpecification() {
         return tagSpecification;
     }
 
@@ -104,7 +100,7 @@ public class EC2Config {
         return platform;
     }
 
-    public Period getRegisterTimeOut() {
+    public Duration getRegisterTimeOut() {
         return registerTimeOut;
     }
 
@@ -132,10 +128,6 @@ public class EC2Config {
         return dockerVolumeProvisionedIOPS;
     }
 
-    public String getInstanceName() {
-        return this.instanceName;
-    }
-
     public boolean runAsSpotInstance() {
         return runAsSpotInstance;
     }
@@ -144,8 +136,8 @@ public class EC2Config {
         return spotPrice;
     }
 
-    public Date getSpotRequestValidUntil() {
-        return now().plusMinutes(spotRequestExpiresAfter).toDate();
+    public Instant getSpotRequestValidUntil() {
+        return Instant.now().plus(spotRequestExpiresAfter, ChronoUnit.MINUTES);
     }
 
     public static class Builder {
@@ -155,12 +147,12 @@ public class EC2Config {
         private PluginSettings pluginSettings;
         private ElasticAgentProfileProperties elasticAgentProfileProperties;
 
-        public Builder withSettings(PluginSettings pluginSettings) {
+        public Builder settings(PluginSettings pluginSettings) {
             this.pluginSettings = pluginSettings;
             return this;
         }
 
-        public Builder withProfile(ElasticAgentProfileProperties elasticAgentProfileProperties) {
+        public Builder profile(ElasticAgentProfileProperties elasticAgentProfileProperties) {
             this.elasticAgentProfileProperties = elasticAgentProfileProperties;
             return this;
         }
@@ -228,12 +220,14 @@ public class EC2Config {
             return ec2Config;
         }
 
-        private TagSpecification getTagSpecification() {
-            return new TagSpecification().withTags(
-                    new Tag(NAME, String.format("%s_%s_INSTANCE", pluginSettings.getClusterName(), elasticAgentProfileProperties.platform())),
-                    new Tag(CREATOR, Constants.PLUGIN_ID),
-                    new Tag(PLATFORM, elasticAgentProfileProperties.platform().name())
-            ).withResourceType(ResourceType.Instance);
+        private TagSpecification.Builder getTagSpecification() {
+            return TagSpecification.builder()
+                    .tags(
+                            Tag.builder().key(NAME).value(String.format("%s_%s_INSTANCE", pluginSettings.getClusterName(), elasticAgentProfileProperties.platform())).build(),
+                            Tag.builder().key(CREATOR).value(Constants.PLUGIN_ID).build(),
+                            Tag.builder().key(PLATFORM).value(elasticAgentProfileProperties.platform().name()).build()
+                    )
+                    .resourceType(ResourceType.INSTANCE);
         }
 
         private String getEncodedUserData(String userdataScript) {

@@ -16,14 +16,13 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.domain;
 
-import com.amazonaws.services.ecs.model.*;
 import com.thoughtworks.gocd.elasticagent.ecs.utils.Util;
 import lombok.EqualsAndHashCode;
-import org.joda.time.DateTime;
-import org.joda.time.Period;
+import software.amazon.awssdk.services.ecs.model.*;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -43,88 +42,95 @@ public class ECSContainer {
     private Integer cpu;
     private Integer memory;
     private Integer memoryReservation;
-    private final Date createdAt;
-    private final Date startedAt;
+    private final Instant createdAt;
+    private final Instant startedAt;
     private final String taskName;
     private JobIdentifier jobIdentifier;
     private String containerArn;
     private Map<String, String> dockerLabels;
-    private List<KeyValuePair> environments;
+    private Map<String, String> environments;
     private boolean privileged;
     private String hostname;
     private String dockerCommand;
-    private LogConfiguration logConfiguration;
-    private List<MountPoint> mountPoints;
+    private String logDriver;
+    private Map<String, String> logOptions;
     private Map<String, String> volumeMounts;
-    private String createdSince;
-    private String startedSince;
+    private final String createdSince;
+    private final String startedSince;
 
     public ECSContainer(Task task, TaskDefinition taskDefinition) {
-        this.containerInstanceArn = task.getContainerInstanceArn();
-        this.status = taskDefinition.getStatus();
-        this.createdAt = task.getCreatedAt();
-        this.startedAt = task.getStartedAt();
+        this.containerInstanceArn = task.containerInstanceArn();
+        this.status = taskDefinition.statusAsString();
+        this.createdAt = task.createdAt();
+        this.startedAt = task.startedAt();
         this.createdSince = toRelativePeriod(createdAt);
         this.startedSince = toRelativePeriod(startedAt);
-        final String[] taskArnParts = task.getTaskArn().split("/");
+        final String[] taskArnParts = task.taskArn().split("/");
         this.taskName = taskArnParts[taskArnParts.length - 1];
 
-        if (!taskDefinition.getContainerDefinitions().isEmpty()) {
-            final ContainerDefinition containerDefinition = taskDefinition.getContainerDefinitions().getFirst();
+        if (!taskDefinition.containerDefinitions().isEmpty()) {
+            final ContainerDefinition containerDefinition = taskDefinition.containerDefinitions().getFirst();
 
-            this.cpu = containerDefinition.getCpu();
-            this.memory = containerDefinition.getMemory();
-            this.memoryReservation = containerDefinition.getMemoryReservation();
-            this.name = containerDefinition.getName();
-            this.image = containerDefinition.getImage();
-            this.dockerLabels = containerDefinition.getDockerLabels();
-            this.environments = containerDefinition.getEnvironment();
+            this.cpu = containerDefinition.cpu();
+            this.memory = containerDefinition.memory();
+            this.memoryReservation = containerDefinition.memoryReservation();
+            this.name = containerDefinition.name();
+            this.image = containerDefinition.image();
+            this.dockerLabels = containerDefinition.dockerLabels();
+            this.environments = new LinkedHashMap<>();
+            containerDefinition.environment().forEach(pair -> environments.put(pair.name(), pair.value()));
             this.jobIdentifier = JobIdentifier.fromJson(dockerLabels.get(LABEL_JOB_IDENTIFIER));
-            this.privileged = containerDefinition.getPrivileged();
-            this.hostname = containerDefinition.getHostname();
-            this.dockerCommand = String.join("\n", containerDefinition.getCommand());
-            this.logConfiguration = containerDefinition.getLogConfiguration();
-            this.mountPoints = containerDefinition.getMountPoints();
+            this.privileged = containerDefinition.privileged();
+            this.hostname = containerDefinition.hostname();
+            this.dockerCommand = String.join("\n", containerDefinition.command());
+            final LogConfiguration logConfiguration = containerDefinition.logConfiguration();
+            this.logDriver = logConfiguration == null ? null : logConfiguration.logDriverAsString();
+            this.logOptions = logConfiguration == null ? null : logConfiguration.options();
             this.volumeMounts = initVolumeMounts(taskDefinition);
         }
 
-        if (!task.getContainers().isEmpty()) {
-            final Container container = task.getContainers().getFirst();
-            this.reason = container.getReason();
-            this.exitCode = container.getExitCode();
-            this.containerName = container.getName();
-            this.lastStatus = container.getLastStatus();
-            this.containerArn = container.getContainerArn();
+        if (!task.containers().isEmpty()) {
+            final Container container = task.containers().getFirst();
+            this.reason = container.reason();
+            this.exitCode = container.exitCode();
+            this.containerName = container.name();
+            this.lastStatus = container.lastStatus();
+            this.containerArn = container.containerArn();
         }
     }
 
-    private String toRelativePeriod(Date date) {
+    private String toRelativePeriod(Instant date) {
         if (date == null) {
             return null;
         }
-        return Util.PERIOD_FORMATTER.print(new Period(new DateTime(date), DateTime.now()));
+        return Util.formatDurationWordsFromNow(date);
     }
 
     private Map<String, String> initVolumeMounts(TaskDefinition taskDefinition) {
-        final List<Volume> volumes = taskDefinition.getVolumes();
-        if (volumes.isEmpty()) {
-
-        }
+        final List<Volume> volumes = taskDefinition.volumes();
         Map<String, String> volumeMount = new HashMap<>();
-        final ContainerDefinition containerDefinition = taskDefinition.getContainerDefinitions().getFirst();
+        final ContainerDefinition containerDefinition = taskDefinition.containerDefinitions().getFirst();
 
         volumes.forEach(volume -> {
-            final MountPoint mountPoint = containerDefinition.getMountPoints().stream().filter(mount -> mount.getSourceVolume().equals(volume.getName())).findFirst().orElse(null);
-            volumeMount.put(volume.getHost().getSourcePath(), mountPoint == null ? "" : mountPoint.getContainerPath());
+            final MountPoint mountPoint = containerDefinition.mountPoints().stream().filter(mount -> mount.sourceVolume().equals(volume.name())).findFirst().orElse(null);
+            volumeMount.put(volume.host().sourcePath(), mountPoint == null ? "" : mountPoint.containerPath());
         });
         return volumeMount;
     }
 
-    public Date getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public Date getStartedAt() {
+    public Long getCreatedAtMillis() {
+        return createdAt == null ? null : createdAt.toEpochMilli();
+    }
+
+    public Long getStartedAtMillis() {
+        return startedAt == null ? null : startedAt.toEpochMilli();
+    }
+
+    public Instant getStartedAt() {
         return startedAt;
     }
 
@@ -188,7 +194,7 @@ public class ECSContainer {
         return dockerLabels;
     }
 
-    public List<KeyValuePair> getEnvironments() {
+    public Map<String, String> getEnvironments() {
         return environments;
     }
 
@@ -204,12 +210,12 @@ public class ECSContainer {
         return dockerCommand;
     }
 
-    public LogConfiguration getLogConfiguration() {
-        return logConfiguration;
+    public String getLogDriver() {
+        return logDriver;
     }
 
-    public List<MountPoint> getMountPoints() {
-        return mountPoints;
+    public Map<String, String> getLogOptions() {
+        return logOptions;
     }
 
     public Map<String, String> getVolumeMounts() {

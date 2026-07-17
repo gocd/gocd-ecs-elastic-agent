@@ -16,35 +16,35 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws.matcher;
 
-import com.amazonaws.services.ecs.model.ContainerDefinition;
-import com.amazonaws.services.ecs.model.ContainerInstance;
+import com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerDefinitionBuilder;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.ContainerResources;
+import software.amazon.awssdk.services.ecs.model.ContainerInstance;
 
 public class ContainerInstanceMatcher {
     public static final String INACTIVE = "INACTIVE";
 
-    public boolean matches(ContainerInstance containerInstance, ContainerDefinition containerDefinition) {
+    public boolean matches(ContainerInstance containerInstance, ContainerDefinitionBuilder.PlacementRequirement containerDefinition) {
         if (isDisconnected(containerInstance) || notActive(containerInstance)) {
             return false;
         }
 
-        ContainerResources resources = new ContainerResources(containerInstance.getRemainingResources());
+        ContainerResources resources = new ContainerResources(containerInstance.remainingResources());
         return isCPUAvailable(resources, containerDefinition) && isMemoryAvailable(resources, containerDefinition);
     }
 
     private boolean notActive(ContainerInstance containerInstance) {
-        return INACTIVE.equals(containerInstance.getStatus());
+        return INACTIVE.equals(containerInstance.status());
     }
 
     private Boolean isDisconnected(ContainerInstance containerInstance) {
-        return !containerInstance.isAgentConnected();
+        return !containerInstance.agentConnected();
     }
 
-    private boolean isMemoryAvailable(ContainerResources resource, ContainerDefinition containerDefinition) {
-        return containerDefinition.getMemory() == null || containerDefinition.getMemory().doubleValue() < resource.getMemory();
+    private boolean isMemoryAvailable(ContainerResources resource, ContainerDefinitionBuilder.PlacementRequirement containerDefinition) {
+        return containerDefinition.memory() == null || containerDefinition.memory().doubleValue() < resource.getMemory();
     }
 
-    private boolean isCPUAvailable(ContainerResources resource, ContainerDefinition containerDefinition) {
-        return containerDefinition.getCpu() == null || containerDefinition.getCpu().doubleValue() < resource.getCpu();
+    private boolean isCPUAvailable(ContainerResources resource, ContainerDefinitionBuilder.PlacementRequirement containerDefinition) {
+        return containerDefinition.cpu() == null || containerDefinition.cpu().doubleValue() < resource.getCpu();
     }
 }

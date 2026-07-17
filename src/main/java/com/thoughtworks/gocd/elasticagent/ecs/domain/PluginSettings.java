@@ -16,15 +16,6 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.domain;
 
-import com.amazonaws.ClientConfiguration;
-import com.amazonaws.auth.AWSCredentialsProvider;
-import com.amazonaws.retry.PredefinedRetryPolicies;
-import com.amazonaws.retry.RetryPolicy;
-import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
-import com.amazonaws.services.ecs.AmazonECS;
-import com.amazonaws.services.ecs.AmazonECSClientBuilder;
-import com.amazonaws.services.ecs.model.LogConfiguration;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -37,9 +28,14 @@ import com.thoughtworks.gocd.elasticagent.ecs.domain.annotation.Metadata;
 import com.thoughtworks.gocd.elasticagent.ecs.utils.Util;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
-import org.joda.time.Period;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.ec2.Ec2Client;
+import software.amazon.awssdk.services.ecs.EcsClient;
+import software.amazon.awssdk.services.ecs.model.LogConfiguration;
 
 import java.text.MessageFormat;
+import java.time.Duration;
 import java.util.*;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.DockerRegistryAuthType.AUTH_TOKEN;
@@ -336,12 +332,11 @@ public class PluginSettings {
         return Util.splitIntoLinesAndTrimSpaces(environmentVariables);
     }
 
-    public Period getContainerAutoregisterTimeout() {
-        if (StringUtils.isBlank(containerAutoregisterTimeout)) {
-            return Period.ZERO;
-        }
+    public Duration getContainerAutoregisterTimeout() {
+        return StringUtils.isBlank(containerAutoregisterTimeout)
+                ? Duration.ZERO
+                : Duration.ofMinutes(parseInt(containerAutoregisterTimeout));
 
-        return new Period().withMinutes(parseInt(containerAutoregisterTimeout));
     }
 
     public StopPolicy getLinuxStopPolicy() {
@@ -372,7 +367,7 @@ public class PluginSettings {
         if (isBlank(logDriverName)) {
             return null;
         }
-        return new LogConfiguration().withLogDriver(logDriverName).withOptions(getLogOptions());
+        return LogConfiguration.builder().logDriver(logDriverName).options(getLogOptions()).build();
     }
 
     public String getKeyPairName() {
@@ -415,8 +410,8 @@ public class PluginSettings {
         return getIntOrDefault(linuxVolumeProvisionedIOPS, null);
     }
 
-    public Period getLinuxRegisterTimeout() {
-        return new Period().withMinutes(getIntOrDefault(this.linuxRegisterTimeout, 5));
+    public Duration getLinuxRegisterTimeout() {
+        return Duration.ofMinutes(getIntOrDefault(this.linuxRegisterTimeout, 5));
     }
 
     public String getWindowsAMI() {
@@ -439,8 +434,8 @@ public class PluginSettings {
         return getIntOrDefault(windowsOSVolumeProvisionedIOPS, null);
     }
 
-    public Period getWindowsRegisterTimeout() {
-        return new Period().withMinutes(getIntOrDefault(this.windowsRegisterTimeout, 15));
+    public Duration getWindowsRegisterTimeout() {
+        return Duration.ofMinutes(getIntOrDefault(this.windowsRegisterTimeout, 15));
     }
 
     public int getMinWindowsInstanceCount() {
@@ -497,45 +492,41 @@ public class PluginSettings {
         return getIntOrDefault(linuxOSVolumeProvisionedIOPS, null);
     }
 
-    public Period stopLinuxInstanceAfter() {
-        return new Period().withMinutes(getIntOrDefault(stopLinuxInstanceAfter, 5));
+    public Duration stopLinuxInstanceAfter() {
+        return Duration.ofMinutes(getIntOrDefault(stopLinuxInstanceAfter, 5));
     }
 
-    public Period stopWindowsInstanceAfter() {
-        return new Period().withMinutes(getIntOrDefault(stopWindowsInstanceAfter, 5));
+    public Duration stopWindowsInstanceAfter() {
+        return Duration.ofMinutes(getIntOrDefault(stopWindowsInstanceAfter, 5));
     }
 
-    public Period terminateStoppedLinuxInstanceAfter() {
-        return new Period().withMinutes(getIntOrDefault(terminateStoppedLinuxInstanceAfter, 5));
+    public Duration terminateStoppedLinuxInstanceAfter() {
+        return Duration.ofMinutes(getIntOrDefault(terminateStoppedLinuxInstanceAfter, 5));
     }
 
-    public Period terminateStoppedWindowsInstanceAfter() {
-        return new Period().withMinutes(getIntOrDefault(terminateStoppedWindowsInstanceAfter, 5));
+    public Duration terminateStoppedWindowsInstanceAfter() {
+        return Duration.ofMinutes(getIntOrDefault(terminateStoppedWindowsInstanceAfter, 5));
     }
 
-    public Period terminateIdleLinuxSpotInstanceAfter() {
-        return new Period().withMinutes(getIntOrDefault(terminateIdleLinuxSpotInstanceAfter, 30));
+    public Duration terminateIdleLinuxSpotInstanceAfter() {
+        return Duration.ofMinutes(getIntOrDefault(terminateIdleLinuxSpotInstanceAfter, 30));
     }
 
-    public Period terminateIdleWindowsSpotInstanceAfter() {
-        return new Period().withMinutes(getIntOrDefault(terminateIdleWindowsSpotInstanceAfter, 30));
+    public Duration terminateIdleWindowsSpotInstanceAfter() {
+        return Duration.ofMinutes(getIntOrDefault(terminateIdleWindowsSpotInstanceAfter, 30));
     }
 
-    public AmazonECS ecsClient() {
-        return AmazonECSClientBuilder
-                .standard()
-                .withCredentials(credentials())
-                .withRegion(getRegion())
-                .withClientConfiguration(new ClientConfiguration().withRetryPolicy(retryPolicy()))
+    public EcsClient ecsClient() {
+        return EcsClient.builder()
+                .credentialsProvider(credentials())
+                .region(Region.of(getRegion()))
                 .build();
     }
 
-    public AmazonEC2 ec2Client() {
-        return AmazonEC2ClientBuilder
-                .standard()
-                .withCredentials(credentials())
-                .withRegion(getRegion())
-                .withClientConfiguration(new ClientConfiguration().withRetryPolicy(retryPolicy()))
+    public Ec2Client ec2Client() {
+        return Ec2Client.builder()
+                .credentialsProvider(credentials())
+                .region(Region.of(getRegion()))
                 .build();
     }
 
@@ -543,15 +534,9 @@ public class PluginSettings {
         return GSON.fromJson(json, PluginSettings.class);
     }
 
-    private RetryPolicy retryPolicy() {
-        return new RetryPolicy(new PredefinedRetryPolicies.SDKDefaultRetryCondition(),
-                PredefinedRetryPolicies.DEFAULT_BACKOFF_STRATEGY,
-                PredefinedRetryPolicies.DEFAULT_MAX_ERROR_RETRY,
-                true);
-    }
 
-    private AWSCredentialsProvider credentials() {
-        return new AWSCredentialsProviderChain().getAWSCredentialsProvider(accessKeyId, secretAccessKey, assumeRoleArn, clusterName);
+    private AwsCredentialsProvider credentials() {
+        return new AWSCredentialsProviderChain().getAwsCredentialsProvider(accessKeyId, secretAccessKey, assumeRoleArn, clusterName);
     }
 
     private Map<String, String> getLogOptions() {
