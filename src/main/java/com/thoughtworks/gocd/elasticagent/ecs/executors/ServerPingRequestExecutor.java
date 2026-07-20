@@ -192,6 +192,15 @@ public class ServerPingRequestExecutor implements RequestExecutor {
     private void stopInstances(PluginSettings pluginSettings, Platform platform, EventStream eventStream) {
         try {
             final StopPolicy stopPolicy = platform == LINUX ? pluginSettings.getLinuxStopPolicy() : pluginSettings.getWindowsStopPolicy();
+            // No StopPolicy configured — this is the case for a Fargate-only cluster
+            // (there are no long-lived EC2 container instances to keep-stopped). Skip
+            // cleanly instead of NPE-ing in strategyFor(null).ordinal(). Reaping of
+            // Fargate tasks is handled by terminateDisabledAgents (job completion) and
+            // terminateUnregisteredInstances (auto-register timeout), plus the agent
+            // container's own self-termination.
+            if (stopPolicy == null) {
+                return;
+            }
             final Optional<List<ContainerInstance>> instanceToStop = instanceSelectionStrategyFactory
                     .strategyFor(stopPolicy)
                     .instancesToStop(pluginSettings, platform);
