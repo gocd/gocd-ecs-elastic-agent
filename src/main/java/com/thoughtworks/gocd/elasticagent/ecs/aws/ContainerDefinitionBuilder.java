@@ -59,7 +59,7 @@ public class ContainerDefinitionBuilder {
                 .environment(environmentFrom())
                 .dockerLabels(labelsFrom())
                 .command(request.elasticProfile().getCommand())
-                .privileged(request.elasticProfile().platform() != WINDOWS && request.elasticProfile().isPrivileged())
+                .privileged(request.elasticProfile().platform() != WINDOWS && request.elasticProfile().isPrivileged() && !request.elasticProfile().isFargate())
                 .logConfiguration(pluginSettings.logConfiguration());
     }
 
