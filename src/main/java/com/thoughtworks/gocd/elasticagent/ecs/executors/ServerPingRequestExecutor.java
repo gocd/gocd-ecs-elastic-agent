@@ -94,7 +94,11 @@ public class ServerPingRequestExecutor implements RequestExecutor {
         List<ClusterProfileProperties> allClusterProfileProperties = serverPingRequest.allClusterProfileProperties();
 
         for (ClusterProfileProperties clusterProfileProperties : allClusterProfileProperties) {
-            performCleanupForCluster(clusterProfileProperties, allAgentInstances.get(clusterProfileProperties.uuid()), doNothingConsoleLogAppender);
+            try {
+                performCleanupForCluster(clusterProfileProperties, allAgentInstances.get(clusterProfileProperties.uuid()), doNothingConsoleLogAppender);
+            } catch (Exception e) {
+                LOG.error(format("[server-ping] Error performing cleanup for cluster {0}.", clusterProfileProperties.getClusterName()), e);
+            }
         }
 
         CheckForPossiblyMissingAgents();
@@ -156,24 +160,28 @@ public class ServerPingRequestExecutor implements RequestExecutor {
     }
 
     private void terminateStoppedInstances(PluginSettings pluginSettings) {
-        final List<Instance> allInstances = containerInstanceHelper.getAllOnDemandInstances(pluginSettings);
+        try {
+            final List<Instance> allInstances = containerInstanceHelper.getAllOnDemandInstances(pluginSettings);
 
-        final EligibleForTerminationPredicate predicate = new EligibleForTerminationPredicate(pluginSettings);
-        final Set<String> instancesToTerminate = allInstances.stream()
-                .filter(predicate)
-                .map(Instance::getInstanceId)
-                .collect(Collectors.toSet());
+            final EligibleForTerminationPredicate predicate = new EligibleForTerminationPredicate(pluginSettings);
+            final Set<String> instancesToTerminate = allInstances.stream()
+                    .filter(predicate)
+                    .map(Instance::getInstanceId)
+                    .collect(Collectors.toSet());
 
-        if (instancesToTerminate.isEmpty()) {
-            LOG.debug("[server-ping] None of the instance is eligible for termination.");
+            if (instancesToTerminate.isEmpty()) {
+                LOG.debug("[server-ping] None of the instance is eligible for termination.");
+            }
+
+            final List<ContainerInstance> containerInstances = containerInstanceHelper.onDemandContainerInstances(pluginSettings);
+            final List<ContainerInstance> containerInstanceList = containerInstances.stream()
+                    .filter(containerInstance -> instancesToTerminate.contains(containerInstance.getEc2InstanceId()))
+                    .collect(toList());
+
+            terminateOperation.execute(pluginSettings, containerInstanceList);
+        } catch (Exception e) {
+            LOG.error("[server-ping] There were errors while terminating stopped instances.", e);
         }
-
-        final List<ContainerInstance> containerInstances = containerInstanceHelper.onDemandContainerInstances(pluginSettings);
-        final List<ContainerInstance> containerInstanceList = containerInstances.stream()
-                .filter(containerInstance -> instancesToTerminate.contains(containerInstance.getEc2InstanceId()))
-                .collect(toList());
-
-        terminateOperation.execute(pluginSettings, containerInstanceList);
     }
 
     private void stopIdleEC2Instance(PluginSettings pluginSettings, EventStream eventStream) {
