@@ -16,8 +16,10 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.executors;
 
+import com.amazonaws.services.ec2.model.AmazonEC2Exception;
 import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ecs.model.ContainerInstance;
+import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import com.thoughtworks.gocd.elasticagent.ecs.*;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerInstanceHelper;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.SpotInstanceService;
@@ -200,6 +202,50 @@ class ServerPingRequestExecutorTest {
         executor.execute();
 
         verify(terminationOperation).execute(clusterProfileProperties, singletonList(stoppedContainerInstance));
+    }
+
+    @Test
+    void shouldCompleteServerPingWhenTerminationOfStoppedInstancesFails() throws Exception {
+        final List<Instance> allInstances = Arrays.asList(
+                instance("i-abcdxyz", RUNNING, LINUX.name()),
+                instance("i-abcd123", STOPPED, LINUX.name())
+        );
+
+        final ContainerInstance stoppedContainerInstance = containerInstance("i-abcd123");
+        final List<ContainerInstance> containerInstances = Arrays.asList(
+                containerInstance("i-abcdxyz"),
+                stoppedContainerInstance
+        );
+
+        when(containerInstanceHelper.getAllOnDemandInstances(clusterProfileProperties)).thenReturn(allInstances);
+        when(containerInstanceHelper.onDemandContainerInstances(clusterProfileProperties)).thenReturn(containerInstances);
+        when(pluginRequest.listAgents()).thenReturn(new Agents(new ArrayList<>()));
+        doThrow(new AmazonEC2Exception("instance is no longer available"))
+                .when(terminationOperation).execute(eq(clusterProfileProperties), anyList());
+
+        final GoPluginApiResponse response = executor.execute();
+
+        assertThat(response.responseCode()).isEqualTo(200);
+    }
+
+    @Test
+    void shouldContinueWithRemainingClustersWhenCleanupForOneClusterFails() throws Exception {
+        final ClusterProfileProperties otherClusterProfileProperties = mock(ClusterProfileProperties.class);
+        when(otherClusterProfileProperties.uuid()).thenReturn("id2");
+        final ECSTasks failingAgentInstances = mock(ECSTasks.class);
+        final ECSTasks otherAgentInstances = mock(ECSTasks.class);
+        when(failingAgentInstances.instancesCreatedAfterTimeout(any(), any())).thenThrow(new AmazonEC2Exception("service unavailable"));
+        when(otherAgentInstances.instancesCreatedAfterTimeout(any(), any())).thenReturn(new Agents());
+        when(otherAgentInstances.getEventStream()).thenReturn(eventStream);
+        when(pluginRequest.listAgents()).thenReturn(new Agents());
+        when(serverPingRequest.allClusterProfileProperties()).thenReturn(List.of(clusterProfileProperties, otherClusterProfileProperties));
+        allAgentInstances.put("id1", failingAgentInstances);
+        allAgentInstances.put("id2", otherAgentInstances);
+
+        final GoPluginApiResponse response = executor.execute();
+
+        verify(otherAgentInstances).instancesCreatedAfterTimeout(eq(otherClusterProfileProperties), any());
+        assertThat(response.responseCode()).isEqualTo(200);
     }
 
     @Test
