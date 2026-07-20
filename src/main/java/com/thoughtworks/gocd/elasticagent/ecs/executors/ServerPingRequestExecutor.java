@@ -97,11 +97,11 @@ public class ServerPingRequestExecutor implements RequestExecutor {
             performCleanupForCluster(clusterProfileProperties, allAgentInstances.get(clusterProfileProperties.uuid()), doNothingConsoleLogAppender);
         }
 
-        CheckForPossiblyMissingAgents();
+        checkForPossiblyMissingAgents();
         return DefaultGoPluginApiResponse.success("");
     }
 
-    private void CheckForPossiblyMissingAgents() {
+    private void checkForPossiblyMissingAgents() {
         Collection<Agent> allAgents = pluginRequest.listAgents().agents();
 
         List<Agent> missingAgents = allAgents.stream().filter(agent -> allAgentInstances.values().stream()
