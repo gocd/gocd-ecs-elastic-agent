@@ -66,6 +66,10 @@ public class TaskHelper {
 
         ContainerDefinitionBuilder containerDefinitionBuilder = new ContainerDefinitionBuilder(createAgentRequest);
 
+        if (elasticAgentProfileProperties.isFargate()) {
+            return createFargateTask(createAgentRequest, pluginSettings, consoleLogAppender, taskName, elasticAgentProfileProperties, containerDefinitionBuilder);
+        }
+
         StopPolicy stopPolicy = elasticAgentProfileProperties.platform() == LINUX ? pluginSettings.getLinuxStopPolicy() : pluginSettings.getWindowsStopPolicy();
         Optional<ContainerInstance> containerInstance = instanceSelectionStrategyFactory
                 .strategyFor(stopPolicy)
@@ -123,6 +127,81 @@ public class TaskHelper {
             cleanupTaskDefinition(pluginSettings, taskDefinitionFromNewTask.taskDefinitionArn());
             String errors = startTaskResult.failures().stream().map(failure -> "    " + failure.arn() + " failed with reason :" + failure.reason()).collect(Collectors.joining("\n"));
             throw new ContainerFailedToRegisterException("Fail to start task " + taskName + ":\n" + errors);
+        }
+    }
+
+    private Optional<ECSTask> createFargateTask(CreateAgentRequest createAgentRequest, PluginSettings pluginSettings, ConsoleLogAppender consoleLogAppender,
+                                                String taskName, ElasticAgentProfileProperties elasticAgentProfileProperties,
+                                                ContainerDefinitionBuilder containerDefinitionBuilder) throws ContainerFailedToRegisterException {
+        consoleLogAppender.accept("This is an ECS Fargate task request. Not creating an EC2 instance.");
+        LOG.info("[create-agent] This is an ECS Fargate task request. Not creating an EC2 instance.");
+
+        final RegisterTaskDefinitionRequest registerTaskDefinitionRequest = registerTaskDefinitionRequestBuilder
+                .build(pluginSettings, elasticAgentProfileProperties, containerDefinitionBuilder.name(taskName)
+                        .pluginSettings(pluginSettings)
+                        .serverId(getServerId())
+                        .build(), taskName);
+
+        consoleLogAppender.accept("Registering ECS Fargate Task definition with cluster...");
+        LOG.debug(format("[create-agent] Registering Fargate task definition: {0} ", registerTaskDefinitionRequest.toString()));
+        RegisterTaskDefinitionResponse taskDefinitionResult = pluginSettings.ecsClient().registerTaskDefinition(registerTaskDefinitionRequest);
+        consoleLogAppender.accept("Done registering ECS Fargate Task definition with cluster.");
+        LOG.debug("[create-agent] Done registering Fargate task definition");
+
+        TaskDefinition taskDefinitionFromNewTask = taskDefinitionResult.taskDefinition();
+
+        final EC2Config ec2Config = new EC2Config.Builder()
+                .settings(pluginSettings)
+                .profile(elasticAgentProfileProperties)
+                .build();
+
+        AwsVpcConfiguration awsVpcConfiguration = AwsVpcConfiguration.builder()
+                .securityGroups(ec2Config.getSecurityGroups())
+                .subnets(ec2Config.getSubnetIds())
+                .assignPublicIp(AssignPublicIp.ENABLED)
+                .build();
+
+        NetworkConfiguration networkConfiguration = NetworkConfiguration.builder()
+                .awsvpcConfiguration(awsVpcConfiguration)
+                .build();
+
+        CapacityProviderStrategyItem capacityProvider = CapacityProviderStrategyItem.builder()
+                .capacityProvider(elasticAgentProfileProperties.runAsSpotInstance() ? "FARGATE_SPOT" : "FARGATE")
+                .build();
+
+        consoleLogAppender.accept("Starting ECS Fargate Task to perform current job...");
+        RunTaskResponse runTaskResult;
+        try {
+            RunTaskRequest runTaskRequest = RunTaskRequest.builder()
+                    .capacityProviderStrategy(capacityProvider)
+                    .taskDefinition(taskDefinitionFromNewTask.taskDefinitionArn())
+                    .cluster(pluginSettings.getClusterName())
+                    .networkConfiguration(networkConfiguration)
+                    .build();
+            LOG.debug(format("[create-agent] Starting Fargate task : {0} ", runTaskRequest.toString()));
+            runTaskResult = pluginSettings.ecsClient().runTask(runTaskRequest);
+        } catch (InvalidParameterException e) {
+            LOG.debug(format("[create-agent] Capacity provider strategy rejected ({0}), falling back to launch type FARGATE.", e.getMessage()));
+            RunTaskRequest runTaskRequest = RunTaskRequest.builder()
+                    .launchType(LaunchType.FARGATE)
+                    .taskDefinition(taskDefinitionFromNewTask.taskDefinitionArn())
+                    .cluster(pluginSettings.getClusterName())
+                    .networkConfiguration(networkConfiguration)
+                    .build();
+            LOG.debug(format("[create-agent] Starting Fargate task : {0} ", runTaskRequest.toString()));
+            runTaskResult = pluginSettings.ecsClient().runTask(runTaskRequest);
+        }
+        LOG.debug("[create-agent] Done executing run task request.");
+
+        if (isStarted(runTaskResult)) {
+            String fargateInstanceId = "FARGATE-" + UUID.randomUUID().toString().replaceAll("-", "");
+            consoleLogAppender.accept(format("ECS Fargate Task {0} scheduled.", taskName));
+            LOG.info(format("[create-agent] Fargate task {0} scheduled.", taskName));
+            return Optional.of(new ECSTask(runTaskResult.tasks().get(0), taskDefinitionFromNewTask, elasticAgentProfileProperties, createAgentRequest.getJobIdentifier(), createAgentRequest.environment(), fargateInstanceId));
+        } else {
+            cleanupTaskDefinition(pluginSettings, taskDefinitionFromNewTask.taskDefinitionArn());
+            String errors = runTaskResult.failures().stream().map(failure -> "    " + failure.arn() + " failed with reason :" + failure.reason()).collect(Collectors.joining("\n"));
+            throw new ContainerFailedToRegisterException("Fail to start Fargate task " + taskName + ":\n" + errors);
         }
     }
 
@@ -223,5 +302,9 @@ public class TaskHelper {
 
     private boolean isStarted(StartTaskResponse startTaskResult) {
         return startTaskResult.failures().isEmpty() && !startTaskResult.tasks().isEmpty();
+    }
+
+    private boolean isStarted(RunTaskResponse runTaskResult) {
+        return runTaskResult.failures().isEmpty() && !runTaskResult.tasks().isEmpty();
     }
 }
