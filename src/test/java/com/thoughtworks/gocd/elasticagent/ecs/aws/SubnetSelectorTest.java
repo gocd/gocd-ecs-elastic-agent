@@ -16,16 +16,16 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws;
 
-import com.amazonaws.services.ec2.AmazonEC2Client;
-import com.amazonaws.services.ec2.model.DescribeSubnetsRequest;
-import com.amazonaws.services.ec2.model.DescribeSubnetsResult;
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.Subnet;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
 import com.thoughtworks.gocd.elasticagent.ecs.exceptions.SubnetNotAvailableException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import software.amazon.awssdk.services.ec2.Ec2Client;
+import software.amazon.awssdk.services.ec2.model.DescribeSubnetsRequest;
+import software.amazon.awssdk.services.ec2.model.DescribeSubnetsResponse;
+import software.amazon.awssdk.services.ec2.model.Instance;
+import software.amazon.awssdk.services.ec2.model.Subnet;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,12 +42,12 @@ import static org.mockito.Mockito.when;
 class SubnetSelectorTest {
     private PluginSettings pluginSettings;
     private SubnetSelector subnetSelector;
-    private AmazonEC2Client ec2Client;
+    private Ec2Client ec2Client;
 
     @BeforeEach
     void setUp() {
         pluginSettings = mock(PluginSettings.class);
-        ec2Client = mock(AmazonEC2Client.class);
+        ec2Client = mock(Ec2Client.class);
 
         when(pluginSettings.ec2Client()).thenReturn(ec2Client);
 
@@ -66,9 +66,9 @@ class SubnetSelectorTest {
     @Test
     void shouldErrorOutIfNoSubnetAvailable() {
         when(pluginSettings.getSubnetIds()).thenReturn(List.of("subnet-1"));
-        when(ec2Client.describeSubnets(any(DescribeSubnetsRequest.class))).thenReturn(new DescribeSubnetsResult().withSubnets(
-                new Subnet().withSubnetId("subnet-1").withState("pending")
-        ));
+        when(ec2Client.describeSubnets(any(DescribeSubnetsRequest.class))).thenReturn(DescribeSubnetsResponse.builder().subnets(
+                Subnet.builder().subnetId("subnet-1").state("pending").build()
+        ).build());
 
         final SubnetNotAvailableException exception = assertThrows(SubnetNotAvailableException.class, () -> subnetSelector.selectSubnetWithMinimumEC2Instances(pluginSettings, pluginSettings.getSubnetIds(), null));
 
@@ -80,13 +80,13 @@ class SubnetSelectorTest {
         final ArgumentCaptor<DescribeSubnetsRequest> argumentCaptor = ArgumentCaptor.forClass(DescribeSubnetsRequest.class);
 
         when(pluginSettings.getSubnetIds()).thenReturn(List.of("subnet-1", "subnet-2"));
-        when(ec2Client.describeSubnets(argumentCaptor.capture())).thenReturn(new DescribeSubnetsResult().withSubnets(
-                new Subnet().withSubnetId("subnet-1").withState("available"),
-                new Subnet().withSubnetId("subnet-2").withState("available")
-        ));
+        when(ec2Client.describeSubnets(argumentCaptor.capture())).thenReturn(DescribeSubnetsResponse.builder().subnets(
+                Subnet.builder().subnetId("subnet-1").state("available").build(),
+                Subnet.builder().subnetId("subnet-2").state("available").build()
+        ).build());
 
         assertThat(IntStream.range(0, 10)
-                .mapToObj(i -> subnetSelector.selectSubnetWithMinimumEC2Instances(pluginSettings, pluginSettings.getSubnetIds(), emptyList()).getSubnetId())
+                .mapToObj(i -> subnetSelector.selectSubnetWithMinimumEC2Instances(pluginSettings, pluginSettings.getSubnetIds(), emptyList()).subnetId())
                 .collect(toSet()))
                 .containsExactly("subnet-1", "subnet-2");
     }
@@ -96,15 +96,15 @@ class SubnetSelectorTest {
         final ArgumentCaptor<DescribeSubnetsRequest> argumentCaptor = ArgumentCaptor.forClass(DescribeSubnetsRequest.class);
 
         when(pluginSettings.getSubnetIds()).thenReturn(List.of("subnet-1", "subnet-2"));
-        when(ec2Client.describeSubnets(argumentCaptor.capture())).thenReturn(new DescribeSubnetsResult().withSubnets(
-                new Subnet().withSubnetId("subnet-1").withState("available"),
-                new Subnet().withSubnetId("subnet-2").withState("available")
-        ));
+        when(ec2Client.describeSubnets(argumentCaptor.capture())).thenReturn(DescribeSubnetsResponse.builder().subnets(
+                Subnet.builder().subnetId("subnet-1").state("available").build(),
+                Subnet.builder().subnetId("subnet-2").state("available").build()
+        ).build());
 
-        Instance instanceInOtherSubnet = new Instance().withSubnetId("some-other-subnet");
+        Instance instanceInOtherSubnet = Instance.builder().subnetId("some-other-subnet").build();
 
         assertThat(IntStream.range(0, 10)
-                .mapToObj(i -> subnetSelector.selectSubnetWithMinimumEC2Instances(pluginSettings, pluginSettings.getSubnetIds(), List.of(instanceInOtherSubnet)).getSubnetId())
+                .mapToObj(i -> subnetSelector.selectSubnetWithMinimumEC2Instances(pluginSettings, pluginSettings.getSubnetIds(), List.of(instanceInOtherSubnet)).subnetId())
                 .collect(toSet()))
                 .containsExactly("subnet-1", "subnet-2");
     }
@@ -114,27 +114,27 @@ class SubnetSelectorTest {
         final ArgumentCaptor<DescribeSubnetsRequest> argumentCaptor = ArgumentCaptor.forClass(DescribeSubnetsRequest.class);
 
         when(pluginSettings.getSubnetIds()).thenReturn(List.of("subnet-1", "subnet-2", "subnet-3", "subnet-4", "subnet-5"));
-        when(ec2Client.describeSubnets(argumentCaptor.capture())).thenReturn(new DescribeSubnetsResult().withSubnets(
-                new Subnet().withSubnetId("subnet-1").withState("pending"),
-                new Subnet().withSubnetId("subnet-2").withState("available"),
-                new Subnet().withSubnetId("subnet-3").withState("available"),
-                new Subnet().withSubnetId("subnet-4").withState("available"),
-                new Subnet().withSubnetId("subnet-5").withState("available")
-        ));
+        when(ec2Client.describeSubnets(argumentCaptor.capture())).thenReturn(DescribeSubnetsResponse.builder().subnets(
+                Subnet.builder().subnetId("subnet-1").state("pending").build(),
+                Subnet.builder().subnetId("subnet-2").state("available").build(),
+                Subnet.builder().subnetId("subnet-3").state("available").build(),
+                Subnet.builder().subnetId("subnet-4").state("available").build(),
+                Subnet.builder().subnetId("subnet-5").state("available").build()
+        ).build());
 
         final List<Instance> instances = List.of(
-                new Instance().withInstanceId("instance-1.1").withSubnetId("subnet-1"),
-                new Instance().withInstanceId("instance-2.1").withSubnetId("subnet-2"),
-                new Instance().withInstanceId("instance-2.2").withSubnetId("subnet-2"),
-                new Instance().withInstanceId("instance-3.1").withSubnetId("subnet-3"),
-                new Instance().withInstanceId("instance-4.1").withSubnetId("subnet-4"),
-                new Instance().withInstanceId("instance-4.2").withSubnetId("subnet-4"),
-                new Instance().withInstanceId("instance-4.3").withSubnetId("subnet-4"),
-                new Instance().withInstanceId("instance-5.1").withSubnetId("subnet-5")
+                Instance.builder().instanceId("instance-1.1").subnetId("subnet-1").build(),
+                Instance.builder().instanceId("instance-2.1").subnetId("subnet-2").build(),
+                Instance.builder().instanceId("instance-2.2").subnetId("subnet-2").build(),
+                Instance.builder().instanceId("instance-3.1").subnetId("subnet-3").build(),
+                Instance.builder().instanceId("instance-4.1").subnetId("subnet-4").build(),
+                Instance.builder().instanceId("instance-4.2").subnetId("subnet-4").build(),
+                Instance.builder().instanceId("instance-4.3").subnetId("subnet-4").build(),
+                Instance.builder().instanceId("instance-5.1").subnetId("subnet-5").build()
         );
 
         assertThat(IntStream.range(0, 10)
-                .mapToObj(i -> subnetSelector.selectSubnetWithMinimumEC2Instances(pluginSettings, pluginSettings.getSubnetIds(), instances).getSubnetId())
+                .mapToObj(i -> subnetSelector.selectSubnetWithMinimumEC2Instances(pluginSettings, pluginSettings.getSubnetIds(), instances).subnetId())
                 .collect(toSet()))
                 .containsExactly("subnet-3", "subnet-5");
     }

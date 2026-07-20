@@ -16,16 +16,19 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws;
 
-import com.amazonaws.services.ec2.model.DescribeSubnetsRequest;
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.Subnet;
-import com.amazonaws.services.ec2.model.SubnetState;
 import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
 import com.thoughtworks.gocd.elasticagent.ecs.exceptions.SubnetNotAvailableException;
 import org.apache.commons.lang3.RandomUtils;
+import software.amazon.awssdk.services.ec2.model.DescribeSubnetsRequest;
+import software.amazon.awssdk.services.ec2.model.Instance;
+import software.amazon.awssdk.services.ec2.model.Subnet;
+import software.amazon.awssdk.services.ec2.model.SubnetState;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static java.text.MessageFormat.format;
@@ -79,11 +82,11 @@ public class SubnetSelector {
     }
 
     private Map<Subnet, Long> instancePerSubnet(List<Subnet> subnets, List<Instance> instances) {
-        final Map<String, Subnet> subnetMap = subnets.stream().collect(Collectors.toMap(Subnet::getSubnetId, subnet -> subnet));
+        final Map<String, Subnet> subnetMap = subnets.stream().collect(Collectors.toMap(Subnet::subnetId, subnet -> subnet));
 
         return instances.stream()
-                .filter(instance -> subnetMap.containsKey(instance.getSubnetId()))
-                .collect(Collectors.groupingBy(subnet -> subnetMap.get(subnet.getSubnetId()), Collectors.counting()));
+                .filter(instance -> subnetMap.containsKey(instance.subnetId()))
+                .collect(Collectors.groupingBy(subnet -> subnetMap.get(subnet.subnetId()), Collectors.counting()));
     }
 
     private List<Subnet> availableSubnets(PluginSettings pluginSettings, Collection<String> subnetIds) {
@@ -99,11 +102,11 @@ public class SubnetSelector {
     }
 
     private boolean isSubnetAvailable(Subnet subnet) {
-        return SubnetState.Available == SubnetState.fromValue(subnet.getState());
+        return SubnetState.AVAILABLE == subnet.state();
     }
 
     private List<Subnet> allSubnets(PluginSettings pluginSettings, Collection<String> subnetIds) {
-        final DescribeSubnetsRequest describeSubnetsRequest = new DescribeSubnetsRequest().withSubnetIds(subnetIds);
-        return pluginSettings.ec2Client().describeSubnets(describeSubnetsRequest).getSubnets();
+        final DescribeSubnetsRequest describeSubnetsRequest = DescribeSubnetsRequest.builder().subnetIds(subnetIds).build();
+        return pluginSettings.ec2Client().describeSubnets(describeSubnetsRequest).subnets();
     }
 }

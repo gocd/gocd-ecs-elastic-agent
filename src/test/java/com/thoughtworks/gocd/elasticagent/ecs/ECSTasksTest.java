@@ -16,21 +16,23 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs;
 
-import com.amazonaws.services.ecs.model.Task;
-import com.amazonaws.services.ecs.model.TaskDefinition;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerInstanceHelper;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.TaskHelper;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.*;
 import com.thoughtworks.gocd.elasticagent.ecs.events.EventStream;
 import com.thoughtworks.gocd.elasticagent.ecs.requests.CreateAgentRequest;
-import org.joda.time.DateTime;
-import org.joda.time.Period;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import software.amazon.awssdk.services.ecs.model.Task;
+import software.amazon.awssdk.services.ecs.model.TaskDefinition;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Optional;
 
+import static java.time.temporal.ChronoUnit.MINUTES;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -58,7 +60,7 @@ class ECSTasksTest {
         when(elasticAgentProfileProperties.platform()).thenReturn(Platform.LINUX);
         when(createAgentRequest.elasticProfile()).thenReturn(elasticAgentProfileProperties);
 
-        when(pluginSettings.getContainerAutoregisterTimeout()).thenReturn(new Period().withMinutes(2));
+        when(pluginSettings.getContainerAutoregisterTimeout()).thenReturn(Duration.ofMinutes(2));
     }
 
     @Test
@@ -123,7 +125,7 @@ class ECSTasksTest {
         final Agents agents = new Agents();
 
         when(task.name()).thenReturn("agent-id");
-        when(task.createdAt()).thenReturn(DateTime.now().minusMinutes(3));
+        when(task.createdAt()).thenReturn(Instant.now().minus(3, MINUTES));
         when(taskHelper.create(createAgentRequest, pluginSettings, consoleLogAppender)).thenReturn(Optional.of(task));
         ecsTasks.create(createAgentRequest, pluginSettings, consoleLogAppender);
 
@@ -138,7 +140,7 @@ class ECSTasksTest {
         final Agents agents = new Agents();
 
         when(task.name()).thenReturn("agent-id");
-        when(task.createdAt()).thenReturn(DateTime.now().minusMinutes(1));
+        when(task.createdAt()).thenReturn(Instant.now().minus(1, MINUTES));
         when(taskHelper.create(createAgentRequest, pluginSettings, consoleLogAppender)).thenReturn(Optional.of(task));
         ecsTasks.create(createAgentRequest, pluginSettings, consoleLogAppender);
 

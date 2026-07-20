@@ -16,10 +16,10 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws;
 
-import com.amazonaws.services.ec2.model.*;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.Platform;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import software.amazon.awssdk.services.ec2.model.*;
 
 import java.util.List;
 
@@ -39,8 +39,8 @@ class RunInstanceRequestBuilderTest {
     void setUp() {
         ec2Config = mock(EC2Config.class);
 
-        final TagSpecification tagSpecification = new TagSpecification()
-                .withTags(new Tag("Foo", "Bar"));
+        final TagSpecification.Builder tagSpecification = TagSpecification.builder()
+                .tags(Tag.builder().key("Foo").value("Bar").build());
 
         final IamInstanceProfileSpecification iamInstanceProfileSpecification = mock(IamInstanceProfileSpecification.class);
 
@@ -48,10 +48,10 @@ class RunInstanceRequestBuilderTest {
         when(ec2Config.getIamInstanceProfile()).thenReturn(iamInstanceProfileSpecification);
         when(ec2Config.getSSHKeyName()).thenReturn("Shared_SSH_Key");
         when(ec2Config.getAmi()).thenReturn("ami-123abcdi");
-        when(ec2Config.getInstanceType()).thenReturn("t2.small");
+        when(ec2Config.getInstanceType()).thenReturn(InstanceType.T2_SMALL.toString());
         when(ec2Config.getSecurityGroups()).thenReturn(asList("sg-12345", "sg-abcde"));
 
-        subnet = new Subnet().withSubnetId("s-s23cdf");
+        subnet = Subnet.builder().subnetId("s-s23cdf").build();
 
         builder = new RunInstanceRequestBuilder();
     }
@@ -59,26 +59,26 @@ class RunInstanceRequestBuilderTest {
     @Test
     void shouldBuildRunInstanceRequestFromEC2Config() {
         final RunInstancesRequest runInstancesRequest = builder
-                .withSubnet(subnet)
-                .withEC2Config(ec2Config)
+                .subnet(subnet)
+                .eC2Config(ec2Config)
                 .instanceToCreate(2)
-                .withServerId("gocd-server-id")
+                .serverId("gocd-server-id")
                 .build();
 
-        assertThat(runInstancesRequest.getMinCount()).isEqualTo(2);
-        assertThat(runInstancesRequest.getMaxCount()).isEqualTo(2);
+        assertThat(runInstancesRequest.minCount()).isEqualTo(2);
+        assertThat(runInstancesRequest.maxCount()).isEqualTo(2);
 
-        assertThat(runInstancesRequest.getImageId()).isEqualTo(ec2Config.getAmi());
-        assertThat(runInstancesRequest.getInstanceType()).isEqualTo(ec2Config.getInstanceType());
-        assertThat(runInstancesRequest.getKeyName()).isEqualTo(ec2Config.getSSHKeyName());
-        assertThat(runInstancesRequest.getIamInstanceProfile()).isEqualTo(ec2Config.getIamInstanceProfile());
-        assertThat(runInstancesRequest.getSecurityGroupIds()).isEqualTo(ec2Config.getSecurityGroups());
-        assertThat(runInstancesRequest.getSubnetId()).isEqualTo("s-s23cdf");
+        assertThat(runInstancesRequest.imageId()).isEqualTo(ec2Config.getAmi());
+        assertThat(runInstancesRequest.instanceTypeAsString()).isEqualTo(ec2Config.getInstanceType());
+        assertThat(runInstancesRequest.keyName()).isEqualTo(ec2Config.getSSHKeyName());
+        assertThat(runInstancesRequest.iamInstanceProfile()).isEqualTo(ec2Config.getIamInstanceProfile());
+        assertThat(runInstancesRequest.securityGroupIds()).isEqualTo(ec2Config.getSecurityGroups());
+        assertThat(runInstancesRequest.subnetId()).isEqualTo("s-s23cdf");
 
-        assertThat(runInstancesRequest.getTagSpecifications()).hasSize(1);
-        assertThat(runInstancesRequest.getTagSpecifications().getFirst().getTags())
+        assertThat(runInstancesRequest.tagSpecifications()).hasSize(1);
+        assertThat(runInstancesRequest.tagSpecifications().getFirst().tags())
                 .hasSize(2)
-                .contains(new Tag("Foo", "Bar"), new Tag(LABEL_SERVER_ID,"gocd-server-id"));
+                .contains(Tag.builder().key("Foo").value("Bar").build(), Tag.builder().key(LABEL_SERVER_ID).value("gocd-server-id").build());
     }
 
     @Test
@@ -86,11 +86,11 @@ class RunInstanceRequestBuilderTest {
         when(ec2Config.getUserdata()).thenReturn("dummy_userdata_script");
 
         final RunInstancesRequest runInstancesRequest = builder
-                .withSubnet(subnet)
-                .withEC2Config(ec2Config)
+                .subnet(subnet)
+                .eC2Config(ec2Config)
                 .build();
 
-        assertThat(runInstancesRequest.getUserData()).isEqualTo("dummy_userdata_script");
+        assertThat(runInstancesRequest.userData()).isEqualTo("dummy_userdata_script");
     }
 
     @Test
@@ -101,18 +101,18 @@ class RunInstanceRequestBuilderTest {
         when(ec2Config.getPlatform()).thenReturn(Platform.LINUX);
 
         final RunInstancesRequest runInstancesRequest = builder
-                .withSubnet(subnet)
-                .withEC2Config(ec2Config)
+                .subnet(subnet)
+                .eC2Config(ec2Config)
                 .build();
 
-        final List<BlockDeviceMapping> deviceMappings = runInstancesRequest.getBlockDeviceMappings();
+        final List<BlockDeviceMapping> deviceMappings = runInstancesRequest.blockDeviceMappings();
 
         assertThat(deviceMappings).hasSize(1);
-        assertThat(deviceMappings.getFirst().getDeviceName()).isEqualTo("/dev/xvda");
-        assertThat(deviceMappings.getFirst().getEbs().getDeleteOnTermination()).isTrue();
-        assertThat(deviceMappings.getFirst().getEbs().getVolumeType()).isEqualTo("gp2");
-        assertThat(deviceMappings.getFirst().getEbs().getVolumeSize()).isEqualTo(100);
-        assertThat(deviceMappings.getFirst().getEbs().getIops()).isNull();
+        assertThat(deviceMappings.getFirst().deviceName()).isEqualTo("/dev/xvda");
+        assertThat(deviceMappings.getFirst().ebs().deleteOnTermination()).isTrue();
+        assertThat(deviceMappings.getFirst().ebs().volumeType()).isEqualTo(VolumeType.GP2);
+        assertThat(deviceMappings.getFirst().ebs().volumeSize()).isEqualTo(100);
+        assertThat(deviceMappings.getFirst().ebs().iops()).isNull();
     }
 
     @Test
@@ -123,18 +123,18 @@ class RunInstanceRequestBuilderTest {
         when(ec2Config.getPlatform()).thenReturn(Platform.LINUX);
 
         final RunInstancesRequest runInstancesRequest = builder
-            .withSubnet(subnet)
-            .withEC2Config(ec2Config)
+            .subnet(subnet)
+            .eC2Config(ec2Config)
             .build();
 
-        final List<BlockDeviceMapping> deviceMappings = runInstancesRequest.getBlockDeviceMappings();
+        final List<BlockDeviceMapping> deviceMappings = runInstancesRequest.blockDeviceMappings();
 
         assertThat(deviceMappings).hasSize(1);
-        assertThat(deviceMappings.getFirst().getDeviceName()).isEqualTo("/dev/xvda");
-        assertThat(deviceMappings.getFirst().getEbs().getDeleteOnTermination()).isTrue();
-        assertThat(deviceMappings.getFirst().getEbs().getVolumeType()).isEqualTo("io1");
-        assertThat(deviceMappings.getFirst().getEbs().getVolumeSize()).isEqualTo(100);
-        assertThat(deviceMappings.getFirst().getEbs().getIops()).isEqualTo(700);
+        assertThat(deviceMappings.getFirst().deviceName()).isEqualTo("/dev/xvda");
+        assertThat(deviceMappings.getFirst().ebs().deleteOnTermination()).isTrue();
+        assertThat(deviceMappings.getFirst().ebs().volumeType()).isEqualTo(VolumeType.IO1);
+        assertThat(deviceMappings.getFirst().ebs().volumeSize()).isEqualTo(100);
+        assertThat(deviceMappings.getFirst().ebs().iops()).isEqualTo(700);
     }
 
     @Test
@@ -145,18 +145,18 @@ class RunInstanceRequestBuilderTest {
         when(ec2Config.getPlatform()).thenReturn(Platform.LINUX);
 
         final RunInstancesRequest runInstancesRequest = builder
-                .withSubnet(subnet)
-                .withEC2Config(ec2Config)
+                .subnet(subnet)
+                .eC2Config(ec2Config)
                 .build();
 
-        final List<BlockDeviceMapping> deviceMappings = runInstancesRequest.getBlockDeviceMappings();
+        final List<BlockDeviceMapping> deviceMappings = runInstancesRequest.blockDeviceMappings();
 
         assertThat(deviceMappings).hasSize(1);
-        assertThat(deviceMappings.getFirst().getDeviceName()).isEqualTo("/dev/xvdcz");
-        assertThat(deviceMappings.getFirst().getEbs().getDeleteOnTermination()).isTrue();
-        assertThat(deviceMappings.getFirst().getEbs().getVolumeType()).isEqualTo("gp2");
-        assertThat(deviceMappings.getFirst().getEbs().getVolumeSize()).isEqualTo(50);
-        assertThat(deviceMappings.getFirst().getEbs().getIops()).isNull();
+        assertThat(deviceMappings.getFirst().deviceName()).isEqualTo("/dev/xvdcz");
+        assertThat(deviceMappings.getFirst().ebs().deleteOnTermination()).isTrue();
+        assertThat(deviceMappings.getFirst().ebs().volumeType()).isEqualTo(VolumeType.GP2);
+        assertThat(deviceMappings.getFirst().ebs().volumeSize()).isEqualTo(50);
+        assertThat(deviceMappings.getFirst().ebs().iops()).isNull();
     }
 
     @Test
@@ -167,18 +167,18 @@ class RunInstanceRequestBuilderTest {
         when(ec2Config.getPlatform()).thenReturn(Platform.LINUX);
 
         final RunInstancesRequest runInstancesRequest = builder
-            .withSubnet(subnet)
-            .withEC2Config(ec2Config)
+            .subnet(subnet)
+            .eC2Config(ec2Config)
             .build();
 
-        final List<BlockDeviceMapping> deviceMappings = runInstancesRequest.getBlockDeviceMappings();
+        final List<BlockDeviceMapping> deviceMappings = runInstancesRequest.blockDeviceMappings();
 
         assertThat(deviceMappings).hasSize(1);
-        assertThat(deviceMappings.getFirst().getDeviceName()).isEqualTo("/dev/xvdcz");
-        assertThat(deviceMappings.getFirst().getEbs().getDeleteOnTermination()).isTrue();
-        assertThat(deviceMappings.getFirst().getEbs().getVolumeType()).isEqualTo("io1");
-        assertThat(deviceMappings.getFirst().getEbs().getVolumeSize()).isEqualTo(50);
-        assertThat(deviceMappings.getFirst().getEbs().getIops()).isEqualTo(1100);
+        assertThat(deviceMappings.getFirst().deviceName()).isEqualTo("/dev/xvdcz");
+        assertThat(deviceMappings.getFirst().ebs().deleteOnTermination()).isTrue();
+        assertThat(deviceMappings.getFirst().ebs().volumeType()).isEqualTo(VolumeType.IO1);
+        assertThat(deviceMappings.getFirst().ebs().volumeSize()).isEqualTo(50);
+        assertThat(deviceMappings.getFirst().ebs().iops()).isEqualTo(1100);
     }
 
     @Test
@@ -188,32 +188,32 @@ class RunInstanceRequestBuilderTest {
         when(ec2Config.getPlatform()).thenReturn(Platform.WINDOWS);
 
         final RunInstancesRequest runInstancesRequest = builder
-                .withSubnet(subnet)
-                .withEC2Config(ec2Config)
+                .subnet(subnet)
+                .eC2Config(ec2Config)
                 .build();
 
-        final List<BlockDeviceMapping> deviceMappings = runInstancesRequest.getBlockDeviceMappings();
+        final List<BlockDeviceMapping> deviceMappings = runInstancesRequest.blockDeviceMappings();
 
         assertThat(deviceMappings).hasSize(1);
-        assertThat(deviceMappings.getFirst().getDeviceName()).isEqualTo("/dev/sda1");
-        assertThat(deviceMappings.getFirst().getEbs().getDeleteOnTermination()).isTrue();
-        assertThat(deviceMappings.getFirst().getEbs().getVolumeType()).isEqualTo("gp2");
-        assertThat(deviceMappings.getFirst().getEbs().getVolumeSize()).isEqualTo(100);
-        assertThat(deviceMappings.getFirst().getEbs().getIops()).isNull();
+        assertThat(deviceMappings.getFirst().deviceName()).isEqualTo("/dev/sda1");
+        assertThat(deviceMappings.getFirst().ebs().deleteOnTermination()).isTrue();
+        assertThat(deviceMappings.getFirst().ebs().volumeType()).isEqualTo(VolumeType.GP2);
+        assertThat(deviceMappings.getFirst().ebs().volumeSize()).isEqualTo(100);
+        assertThat(deviceMappings.getFirst().ebs().iops()).isNull();
     }
 
     @Test
     void shouldHaveServerIdTag() {
-        when(ec2Config.getTagSpecification()).thenReturn(new TagSpecification());
+        when(ec2Config.getTagSpecification()).thenReturn(TagSpecification.builder());
 
         final RunInstancesRequest runInstancesRequest = builder
-                .withSubnet(subnet)
-                .withEC2Config(ec2Config)
+                .subnet(subnet)
+                .eC2Config(ec2Config)
                 .instanceToCreate(2)
-                .withServerId("gocd-server-id")
+                .serverId("gocd-server-id")
                 .build();
 
-        assertThat(runInstancesRequest.getTagSpecifications().getFirst().getTags())
-                .contains(new Tag(LABEL_SERVER_ID, "gocd-server-id"));
+        assertThat(runInstancesRequest.tagSpecifications().getFirst().tags())
+                .contains(Tag.builder().key(LABEL_SERVER_ID).value("gocd-server-id").build());
     }
 }

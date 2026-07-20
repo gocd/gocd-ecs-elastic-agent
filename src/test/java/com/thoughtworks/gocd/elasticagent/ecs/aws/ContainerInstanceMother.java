@@ -16,68 +16,81 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws;
 
-import com.amazonaws.services.ecs.model.Attribute;
-import com.amazonaws.services.ecs.model.ContainerInstance;
-import com.amazonaws.services.ecs.model.Resource;
-import com.amazonaws.services.ecs.model.VersionInfo;
+import software.amazon.awssdk.services.ecs.model.Attribute;
+import software.amazon.awssdk.services.ecs.model.ContainerInstance;
+import software.amazon.awssdk.services.ecs.model.Resource;
+import software.amazon.awssdk.services.ecs.model.VersionInfo;
 
 import java.util.Random;
 import java.util.UUID;
 
-import static com.amazonaws.services.ecs.model.AgentUpdateStatus.UPDATED;
+import static software.amazon.awssdk.services.ecs.model.AgentUpdateStatus.UPDATED;
 
 public class ContainerInstanceMother {
     public static ContainerInstance containerInstance(String ec2InstanceId) {
-        return new ContainerInstance()
-                .withEc2InstanceId(ec2InstanceId)
-                .withAgentConnected(true)
-                .withAgentUpdateStatus(UPDATED)
-                .withStatus("ACTIVE")
-                .withContainerInstanceArn(String.format("arn:aws:ecs:us-west-2:%s:container-instance/%s", new Random().nextInt(), UUID.randomUUID()));
+        return containerInstanceBuilder(ec2InstanceId)
+                .build();
     }
 
     public static ContainerInstance containerInstance(String ec2InstanceId, int pendingTasksCount, int runningTasksCount) {
-        return containerInstance(ec2InstanceId)
-                .withPendingTasksCount(pendingTasksCount)
-                .withRunningTasksCount(runningTasksCount)
-                .withAgentConnected(true);
+        return containerInstanceBuilder(ec2InstanceId)
+                .pendingTasksCount(pendingTasksCount)
+                .runningTasksCount(runningTasksCount)
+                .agentConnected(true)
+                .build();
     }
 
     public static ContainerInstance containerInstance(String ec2InstanceId, String containerInstanceArn) {
-        return containerInstance(ec2InstanceId)
-                .withContainerInstanceArn(containerInstanceArn);
+        return containerInstanceBuilder(ec2InstanceId, containerInstanceArn)
+                .build();
     }
 
     public static ContainerInstance containerInstance(String ec2InstanceId, boolean agentConnected) {
-        return containerInstance(ec2InstanceId)
-                .withAgentConnected(agentConnected);
+        return containerInstanceBuilder(ec2InstanceId)
+                .agentConnected(agentConnected)
+                .build();
     }
 
     public static ContainerInstance containerInstance(String instanceId, String containerInstanceArn, String status, int registeredCPU, int registeredMemory, int remainingCPU, int remainingMemory) {
-        return containerInstance(instanceId, containerInstanceArn)
-                .withAgentConnected(true)
-                .withAgentUpdateStatus(UPDATED)
-                .withStatus(status)
-                .withRegisteredResources(
+        return containerInstanceBuilder(instanceId, containerInstanceArn)
+                .agentConnected(true)
+                .agentUpdateStatus(UPDATED)
+                .status(status)
+                .registeredResources(
                         resourceWith("cpu", registeredCPU),
                         resourceWith("memory", registeredMemory)
                 )
-                .withRemainingResources(
+                .remainingResources(
                         resourceWith("CPU", remainingCPU),
                         resourceWith("memory", remainingMemory)
-                ).withVersionInfo(versionInfo("1.13", "1.24"));
+                ).versionInfo(versionInfo("1.13", "1.24"))
+                .build();
     }
 
-    public static ContainerInstance containerInstance(String ec2InstanceId, Attribute... attributes) {
-        return containerInstance(ec2InstanceId)
-                .withAttributes(attributes);
+    public static ContainerInstance.Builder containerInstanceBuilder(String ec2InstanceId, Attribute... attributes) {
+        return containerInstanceBuilder(ec2InstanceId)
+                .attributes(attributes);
     }
 
     public static Resource resourceWith(String resourceName, int registeredCPU) {
-        return new Resource().withName(resourceName).withType("INTEGER").withIntegerValue(registeredCPU);
+        return Resource.builder().name(resourceName).type("INTEGER").integerValue(registeredCPU).build();
     }
 
     public static VersionInfo versionInfo(String dockerVersion, String agentVersion) {
-        return new VersionInfo().withAgentVersion(agentVersion).withDockerVersion(dockerVersion);
+        return VersionInfo.builder().agentVersion(agentVersion).dockerVersion(dockerVersion).build();
+    }
+
+    public static ContainerInstance.Builder containerInstanceBuilder(String ec2InstanceId) {
+        return ContainerInstance.builder()
+                .ec2InstanceId(ec2InstanceId)
+                .agentConnected(true)
+                .agentUpdateStatus(UPDATED)
+                .status("ACTIVE")
+                .containerInstanceArn(String.format("arn:aws:ecs:us-west-2:%s:container-instance/%s", new Random().nextInt(), UUID.randomUUID()));
+    }
+
+    public static ContainerInstance.Builder containerInstanceBuilder(String ec2InstanceId, String containerInstanceArn) {
+        return containerInstanceBuilder(ec2InstanceId)
+                .containerInstanceArn(containerInstanceArn);
     }
 }

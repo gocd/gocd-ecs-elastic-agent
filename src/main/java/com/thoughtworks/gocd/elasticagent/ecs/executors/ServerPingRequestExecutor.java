@@ -16,8 +16,6 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.executors;
 
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ecs.model.ContainerInstance;
 import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.go.plugin.api.response.DefaultGoPluginApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
@@ -38,6 +36,8 @@ import com.thoughtworks.gocd.elasticagent.ecs.events.EventStream;
 import com.thoughtworks.gocd.elasticagent.ecs.exceptions.LimitExceededException;
 import com.thoughtworks.gocd.elasticagent.ecs.exceptions.ServerRequestFailedException;
 import com.thoughtworks.gocd.elasticagent.ecs.requests.ServerPingRequest;
+import software.amazon.awssdk.services.ec2.model.Instance;
+import software.amazon.awssdk.services.ecs.model.ContainerInstance;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -166,7 +166,7 @@ public class ServerPingRequestExecutor implements RequestExecutor {
             final EligibleForTerminationPredicate predicate = new EligibleForTerminationPredicate(pluginSettings);
             final Set<String> instancesToTerminate = allInstances.stream()
                     .filter(predicate)
-                    .map(Instance::getInstanceId)
+                .map(Instance::instanceId)
                     .collect(Collectors.toSet());
 
             if (instancesToTerminate.isEmpty()) {
@@ -175,7 +175,7 @@ public class ServerPingRequestExecutor implements RequestExecutor {
 
             final List<ContainerInstance> containerInstances = containerInstanceHelper.onDemandContainerInstances(pluginSettings);
             final List<ContainerInstance> containerInstanceList = containerInstances.stream()
-                    .filter(containerInstance -> instancesToTerminate.contains(containerInstance.getEc2InstanceId()))
+                .filter(containerInstance -> instancesToTerminate.contains(containerInstance.ec2InstanceId()))
                     .collect(toList());
 
             terminateOperation.execute(pluginSettings, containerInstanceList);
@@ -235,7 +235,7 @@ public class ServerPingRequestExecutor implements RequestExecutor {
     private void ensureClusterSizeBasedOnPlatform(PluginSettings pluginSettings, ElasticAgentProfileProperties elasticAgentProfileProperties, EventStream eventStream, ConsoleLogAppender consoleLogAppender) throws LimitExceededException {
         LOG.info(format("[server-ping] Checking running {0} instances in the cluster.", elasticAgentProfileProperties.platform()));
 
-        final EC2Config ec2Config = new EC2Config.Builder().withProfile(elasticAgentProfileProperties).withSettings(pluginSettings).build();
+        final EC2Config ec2Config = new EC2Config.Builder().profile(elasticAgentProfileProperties).settings(pluginSettings).build();
 
         String instanceName = String.format("%s_%s_INSTANCE", pluginSettings.getClusterName(), elasticAgentProfileProperties.platform());
         final List<Instance> allInstances = containerInstanceHelper.getAllOnDemandInstances(pluginSettings);
@@ -257,7 +257,7 @@ public class ServerPingRequestExecutor implements RequestExecutor {
     private void terminateIdleContainerInstance(PluginSettings pluginSettings, List<Instance> instancesForPlatform) {
         final Instance instance = instancesForPlatform.stream().sorted(new MostIdleInstanceComparator(Clock.DEFAULT.now())).toList().getFirst();
         final Optional<ContainerInstance> containerInstance = containerInstanceHelper.onDemandContainerInstances(pluginSettings).stream()
-                .filter(ci -> ci.getEc2InstanceId().equals(instance.getInstanceId()))
+                .filter(ci -> ci.ec2InstanceId().equals(instance.instanceId()))
                 .findFirst();
         containerInstance.ifPresent(self -> terminateOperation.execute(pluginSettings, self));
     }

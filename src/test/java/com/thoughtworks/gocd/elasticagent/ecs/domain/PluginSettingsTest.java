@@ -16,8 +16,10 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.domain;
 
-import org.joda.time.Period;
 import org.junit.jupiter.api.Test;
+import software.amazon.awssdk.services.ecs.model.LogDriver;
+
+import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -45,7 +47,7 @@ class PluginSettingsTest {
         assertThat(pluginSettings.getSecretAccessKey()).isEqualTo("some_secret_key");
         assertThat(pluginSettings.getClusterName()).isEqualTo("sample_cluster");
         assertThat(pluginSettings.getEnvironmentVariables()).contains("TZ=PST");
-        assertThat(pluginSettings.getContainerAutoregisterTimeout()).isEqualTo(new Period().withMinutes(3));
+        assertThat(pluginSettings.getContainerAutoregisterTimeout()).isEqualTo(Duration.ofMinutes(3));
         assertThat(pluginSettings.getKeyPairName()).isEqualTo("your_ssh_key_name");
         assertThat(pluginSettings.getRegion()).isEqualTo("us-east-x");
         assertThat(pluginSettings.getSubnetIds()).contains("s-foobar");
@@ -59,8 +61,8 @@ class PluginSettingsTest {
                 .addSetting("LogOptions", "awslogs-group=foo-group\nawslogs-region=us-east-1")
                 .build();
 
-        assertThat(pluginSettings.logConfiguration().getLogDriver()).isEqualTo("awslogs");
-        assertThat(pluginSettings.logConfiguration().getOptions())
+        assertThat(pluginSettings.logConfiguration().logDriver()).isEqualTo(LogDriver.AWSLOGS);
+        assertThat(pluginSettings.logConfiguration().options())
                 .containsEntry("awslogs-group", "foo-group")
                 .containsEntry("awslogs-region", "us-east-1");
 

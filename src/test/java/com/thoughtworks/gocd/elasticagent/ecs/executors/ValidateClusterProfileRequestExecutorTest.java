@@ -28,26 +28,25 @@ import uk.org.webcompere.systemstubs.environment.EnvironmentVariables;
 import uk.org.webcompere.systemstubs.jupiter.SystemStub;
 import uk.org.webcompere.systemstubs.jupiter.SystemStubsExtension;
 
-import static com.amazonaws.SDKGlobalConfiguration.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static software.amazon.awssdk.core.SdkSystemSetting.AWS_ACCESS_KEY_ID;
+import static software.amazon.awssdk.core.SdkSystemSetting.AWS_SECRET_ACCESS_KEY;
 
 @ExtendWith(SystemStubsExtension.class)
 class ValidateClusterProfileRequestExecutorTest {
 
     @SystemStub
     EnvironmentVariables environmentVariables = new EnvironmentVariables()
-            .set(ACCESS_KEY_ENV_VAR, "")
-            .set(ALTERNATE_ACCESS_KEY_ENV_VAR, "")
-            .set(SECRET_KEY_ENV_VAR, "")
-            .set(ALTERNATE_SECRET_KEY_ENV_VAR, "");
+            .set(AWS_ACCESS_KEY_ID.environmentVariable(), "")
+            .set(AWS_SECRET_ACCESS_KEY.environmentVariable(), "");
 
     @Test
     void shouldValidateABadConfiguration() throws Exception {
         environmentVariables
-                .set(ACCESS_KEY_ENV_VAR, "access-key-from-env")
-                .set(SECRET_KEY_ENV_VAR, "secret-key-from-env")
+                .set(AWS_ACCESS_KEY_ID.environmentVariable(), "access-key-from-env")
+                .set(AWS_SECRET_ACCESS_KEY.environmentVariable(), "secret-key-from-env")
                 .execute(() -> {
                     ValidateClusterProfileRequest request = new ValidateClusterProfileRequest();
                     GoPluginApiResponse response = new ValidateClusterProfileRequestExecutor(request).execute();

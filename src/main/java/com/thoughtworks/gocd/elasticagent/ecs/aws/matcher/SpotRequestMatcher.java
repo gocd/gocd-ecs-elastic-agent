@@ -16,12 +16,12 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws.matcher;
 
-import com.amazonaws.services.ec2.model.GroupIdentifier;
-import com.amazonaws.services.ec2.model.LaunchSpecification;
-import com.amazonaws.services.ec2.model.SpotInstanceRequest;
-import com.amazonaws.services.ec2.model.Tag;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.EC2Config;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.Platform;
+import software.amazon.awssdk.services.ec2.model.GroupIdentifier;
+import software.amazon.awssdk.services.ec2.model.LaunchSpecification;
+import software.amazon.awssdk.services.ec2.model.SpotInstanceRequest;
+import software.amazon.awssdk.services.ec2.model.Tag;
 
 import java.util.Collection;
 import java.util.Objects;
@@ -34,22 +34,22 @@ public class SpotRequestMatcher {
             return false;
         }
 
-        LaunchSpecification launchSpecification = spotInstanceRequest.getLaunchSpecification();
+        LaunchSpecification launchSpecification = spotInstanceRequest.launchSpecification();
         final Platform platform = platformFor(spotInstanceRequest);
 
         if (platform != ec2Config.getPlatform()) {
             return false;
         }
 
-        if (!Objects.equals(launchSpecification.getImageId(), ec2Config.getAmi())) {
+        if (!Objects.equals(launchSpecification.imageId(), ec2Config.getAmi())) {
             return false;
         }
 
-        if (!Objects.equals(ec2Config.getInstanceType(), launchSpecification.getInstanceType())) {
+        if (!Objects.equals(ec2Config.getInstanceType(), launchSpecification.instanceTypeAsString())) {
             return false;
         }
 
-        if (notMatching(ec2Config.getSubnetIds(), launchSpecification.getSubnetId())) {
+        if (notMatching(ec2Config.getSubnetIds(), launchSpecification.subnetId())) {
             return false;
         }
 
@@ -61,13 +61,13 @@ public class SpotRequestMatcher {
     }
 
     private Platform platformFor(SpotInstanceRequest spotInstanceRequest) {
-        Tag platformTag = spotInstanceRequest.getTags().stream().filter(tag -> "platform".equals(tag.getKey())).findFirst().orElse(null);
+        Tag platformTag = spotInstanceRequest.tags().stream().filter(tag -> "platform".equals(tag.key())).findFirst().orElse(null);
 
-        return platformTag != null ? Platform.from(platformTag.getValue()) : null;
+        return platformTag != null ? Platform.from(platformTag.value()) : null;
     }
 
     private Set<String> getInstanceSecurityGroups(LaunchSpecification launchSpecification) {
-        return launchSpecification.getAllSecurityGroups().stream().map(GroupIdentifier::getGroupId).collect(Collectors.toSet());
+        return launchSpecification.securityGroups().stream().map(GroupIdentifier::groupId).collect(Collectors.toSet());
     }
 
     private boolean notMatching(Collection<String> valueFromConfig, String valueFromInstance) {

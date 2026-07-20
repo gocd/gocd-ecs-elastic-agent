@@ -16,23 +16,22 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws.predicate;
 
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.Tag;
 import com.thoughtworks.gocd.elasticagent.ecs.Clock;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.Platform;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
-import org.joda.time.Period;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
+import software.amazon.awssdk.services.ec2.model.Instance;
+import software.amazon.awssdk.services.ec2.model.InstanceStateName;
+import software.amazon.awssdk.services.ec2.model.Tag;
+
+import java.time.Duration;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.Constants.STOPPED_AT;
-import static com.thoughtworks.gocd.elasticagent.ecs.aws.InstanceMother.instance;
-import static com.thoughtworks.gocd.elasticagent.ecs.aws.InstanceMother.linuxInstanceWithTag;
-import static com.thoughtworks.gocd.elasticagent.ecs.domain.EC2InstanceState.*;
+import static com.thoughtworks.gocd.elasticagent.ecs.aws.InstanceMother.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -48,7 +47,7 @@ class EligibleForTerminationPredicateTest {
 
     @Test
     void shouldReturnTrueIfInstanceDoesNotHaveStoppedAtLabel() {
-        final Instance instance = linuxInstanceWithTag("i-abcd123", STOPPED, new Tag("Foo", "Bar"));
+        final Instance instance = linuxInstanceWithTag("i-abcd123", InstanceStateName.STOPPED, Tag.builder().key("Foo").value("Bar").build());
 
         final boolean testResult = new EligibleForTerminationPredicate(null).test(instance);
 
@@ -56,8 +55,8 @@ class EligibleForTerminationPredicateTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {PENDING, RUNNING, STOPPING, SHUTTING_DOWN, TERMINATED})
-    void shouldReturnFalseForInstanceWithState(String state) {
+    @EnumSource(value = InstanceStateName.class, names = {"PENDING", "RUNNING", "STOPPING", "SHUTTING_DOWN", "TERMINATED"})
+    void shouldReturnFalseForInstanceWithState(InstanceStateName state) {
         final Instance instance = instance("i-abcd123", state, Platform.WINDOWS.name());
 
         final boolean testResult = new EligibleForTerminationPredicate(null).test(instance);
@@ -69,13 +68,14 @@ class EligibleForTerminationPredicateTest {
     @EnumSource(Platform.class)
     void shouldReturnTrueWhenInstanceIsStoppedLongerThanTheTimeConfiguredInPluginSettings(Platform platform) {
         final Clock.TestClock testClock = new Clock.TestClock();
-        final Instance instance = instance("i-abcd123", STOPPED, platform.name())
-                .withTags(new Tag(STOPPED_AT, String.valueOf(testClock.now().getMillis())));
+        final Instance instance = instanceBuilder("i-abcd123", InstanceStateName.STOPPED, platform.name())
+                .tags(Tag.builder().key(STOPPED_AT).value(String.valueOf(testClock.now().toEpochMilli())).build())
+                .build();
 
-        when(pluginSettings.terminateStoppedLinuxInstanceAfter()).thenReturn(Period.seconds(20));
-        when(pluginSettings.terminateStoppedWindowsInstanceAfter()).thenReturn(Period.seconds(20));
+        when(pluginSettings.terminateStoppedLinuxInstanceAfter()).thenReturn(Duration.ofSeconds(20));
+        when(pluginSettings.terminateStoppedWindowsInstanceAfter()).thenReturn(Duration.ofSeconds(20));
 
-        testClock.forward(Period.seconds(21));
+        testClock.forward(Duration.ofSeconds(21));
 
         final boolean testResult = new EligibleForTerminationPredicate(pluginSettings, testClock).test(instance);
 
@@ -86,13 +86,14 @@ class EligibleForTerminationPredicateTest {
     @EnumSource(Platform.class)
     void shouldReturnFalseWhenTerminationTimeIsNotReached(Platform platform) {
         final Clock.TestClock testClock = new Clock.TestClock();
-        final Instance instance = instance("i-abcd123", STOPPED, platform.name())
-                .withTags(new Tag(STOPPED_AT, String.valueOf(testClock.now().getMillis())));
+        final Instance instance = instanceBuilder("i-abcd123", InstanceStateName.STOPPED, platform.name())
+                .tags(Tag.builder().key(STOPPED_AT).value(String.valueOf(testClock.now().toEpochMilli())).build())
+                .build();
 
-        when(pluginSettings.terminateStoppedLinuxInstanceAfter()).thenReturn(Period.seconds(20));
-        when(pluginSettings.terminateStoppedWindowsInstanceAfter()).thenReturn(Period.seconds(20));
+        when(pluginSettings.terminateStoppedLinuxInstanceAfter()).thenReturn(Duration.ofSeconds(20));
+        when(pluginSettings.terminateStoppedWindowsInstanceAfter()).thenReturn(Duration.ofSeconds(20));
 
-        testClock.forward(Period.seconds(19));
+        testClock.forward(Duration.ofSeconds(19));
 
         final boolean testResult = new EligibleForTerminationPredicate(pluginSettings, testClock).test(instance);
 

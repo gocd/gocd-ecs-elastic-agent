@@ -16,8 +16,6 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws;
 
-import com.amazonaws.services.ecs.AmazonECS;
-import com.amazonaws.services.ecs.model.*;
 import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.gocd.elasticagent.ecs.Constants;
 import com.thoughtworks.gocd.elasticagent.ecs.ECSTask;
@@ -28,6 +26,8 @@ import com.thoughtworks.gocd.elasticagent.ecs.exceptions.ContainerInstanceFailed
 import com.thoughtworks.gocd.elasticagent.ecs.exceptions.LimitExceededException;
 import com.thoughtworks.gocd.elasticagent.ecs.requests.CreateAgentRequest;
 import org.apache.commons.lang3.Strings;
+import software.amazon.awssdk.services.ecs.EcsClient;
+import software.amazon.awssdk.services.ecs.model.*;
 
 import java.text.MessageFormat;
 import java.util.*;
@@ -64,17 +64,12 @@ public class TaskHelper {
 
         final ElasticAgentProfileProperties elasticAgentProfileProperties = createAgentRequest.elasticProfile();
 
-        ContainerDefinition containerDefinition = new ContainerDefinitionBuilder()
-                .withName(taskName)
-                .pluginSettings(pluginSettings)
-                .createAgentRequest(createAgentRequest)
-                .withServerId(getServerId())
-                .build();
+        ContainerDefinitionBuilder containerDefinitionBuilder = new ContainerDefinitionBuilder(createAgentRequest);
 
         StopPolicy stopPolicy = elasticAgentProfileProperties.platform() == LINUX ? pluginSettings.getLinuxStopPolicy() : pluginSettings.getWindowsStopPolicy();
         Optional<ContainerInstance> containerInstance = instanceSelectionStrategyFactory
                 .strategyFor(stopPolicy)
-                .instanceForScheduling(pluginSettings, elasticAgentProfileProperties, containerDefinition);
+                .instanceForScheduling(pluginSettings, elasticAgentProfileProperties, containerDefinitionBuilder.buildPlacementRequirement());
 
         if (containerInstance.isEmpty()) {
             consoleLogAppender.accept("No running instance(s) found to build the ECS Task to perform current job.");
@@ -92,113 +87,107 @@ public class TaskHelper {
         }
 
         final RegisterTaskDefinitionRequest registerTaskDefinitionRequest = registerTaskDefinitionRequestBuilder
-                .build(pluginSettings, elasticAgentProfileProperties, containerDefinition).withFamily(taskName);
+                .build(pluginSettings, elasticAgentProfileProperties, containerDefinitionBuilder.name(taskName)
+                        .pluginSettings(pluginSettings)
+                        .serverId(getServerId())
+                        .build(), taskName);
 
         consoleLogAppender.accept("Registering ECS Task definition with cluster...");
         LOG.debug(format("[create-agent] Registering task definition: {0} ", registerTaskDefinitionRequest.toString()));
-        RegisterTaskDefinitionResult taskDefinitionResult = pluginSettings.ecsClient().registerTaskDefinition(registerTaskDefinitionRequest);
+        RegisterTaskDefinitionResponse taskDefinitionResult = pluginSettings.ecsClient().registerTaskDefinition(registerTaskDefinitionRequest);
         consoleLogAppender.accept("Done registering ECS Task definition with cluster.");
         LOG.debug("[create-agent] Done registering task definition");
 
-        TaskDefinition taskDefinitionFromNewTask = taskDefinitionResult.getTaskDefinition();
-        StartTaskRequest startTaskRequest = new StartTaskRequest()
-                .withTaskDefinition(taskDefinitionFromNewTask.getTaskDefinitionArn())
-                .withContainerInstances(containerInstance.get().getContainerInstanceArn())
-                .withCluster(pluginSettings.getClusterName());
+        TaskDefinition taskDefinitionFromNewTask = taskDefinitionResult.taskDefinition();
+        StartTaskRequest startTaskRequest = StartTaskRequest.builder()
+                .taskDefinition(taskDefinitionFromNewTask.taskDefinitionArn())
+                .containerInstances(containerInstance.get().containerInstanceArn())
+                .cluster(pluginSettings.getClusterName())
+                .build();
 
         consoleLogAppender.accept("Starting ECS Task to perform current job...");
         LOG.debug(format("[create-agent] Starting task : {0} ", startTaskRequest.toString()));
-        StartTaskResult startTaskResult = pluginSettings.ecsClient().startTask(startTaskRequest);
+        StartTaskResponse startTaskResult = pluginSettings.ecsClient().startTask(startTaskRequest);
         LOG.debug("[create-agent] Done executing start task request.");
 
         if (isStarted(startTaskResult)) {
             String message = elasticAgentProfileProperties.runAsSpotInstance() ?
                     "[WARNING] The ECS task is scheduled on a Spot Instance. A spot instance termination would re-schedule the job."
-                    : String.format("ECS Task %s scheduled on container instance %s.", taskName, containerInstance.get().getEc2InstanceId());
+                    : String.format("ECS Task %s scheduled on container instance %s.", taskName, containerInstance.get().ec2InstanceId());
 
             consoleLogAppender.accept(message);
 
-            LOG.info(format("[create-agent] Task {0} scheduled on container instance {1}", taskName, containerInstance.get().getEc2InstanceId()));
-            return Optional.of(new ECSTask(startTaskResult.getTasks().getFirst(), taskDefinitionFromNewTask, elasticAgentProfileProperties, createAgentRequest.getJobIdentifier(), createAgentRequest.environment(), containerInstance.get().getEc2InstanceId()));
+            LOG.info(format("[create-agent] Task {0} scheduled on container instance {1}", taskName, containerInstance.get().ec2InstanceId()));
+            return Optional.of(new ECSTask(startTaskResult.tasks().getFirst(), taskDefinitionFromNewTask, elasticAgentProfileProperties, createAgentRequest.getJobIdentifier(), createAgentRequest.environment(), containerInstance.get().ec2InstanceId()));
         } else {
-            cleanupTaskDefinition(pluginSettings, taskDefinitionFromNewTask.getTaskDefinitionArn());
-            String errors = startTaskResult.getFailures().stream().map(failure -> "    " + failure.getArn() + " failed with reason :" + failure.getReason()).collect(Collectors.joining("\n"));
+            cleanupTaskDefinition(pluginSettings, taskDefinitionFromNewTask.taskDefinitionArn());
+            String errors = startTaskResult.failures().stream().map(failure -> "    " + failure.arn() + " failed with reason :" + failure.reason()).collect(Collectors.joining("\n"));
             throw new ContainerFailedToRegisterException("Fail to start task " + taskName + ":\n" + errors);
         }
     }
 
     public void stopAndCleanupTask(PluginSettings pluginSettings, ECSTask task) {
         pluginSettings.ecsClient().stopTask(
-                new StopTaskRequest()
-                        .withCluster(pluginSettings.getClusterName())
-                        .withTask(task.taskArn())
-                        .withReason("Stopped by GoCD server.")
+                StopTaskRequest.builder()
+                        .cluster(pluginSettings.getClusterName())
+                        .task(task.taskArn())
+                        .reason("Stopped by GoCD server.")
+                        .build()
         );
         cleanupTaskDefinition(pluginSettings, task.taskDefinitionArn());
     }
 
     public void cleanupTaskDefinition(PluginSettings settings, String taskDefinitionArn) {
-        settings.ecsClient().deregisterTaskDefinition(new DeregisterTaskDefinitionRequest().withTaskDefinition(taskDefinitionArn));
-        settings.ecsClient().deleteTaskDefinitions(new DeleteTaskDefinitionsRequest().withTaskDefinitions(taskDefinitionArn));
+        settings.ecsClient().deregisterTaskDefinition(DeregisterTaskDefinitionRequest.builder().taskDefinition(taskDefinitionArn).build());
+        settings.ecsClient().deleteTaskDefinitions(DeleteTaskDefinitionsRequest.builder().taskDefinitions(taskDefinitionArn).build());
     }
 
     public Map<Task, TaskDefinition> listAllTasks(PluginSettings settings) {
         String clusterName = settings.getClusterName();
 
-        AmazonECS ecsClient = settings.ecsClient();
+        EcsClient ecsClient = settings.ecsClient();
 
-        List<String> taskArns = ecsClient.listTasks(new ListTasksRequest()
-                .withCluster(clusterName)).getTaskArns();
+        List<String> taskArns = ecsClient.listTasks(ListTasksRequest.builder().cluster(clusterName).build()).taskArns();
 
         if (taskArns.isEmpty()) {
             return Collections.emptyMap();
         }
 
-        List<Task> tasks = ecsClient.describeTasks(new DescribeTasksRequest()
-                .withTasks(taskArns)
-                .withCluster(clusterName))
-                .getTasks();
+        List<Task> tasks = ecsClient.describeTasks(DescribeTasksRequest.builder().tasks(taskArns).cluster(clusterName).build()).tasks();
 
         return tasks.stream().collect(Collectors.toMap(
                 task -> task,
-                task -> ecsClient.describeTaskDefinition(new DescribeTaskDefinitionRequest()
-                        .withTaskDefinition(task.getTaskDefinitionArn()))
-                        .getTaskDefinition()
+                task -> ecsClient.describeTaskDefinition(DescribeTaskDefinitionRequest.builder().taskDefinition(task.taskDefinitionArn()).build()).taskDefinition()
         ));
     }
 
     public List<ECSContainer> allRunningContainers(PluginSettings settings) {
         String clusterName = settings.getClusterName();
 
-        AmazonECS ecsClient = settings.ecsClient();
+        EcsClient ecsClient = settings.ecsClient();
 
-        List<String> taskArns = ecsClient.listTasks(new ListTasksRequest()
-                .withCluster(clusterName)
-                .withDesiredStatus(DesiredStatus.RUNNING)).getTaskArns();
+        List<String> taskArns = ecsClient.listTasks(ListTasksRequest.builder()
+                .cluster(clusterName)
+                .desiredStatus(DesiredStatus.RUNNING)
+                .build()).taskArns();
 
         if (taskArns.isEmpty()) {
             return Collections.emptyList();
         }
 
-        List<Task> tasks = ecsClient.describeTasks(new DescribeTasksRequest()
-                .withTasks(taskArns)
-                .withCluster(clusterName))
-                .getTasks();
+        List<Task> tasks = ecsClient.describeTasks(DescribeTasksRequest.builder().tasks(taskArns).cluster(clusterName).build()).tasks();
 
         return tasks.stream().map(t -> {
-            final TaskDefinition taskDefinition = ecsClient.describeTaskDefinition(new DescribeTaskDefinitionRequest().withTaskDefinition(t.getTaskDefinitionArn())).getTaskDefinition();
+            final TaskDefinition taskDefinition = ecsClient.describeTaskDefinition(DescribeTaskDefinitionRequest.builder().taskDefinition(t.taskDefinitionArn()).build()).taskDefinition();
             return new ECSContainer(t, taskDefinition);
         }).collect(Collectors.toList());
     }
 
     public Optional<Task> refreshTask(PluginSettings settings, String taskArn) {
         String clusterName = settings.getClusterName();
-        AmazonECS ecsClient = settings.ecsClient();
+        EcsClient ecsClient = settings.ecsClient();
 
-        List<Task> tasks = ecsClient.describeTasks(new DescribeTasksRequest()
-                .withTasks(taskArn)
-                .withCluster(clusterName))
-                .getTasks();
+        List<Task> tasks = ecsClient.describeTasks(DescribeTasksRequest.builder().tasks(taskArn).cluster(clusterName).build()).tasks();
 
         if (tasks.isEmpty()) {
             return empty();
@@ -208,15 +197,22 @@ public class TaskHelper {
     }
 
     public Optional<ECSTask> fromTaskInfo(Task task, TaskDefinition taskDefinition, Map<String, String> arnToInstanceId, String serverId) {
-        List<ContainerDefinition> containerDefinitions = taskDefinition.getContainerDefinitions();
-        Map<String, String> labels = containerDefinitions.getFirst().getDockerLabels();
+        List<ContainerDefinition> containerDefinitions = taskDefinition.containerDefinitions();
+        Map<String, String> labels = containerDefinitions.getFirst().dockerLabels();
 
-        if (!Strings.CI.equals(labels.getOrDefault(Constants.LABEL_SERVER_ID, serverId), serverId)) {
-            LOG.debug(MessageFormat.format("Ignoring task {0} as server id({1}) doest not match with {2}", task.getTaskArn(), labels.get(LABEL_SERVER_ID), serverId));
+        // Both labels are stamped on every task definition this plugin registers, so anything without them
+        // (e.g. non-plugin tasks running in a shared cluster) must not be adopted, let alone cleaned up.
+        if (!PLUGIN_ID.equals(labels.get(CREATED_BY_LABEL_KEY))) {
+            LOG.debug(MessageFormat.format("Ignoring task {0} as it was not created by this plugin.", task.taskArn()));
             return empty();
         }
 
-        final String instanceId = arnToInstanceId.get(task.getContainerInstanceArn());
+        if (!Strings.CI.equals(labels.get(Constants.LABEL_SERVER_ID), serverId)) {
+            LOG.debug(MessageFormat.format("Ignoring task {0} as server id({1}) does not match with {2}", task.taskArn(), labels.get(LABEL_SERVER_ID), serverId));
+            return empty();
+        }
+
+        final String instanceId = arnToInstanceId.get(task.containerInstanceArn());
 
         ElasticAgentProfileProperties elasticAgentProfileProperties = ElasticAgentProfileProperties.fromJson(labels.get(CONFIGURATION_LABEL_KEY));
         JobIdentifier jobIdentifier = JobIdentifier.fromJson(labels.get(LABEL_JOB_IDENTIFIER));
@@ -225,7 +221,7 @@ public class TaskHelper {
         return Optional.of(new ECSTask(task, taskDefinition, elasticAgentProfileProperties, jobIdentifier, env, instanceId));
     }
 
-    private boolean isStarted(StartTaskResult startTaskResult) {
-        return startTaskResult.getFailures().isEmpty() && !startTaskResult.getTasks().isEmpty();
+    private boolean isStarted(StartTaskResponse startTaskResult) {
+        return startTaskResult.failures().isEmpty() && !startTaskResult.tasks().isEmpty();
     }
 }

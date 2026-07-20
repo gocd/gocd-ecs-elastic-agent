@@ -16,17 +16,17 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.domain;
 
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ecs.model.Cluster;
-import com.amazonaws.services.ecs.model.ContainerInstance;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import software.amazon.awssdk.services.ec2.model.Instance;
+import software.amazon.awssdk.services.ec2.model.InstanceStateName;
+import software.amazon.awssdk.services.ecs.model.Cluster;
+import software.amazon.awssdk.services.ecs.model.ContainerInstance;
 
 import java.text.ParseException;
 import java.util.Collections;
 import java.util.List;
 
-import static com.amazonaws.services.ec2.model.InstanceType.C3Large;
 import static com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerInstanceMother.containerInstance;
 import static com.thoughtworks.gocd.elasticagent.ecs.aws.InstanceMother.*;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.AWSModelMother.*;
@@ -34,6 +34,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static software.amazon.awssdk.services.ec2.model.InstanceType.C3_LARGE;
 
 class ECSClusterTest {
 
@@ -110,7 +111,7 @@ class ECSClusterTest {
                 4,
                 1024
         );
-        final Instance instance = instance("instance-id-1", C3Large, "ami-2dad3da", toDate("13/05/2017 12:50:20"));
+        final Instance instance = instance("instance-id-1", C3_LARGE, "ami-2dad3da", toInstant("13/05/2017 12:50:20"));
         final ECSContainer alpineContainer = containerWith("arn/container-instance-1", "alpine-container", "alpine", 100, 200, "13/05/2017 12:55:00", "13/05/2017 12:56:30");
 
         final ECSCluster ecsCluster = new ECSCluster(cluster, singletonList(containerInstance), singletonList(instance), singletonList(alpineContainer), 2, 3, 0, 0);
@@ -127,8 +128,8 @@ class ECSClusterTest {
         final ContainerInstance onDemandContainerInstance = containerInstance("instance-id-1");
         final ContainerInstance spotContainerInstance = containerInstance("instance-id-2");
 
-        final Instance onDemandInstance = instance("instance-id-1", C3Large, "ami-2dad3da", toDate("13/05/2017 12:50:20"));
-        final Instance spotInstance = spotInstance("instance-id-2", "running", "ami-2dad3da");
+        final Instance onDemandInstance = instance("instance-id-1", C3_LARGE, "ami-2dad3da", toInstant("13/05/2017 12:50:20"));
+        final Instance spotInstance = spotInstance("instance-id-2", InstanceStateName.RUNNING, "ami-2dad3da");
 
         final ECSContainer alpineContainer = containerWith("arn/container-instance-1", "alpine-container", "alpine", 100, 200, "13/05/2017 12:55:00", "13/05/2017 12:56:30");
 

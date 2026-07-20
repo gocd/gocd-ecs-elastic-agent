@@ -16,30 +16,26 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws;
 
-import com.amazonaws.services.ec2.model.*;
-import com.amazonaws.services.ecs.model.ContainerInstance;
 import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.gocd.elasticagent.ecs.ECSElasticPlugin;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.predicate.SpotInstanceEligibleForTerminationPredicate;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.wait.Poller;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.wait.Result;
-import com.thoughtworks.gocd.elasticagent.ecs.domain.ConsoleLogAppender;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.Platform;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
-import org.joda.time.Period;
+import software.amazon.awssdk.services.ec2.model.*;
+import software.amazon.awssdk.services.ecs.model.ContainerInstance;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.Constants.*;
 import static com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerInstanceHelper.*;
-import static com.thoughtworks.gocd.elasticagent.ecs.domain.EC2InstanceState.PENDING;
-import static com.thoughtworks.gocd.elasticagent.ecs.domain.EC2InstanceState.RUNNING;
-import static com.thoughtworks.gocd.elasticagent.ecs.domain.SpotRequestState.*;
+import static com.thoughtworks.gocd.elasticagent.ecs.aws.strategy.InstanceSelectionStrategy.ACCEPTABLE_STATES;
 import static com.thoughtworks.gocd.elasticagent.ecs.domain.SpotRequestStatus.REQUEST_CANCELLED_INSTANCE_RUNNING;
 import static com.thoughtworks.gocd.elasticagent.ecs.utils.Util.toMap;
 import static java.lang.String.format;
@@ -47,26 +43,25 @@ import static java.lang.String.valueOf;
 import static java.lang.System.currentTimeMillis;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static software.amazon.awssdk.services.ec2.model.SpotInstanceState.*;
 
 public class SpotInstanceHelper {
     public static final String SPOT_INSTANCE_NAME_FORMAT = "%s_%s_SPOT_INSTANCE";
     private static final Logger LOG = Logger.getLoggerFor(SpotInstanceHelper.class);
-    private static final Set<String> ACCEPTABLE_STATES = Stream.of(PENDING, RUNNING).collect(toSet());
 
     private final SpotInstanceRequestBuilder spotInstanceRequestBuilder;
     private final SubnetSelector subnetSelector;
     private final Supplier<String> serverIdSupplier;
     private final ContainerInstanceHelper containerInstanceHelper;
-    private final Period spotRequestVisibilityTimeout;
+    private final Duration spotRequestVisibilityTimeout;
 
     public SpotInstanceHelper() {
-        this(new ContainerInstanceHelper(), new SpotInstanceRequestBuilder(), new SubnetSelector(), ECSElasticPlugin::getServerId, Period.seconds(25));
+        this(new ContainerInstanceHelper(), new SpotInstanceRequestBuilder(), new SubnetSelector(), ECSElasticPlugin::getServerId, Duration.ofSeconds(25));
     }
 
     protected SpotInstanceHelper(ContainerInstanceHelper spotInstanceRequestBuilder, SpotInstanceRequestBuilder containerInstanceHelper,
-                                 SubnetSelector subnetSelector, Supplier<String> serverIdSupplier, Period spotRequestVisibilityTimeout) {
+                                 SubnetSelector subnetSelector, Supplier<String> serverIdSupplier, Duration spotRequestVisibilityTimeout) {
         this.containerInstanceHelper = spotInstanceRequestBuilder;
         this.spotInstanceRequestBuilder = containerInstanceHelper;
         this.subnetSelector = subnetSelector;
@@ -74,12 +69,12 @@ public class SpotInstanceHelper {
         this.spotRequestVisibilityTimeout = spotRequestVisibilityTimeout;
     }
 
-    public RequestSpotInstancesResult requestSpotInstanceRequest(PluginSettings pluginSettings, EC2Config ec2Config, ConsoleLogAppender consoleLogAppender) {
+    public RequestSpotInstancesResponse requestSpotInstanceRequest(PluginSettings pluginSettings, EC2Config ec2Config) {
         List<Instance> allInstances = containerInstanceHelper.getAllInstances(pluginSettings);
 
         Subnet subnet = subnetSelector.selectSubnetWithMinimumEC2Instances(pluginSettings, ec2Config.getSubnetIds(), allInstances);
 
-        RequestSpotInstancesRequest requestSpotInstancesRequest = spotInstanceRequestBuilder.withEC2Config(ec2Config).withSubnet(subnet).build();
+        RequestSpotInstancesRequest requestSpotInstancesRequest = spotInstanceRequestBuilder.eC2Config(ec2Config).subnet(subnet).build();
 
         return pluginSettings.ec2Client().requestSpotInstances(requestSpotInstancesRequest);
     }
@@ -103,15 +98,15 @@ public class SpotInstanceHelper {
 
         final List<ContainerInstance> containerInstances = containerInstanceHelper.spotContainerInstances(pluginSettings);
 
-        Map<String, ContainerInstance> containerInstanceMap = toMap(containerInstances, ContainerInstance::getEc2InstanceId, containerInstance -> containerInstance);
+        Map<String, ContainerInstance> containerInstanceMap = toMap(containerInstances, ContainerInstance::ec2InstanceId, containerInstance -> containerInstance);
 
         if (containerInstances.isEmpty()) {
             return emptyList();
         }
 
         return spotInstancesInCluster.stream()
-                .filter(instance -> containerInstanceMap.containsKey(instance.getInstanceId()))
-                .filter(instance -> isIdle(containerInstanceMap.get(instance.getInstanceId())))
+                .filter(instance -> containerInstanceMap.containsKey(instance.instanceId()))
+                .filter(instance -> isIdle(containerInstanceMap.get(instance.instanceId())))
                 .collect(toList());
     }
 
@@ -123,74 +118,68 @@ public class SpotInstanceHelper {
                 .collect(toList());
     }
 
-    public List<SpotInstanceRequest> getAllOpenOrSpotRequestsWithRunningInstances(PluginSettings pluginSettings, String clusterName, Platform platform) {
-        DescribeSpotInstanceRequestsRequest describeSpotInstanceRequestsRequest = new DescribeSpotInstanceRequestsRequest()
-                .withFilters(
-                        new Filter().withName("state").withValues(OPEN, ACTIVE, CANCELLED),
-                        new Filter().withName("tag:Creator").withValues(PLUGIN_ID),
-                        new Filter().withName("tag:cluster-name").withValues(clusterName),
-                        new Filter().withName("tag:platform").withValues(platform.name()),
-                        new Filter().withName("tag:server-id").withValues(serverIdSupplier.get())
-                );
+    public Stream<SpotInstanceRequest> getAllOpenOrSpotRequestsWithRunningInstances(PluginSettings pluginSettings, String clusterName, Platform platform) {
+        DescribeSpotInstanceRequestsRequest describeSpotInstanceRequestsRequest = DescribeSpotInstanceRequestsRequest.builder()
+                .filters(
+                        Filter.builder().name("state").values(OPEN.toString(), ACTIVE.toString(), CANCELLED.toString()).build(),
+                        Filter.builder().name("tag:Creator").values(PLUGIN_ID).build(),
+                        Filter.builder().name("tag:cluster-name").values(clusterName).build(),
+                        Filter.builder().name("tag:platform").values(platform.name()).build(),
+                        Filter.builder().name("tag:server-id").values(serverIdSupplier.get()).build()
+                ).build();
 
-        DescribeSpotInstanceRequestsResult describeSpotInstanceRequestsResult = pluginSettings.ec2Client().describeSpotInstanceRequests(describeSpotInstanceRequestsRequest);
+        DescribeSpotInstanceRequestsResponse describeSpotInstanceRequestsResult = pluginSettings.ec2Client().describeSpotInstanceRequests(describeSpotInstanceRequestsRequest);
 
-        List<SpotInstanceRequest> allOpenSpotRequests = describeSpotInstanceRequestsResult.getSpotInstanceRequests();
-
-        allOpenSpotRequests.removeIf(spotInstanceRequest -> {
-            if (CANCELLED.equals(spotInstanceRequest.getState())) {
-                return !REQUEST_CANCELLED_INSTANCE_RUNNING.equals(spotInstanceRequest.getStatus().getCode());
-            }
-            return false;
-        });
-
-        return allOpenSpotRequests;
+        return describeSpotInstanceRequestsResult.spotInstanceRequests()
+                .stream()
+                .filter(spotInstanceRequest -> !CANCELLED.equals(spotInstanceRequest.state()) || REQUEST_CANCELLED_INSTANCE_RUNNING.equals(spotInstanceRequest.status().code()));
     }
 
     public List<SpotInstanceRequest> getAllSpotRequestsForCluster(PluginSettings pluginSettings) {
-        DescribeSpotInstanceRequestsRequest describeSpotInstanceRequestsRequest = new DescribeSpotInstanceRequestsRequest()
-                .withFilters(
-                        new Filter().withName("tag:Creator").withValues(PLUGIN_ID),
-                        new Filter().withName("tag:cluster-name").withValues(pluginSettings.getClusterName()),
-                        new Filter().withName("tag:server-id").withValues(serverIdSupplier.get())
-                );
+        DescribeSpotInstanceRequestsRequest describeSpotInstanceRequestsRequest = DescribeSpotInstanceRequestsRequest.builder()
+                .filters(
+                        Filter.builder().name("tag:Creator").values(PLUGIN_ID).build(),
+                        Filter.builder().name("tag:cluster-name").values(pluginSettings.getClusterName()).build(),
+                        Filter.builder().name("tag:server-id").values(serverIdSupplier.get()).build()
+                ).build();
 
-        DescribeSpotInstanceRequestsResult describeSpotInstanceRequestsResult = pluginSettings.ec2Client().describeSpotInstanceRequests(describeSpotInstanceRequestsRequest);
-
-        return describeSpotInstanceRequestsResult.getSpotInstanceRequests();
+        return pluginSettings.ec2Client()
+                .describeSpotInstanceRequests(describeSpotInstanceRequestsRequest)
+                .spotInstanceRequests();
     }
 
     public List<Instance> allRegisteredSpotInstancesForPlatform(PluginSettings pluginSettings, Platform platform) {
         List<ContainerInstance> containerInstanceList = containerInstanceHelper.getContainerInstances(pluginSettings);
 
         final List<Instance> registeredSpotInstances = containerInstanceHelper.ec2InstancesFromContainerInstances(pluginSettings, containerInstanceList).stream()
-                .filter(instance -> isNotBlank(instance.getSpotInstanceRequestId()))
-                .filter(instance -> ACCEPTABLE_STATES.contains(instance.getState().getName().toLowerCase()))
+                .filter(instance -> isNotBlank(instance.spotInstanceRequestId()))
+                .filter(instance -> ACCEPTABLE_STATES.contains(instance.state().name()))
                 .collect(toList());
 
         return filterByPlatform(registeredSpotInstances, platform);
     }
 
     public void tagSpotResources(PluginSettings pluginSettings, List<String> resources, Platform platform) {
-        CreateTagsRequest createTagsRequest = new CreateTagsRequest()
-                .withResources(resources)
-                .withTags(
-                        new Tag().withKey(LABEL_SERVER_ID).withValue(serverIdSupplier.get()),
-                        new Tag().withKey("Creator").withValue(PLUGIN_ID),
-                        new Tag().withKey("cluster-name").withValue(pluginSettings.getClusterName()),
-                        new Tag().withKey("platform").withValue(platform.name()),
-                        new Tag().withKey("Name").withValue(format(SPOT_INSTANCE_NAME_FORMAT, pluginSettings.getClusterName(), platform.name()))
-                );
+        CreateTagsRequest createTagsRequest = CreateTagsRequest.builder()
+                .resources(resources)
+                .tags(
+                        Tag.builder().key(LABEL_SERVER_ID).value(serverIdSupplier.get()).build(),
+                        Tag.builder().key("Creator").value(PLUGIN_ID).build(),
+                        Tag.builder().key("cluster-name").value(pluginSettings.getClusterName()).build(),
+                        Tag.builder().key("platform").value(platform.name()).build(),
+                        Tag.builder().key("Name").value(format(SPOT_INSTANCE_NAME_FORMAT, pluginSettings.getClusterName(), platform.name())).build()
+                )
+                .build();
 
         pluginSettings.ec2Client().createTags(createTagsRequest);
     }
 
     public boolean waitTillSpotRequestCanBeLookedUpById(PluginSettings pluginSettings, String spotInstanceRequestId) {
-        final Result<DescribeSpotInstanceRequestsResult> result = new Poller<DescribeSpotInstanceRequestsResult>()
+        final Result<DescribeSpotInstanceRequestsResponse> result = new Poller<DescribeSpotInstanceRequestsResponse>()
                 .timeout(spotRequestVisibilityTimeout)
                 .stopWhen(Objects::nonNull)
                 .poll(getSpotRequest(pluginSettings, spotInstanceRequestId))
-                .start();
+                .await();
 
         if (result.isFailed()) {
             LOG.debug("[create-agent] Unable to lookup for Spot Request with id: '{}', hence cancelling the spot request.", spotInstanceRequestId);
@@ -203,16 +192,18 @@ public class SpotInstanceHelper {
     }
 
     public void cancelSpotInstanceRequest(PluginSettings pluginSettings, String spotInstanceRequestId) {
-        CancelSpotInstanceRequestsRequest cancelSpotInstanceRequestsRequest = new CancelSpotInstanceRequestsRequest()
-                .withSpotInstanceRequestIds(spotInstanceRequestId);
+        CancelSpotInstanceRequestsRequest cancelSpotInstanceRequestsRequest = CancelSpotInstanceRequestsRequest.builder()
+                .spotInstanceRequestIds(spotInstanceRequestId)
+                .build();
         pluginSettings.ec2Client().cancelSpotInstanceRequests(cancelSpotInstanceRequestsRequest);
     }
 
-    private Supplier<DescribeSpotInstanceRequestsResult> getSpotRequest(PluginSettings pluginSettings, String spotInstanceRequestId) {
+    private Supplier<DescribeSpotInstanceRequestsResponse> getSpotRequest(PluginSettings pluginSettings, String spotInstanceRequestId) {
         return () -> {
-            DescribeSpotInstanceRequestsRequest describeSpotInstanceRequestsRequest = new DescribeSpotInstanceRequestsRequest()
-                    .withSpotInstanceRequestIds(spotInstanceRequestId);
-            DescribeSpotInstanceRequestsResult describeSpotInstanceRequestsResult = null;
+            DescribeSpotInstanceRequestsRequest describeSpotInstanceRequestsRequest = DescribeSpotInstanceRequestsRequest.builder()
+                    .spotInstanceRequestIds(spotInstanceRequestId)
+                    .build();
+            DescribeSpotInstanceRequestsResponse describeSpotInstanceRequestsResult = null;
 
             try {
                 describeSpotInstanceRequestsResult = pluginSettings.ec2Client().describeSpotInstanceRequests(describeSpotInstanceRequestsRequest);
@@ -225,38 +216,40 @@ public class SpotInstanceHelper {
     }
 
     public List<SpotInstanceRequest> getSpotRequestsWithARunningSpotInstance(PluginSettings pluginSettings, String clusterName) {
-        DescribeSpotInstanceRequestsRequest describeSpotInstanceRequestsRequest = new DescribeSpotInstanceRequestsRequest()
-                .withFilters(
-                        new Filter().withName("state").withValues(ACTIVE, CANCELLED),
-                        new Filter().withName("tag:Creator").withValues(PLUGIN_ID),
-                        new Filter().withName("tag:cluster-name").withValues(clusterName),
-                        new Filter().withName("tag:server-id").withValues(serverIdSupplier.get())
-                );
+        DescribeSpotInstanceRequestsRequest describeSpotInstanceRequestsRequest = DescribeSpotInstanceRequestsRequest.builder()
+                .filters(
+                        Filter.builder().name("state").values(ACTIVE.toString(), CANCELLED.toString()).build(),
+                        Filter.builder().name("tag:Creator").values(PLUGIN_ID).build(),
+                        Filter.builder().name("tag:cluster-name").values(clusterName).build(),
+                        Filter.builder().name("tag:server-id").values(serverIdSupplier.get()).build()
+                )
+                .build();
 
-        DescribeSpotInstanceRequestsResult describeSpotInstanceRequestsResult = pluginSettings.ec2Client().describeSpotInstanceRequests(describeSpotInstanceRequestsRequest);
+        DescribeSpotInstanceRequestsResponse describeSpotInstanceRequestsResult = pluginSettings.ec2Client().describeSpotInstanceRequests(describeSpotInstanceRequestsRequest);
 
-        return describeSpotInstanceRequestsResult.getSpotInstanceRequests().stream()
+        return describeSpotInstanceRequestsResult.spotInstanceRequests().stream()
                 .filter(sr -> isActive(sr) || isCancelledWithRunningInstance(sr))
                 .collect(toList());
     }
 
     public void tagSpotInstancesAsIdle(PluginSettings pluginSettings, List<String> instanceIds) {
-        CreateTagsRequest createTagsRequest = new CreateTagsRequest()
-                .withResources(instanceIds)
-                .withTags(
-                        new Tag().withKey(LAST_SEEN_IDLE).withValue(valueOf(currentTimeMillis()))
-                );
+        CreateTagsRequest createTagsRequest = CreateTagsRequest.builder()
+                .resources(instanceIds)
+                .tags(
+                        Tag.builder().key(LAST_SEEN_IDLE).value(valueOf(currentTimeMillis())).build()
+                )
+                .build();
 
         pluginSettings.ec2Client().createTags(createTagsRequest);
     }
 
     private boolean isIdle(ContainerInstance containerInstance) {
-        return containerInstance.getPendingTasksCount() == 0 && containerInstance.getRunningTasksCount() == 0;
+        return containerInstance.pendingTasksCount() == 0 && containerInstance.runningTasksCount() == 0;
     }
 
     private List<Instance> filterSpotInstances(List<Instance> allInstances) {
         return allInstances.stream()
-                .filter(instance -> isNotBlank(instance.getSpotInstanceRequestId()))
+                .filter(instance -> isNotBlank(instance.spotInstanceRequestId()))
                 .collect(toList());
     }
 
@@ -265,10 +258,10 @@ public class SpotInstanceHelper {
     }
 
     private boolean isCancelledWithRunningInstance(SpotInstanceRequest sr) {
-        return sr.getState().equals(CANCELLED) && sr.getStatus().getCode().equals("request-canceled-and-instance-running");
+        return sr.state().equals(CANCELLED) && sr.status().code().equals(REQUEST_CANCELLED_INSTANCE_RUNNING);
     }
 
     private boolean isActive(SpotInstanceRequest spotInstanceRequest) {
-        return spotInstanceRequest.getState().equals(ACTIVE);
+        return spotInstanceRequest.state().equals(ACTIVE);
     }
 }

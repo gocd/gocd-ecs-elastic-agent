@@ -17,9 +17,10 @@
 package com.thoughtworks.gocd.elasticagent.ecs.aws.wait;
 
 public class Result<V> {
-    private V object = null;
-    private boolean isFailed = false;
-    private Throwable exception;
+    // shared between the Poller's worker thread and the awaiting thread
+    private volatile V object = null;
+    private volatile boolean isFailed = false;
+    private volatile Throwable exception;
 
     public boolean isFailed() {
         return isFailed;

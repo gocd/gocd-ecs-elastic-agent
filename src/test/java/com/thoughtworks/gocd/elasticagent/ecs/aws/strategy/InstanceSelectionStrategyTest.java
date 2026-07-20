@@ -16,8 +16,6 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws.strategy;
 
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ecs.model.ContainerInstance;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerInstanceHelper;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.matcher.ContainerInstanceMatcher;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.matcher.InstanceMatcher;
@@ -28,13 +26,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.EnumSource;
+import software.amazon.awssdk.services.ec2.model.Instance;
+import software.amazon.awssdk.services.ec2.model.InstanceStateName;
+import software.amazon.awssdk.services.ecs.model.ContainerInstance;
 
 import java.util.*;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerInstanceMother.containerInstance;
 import static com.thoughtworks.gocd.elasticagent.ecs.aws.InstanceMother.*;
-import static com.thoughtworks.gocd.elasticagent.ecs.domain.EC2InstanceState.*;
+
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -141,7 +142,7 @@ class InstanceSelectionStrategyTest {
             final Optional<ContainerInstance> containerInstance = idleInstanceSelectionStrategy.instanceForScheduling(pluginSettings, elasticAgentProfileProperties, null);
 
             assertThat(containerInstance.isPresent()).isTrue();
-            assertThat(containerInstance.get().getEc2InstanceId()).isEqualTo("i-linux");
+            assertThat(containerInstance.get().ec2InstanceId()).isEqualTo("i-linux");
 
         }
 
@@ -153,8 +154,8 @@ class InstanceSelectionStrategyTest {
             );
 
             final List<Instance> instances = asList(
-                    runningLinuxInstance("i-linux").withSpotInstanceRequestId("spot_id"),
-                    runningWindowsInstance("i-windows").withSpotInstanceRequestId("spot_id_windows")
+                    runningLinuxSpotInstance("i-linux"),
+                    runningWindowsSpotInstance("i-windows")
             );
 
             when(containerInstanceHelper.getContainerInstances(pluginSettings)).thenReturn(containerInstances);
@@ -165,7 +166,7 @@ class InstanceSelectionStrategyTest {
             final Optional<ContainerInstance> containerInstance = idleInstanceSelectionStrategy.instanceForScheduling(pluginSettings, elasticAgentProfileProperties, null);
 
             assertThat(containerInstance.isPresent()).isTrue();
-            assertThat(containerInstance.get().getEc2InstanceId()).isEqualTo("i-linux");
+            assertThat(containerInstance.get().ec2InstanceId()).isEqualTo("i-linux");
             verify(containerInstanceHelper).removeLastSeenIdleTag(pluginSettings, List.of("i-linux"));
         }
     }
@@ -225,8 +226,8 @@ class InstanceSelectionStrategyTest {
         }
 
         @ParameterizedTest
-        @ValueSource(strings = {PENDING, RUNNING})
-        void shouldReturnContainerInstanceWithAcceptableStates(String instanceState) {
+        @EnumSource(value = InstanceStateName.class, names = {"PENDING", "RUNNING"})
+        void shouldReturnContainerInstanceWithAcceptableStates(InstanceStateName instanceState) {
             final List<ContainerInstance> containerInstances = asList(
                     containerInstance("i-linux1", 0, 0),
                     containerInstance("i-linux2", 0, 0),
@@ -234,8 +235,8 @@ class InstanceSelectionStrategyTest {
             );
 
             final List<Instance> instances = asList(
-                    linuxInstance("i-linux1", TERMINATED),
-                    linuxInstance("i-linux2", STOPPED),
+                    linuxInstance("i-linux1", InstanceStateName.TERMINATED),
+                    linuxInstance("i-linux2", InstanceStateName.STOPPED),
                     linuxInstance("i-linux3", instanceState)
             );
 
@@ -246,7 +247,7 @@ class InstanceSelectionStrategyTest {
             final Optional<List<ContainerInstance>> containerInstance = idleInstanceSelectionStrategy.instancesToStop(pluginSettings, Platform.LINUX);
 
             assertThat(containerInstance.isPresent()).isTrue();
-            assertThat(containerInstance.get().getFirst().getEc2InstanceId()).isEqualTo("i-linux3");
+            assertThat(containerInstance.get().getFirst().ec2InstanceId()).isEqualTo("i-linux3");
         }
     }
 
@@ -258,7 +259,7 @@ class InstanceSelectionStrategyTest {
 
         @Override
         protected List<ContainerInstance> findInstancesToStop(PluginSettings pluginSettings, Platform platform, Map<String, ContainerInstance> instanceIdToContainerInstance, List<Instance> idleInstances) {
-            return singletonList(instanceIdToContainerInstance.get(idleInstances.getFirst().getInstanceId()));
+            return singletonList(instanceIdToContainerInstance.get(idleInstances.getFirst().instanceId()));
         }
 
         @Override

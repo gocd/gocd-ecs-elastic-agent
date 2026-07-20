@@ -16,14 +16,14 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws.strategy;
 
-import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.model.StopInstancesRequest;
-import com.amazonaws.services.ec2.model.StopInstancesResult;
-import com.amazonaws.services.ecs.model.ContainerInstance;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import software.amazon.awssdk.services.ec2.Ec2Client;
+import software.amazon.awssdk.services.ec2.model.StopInstancesRequest;
+import software.amazon.awssdk.services.ec2.model.StopInstancesResponse;
+import software.amazon.awssdk.services.ecs.model.ContainerInstance;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerInstanceMother.containerInstance;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,12 +33,12 @@ import static org.mockito.Mockito.when;
 class StopOperationTest {
 
     private PluginSettings pluginSettings;
-    private AmazonEC2 ec2Client;
+    private Ec2Client ec2Client;
 
     @BeforeEach
     void setUp() {
         pluginSettings = mock(PluginSettings.class);
-        ec2Client = mock(AmazonEC2.class);
+        ec2Client = mock(Ec2Client.class);
 
         when(pluginSettings.ec2Client()).thenReturn(ec2Client);
     }
@@ -50,13 +50,13 @@ class StopOperationTest {
         final ArgumentCaptor<StopInstancesRequest> stopInstancesRequestArgumentCaptor = ArgumentCaptor.forClass(StopInstancesRequest.class);
 
         when(ec2Client.stopInstances(stopInstancesRequestArgumentCaptor.capture()))
-                .thenReturn(new StopInstancesResult());
+                .thenReturn(StopInstancesResponse.builder().build());
 
         new StopOperation().execute(pluginSettings, instanceToDeregister);
 
         final StopInstancesRequest stopInstancesRequest = stopInstancesRequestArgumentCaptor.getValue();
 
-        assertThat(stopInstancesRequest.getInstanceIds())
+        assertThat(stopInstancesRequest.instanceIds())
                 .hasSize(1)
                 .contains("i-abcde12");
     }

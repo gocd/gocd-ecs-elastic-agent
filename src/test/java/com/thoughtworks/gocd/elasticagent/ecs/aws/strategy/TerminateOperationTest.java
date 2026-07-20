@@ -16,18 +16,18 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws.strategy;
 
-import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.model.AmazonEC2Exception;
-import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
-import com.amazonaws.services.ec2.model.TerminateInstancesResult;
-import com.amazonaws.services.ecs.AmazonECS;
-import com.amazonaws.services.ecs.model.ContainerInstance;
-import com.amazonaws.services.ecs.model.DeregisterContainerInstanceRequest;
-import com.amazonaws.services.ecs.model.DeregisterContainerInstanceResult;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import software.amazon.awssdk.services.ec2.Ec2Client;
+import software.amazon.awssdk.services.ec2.model.Ec2Exception;
+import software.amazon.awssdk.services.ec2.model.TerminateInstancesRequest;
+import software.amazon.awssdk.services.ec2.model.TerminateInstancesResponse;
+import software.amazon.awssdk.services.ecs.EcsClient;
+import software.amazon.awssdk.services.ecs.model.ContainerInstance;
+import software.amazon.awssdk.services.ecs.model.DeregisterContainerInstanceRequest;
+import software.amazon.awssdk.services.ecs.model.DeregisterContainerInstanceResponse;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerInstanceMother.containerInstance;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,15 +39,15 @@ import static org.mockito.Mockito.when;
 class TerminateOperationTest {
 
     private PluginSettings pluginSettings;
-    private AmazonECS ecsClient;
-    private AmazonEC2 ec2Client;
+    private EcsClient ecsClient;
+    private Ec2Client ec2Client;
     private TerminateOperation terminateOperation;
 
     @BeforeEach
     void setUp() {
         pluginSettings = mock(PluginSettings.class);
-        ecsClient = mock(AmazonECS.class);
-        ec2Client = mock(AmazonEC2.class);
+        ecsClient = mock(EcsClient.class);
+        ec2Client = mock(Ec2Client.class);
 
         when(pluginSettings.ecsClient()).thenReturn(ecsClient);
         when(pluginSettings.ec2Client()).thenReturn(ec2Client);
@@ -63,31 +63,31 @@ class TerminateOperationTest {
 
         when(pluginSettings.getClusterName()).thenReturn("GoCD");
         when(ecsClient.deregisterContainerInstance(deregisterContainerInstanceRequestArgumentCaptor.capture()))
-                .thenReturn(new DeregisterContainerInstanceResult().withContainerInstance(instanceToDeregister));
+                .thenReturn(DeregisterContainerInstanceResponse.builder().containerInstance(instanceToDeregister).build());
 
         when(ec2Client.terminateInstances(terminateInstancesRequestArgumentCaptor.capture()))
-                .thenReturn(new TerminateInstancesResult());
+                .thenReturn(TerminateInstancesResponse.builder().build());
 
         terminateOperation.execute(pluginSettings, instanceToDeregister);
 
         final DeregisterContainerInstanceRequest deregisterContainerInstanceRequest = deregisterContainerInstanceRequestArgumentCaptor.getValue();
-        assertThat(deregisterContainerInstanceRequest.getCluster()).isEqualTo("GoCD");
-        assertThat(deregisterContainerInstanceRequest.getContainerInstance()).isEqualTo("container-instance-arn");
-        assertThat(deregisterContainerInstanceRequest.getForce()).isEqualTo(true);
+        assertThat(deregisterContainerInstanceRequest.cluster()).isEqualTo("GoCD");
+        assertThat(deregisterContainerInstanceRequest.containerInstance()).isEqualTo("container-instance-arn");
+        assertThat(deregisterContainerInstanceRequest.force()).isEqualTo(true);
 
         final TerminateInstancesRequest terminateInstancesRequest = terminateInstancesRequestArgumentCaptor.getValue();
-        assertThat(terminateInstancesRequest.getInstanceIds())
+        assertThat(terminateInstancesRequest.instanceIds())
                 .hasSize(1)
                 .contains("i-abcde12");
     }
 
     @Test
     void shouldErrorOutIfFailedToTerminateContainerInstance() {
-        final ContainerInstance instanceToDeregister = containerInstance("i-abcde12", "container-instance-arn");;
+        final ContainerInstance instanceToDeregister = containerInstance("i-abcde12", "container-instance-arn");
 
-        when(ecsClient.deregisterContainerInstance(any())).thenThrow(new AmazonEC2Exception("Request Timeout"));
+        when(ecsClient.deregisterContainerInstance(any(DeregisterContainerInstanceRequest.class))).thenThrow(Ec2Exception.builder().message("Request Timeout").build());
 
-        final AmazonEC2Exception exception = assertThrows(AmazonEC2Exception.class, () -> terminateOperation.execute(pluginSettings, instanceToDeregister));
+        final Ec2Exception exception = assertThrows(Ec2Exception.class, () -> terminateOperation.execute(pluginSettings, instanceToDeregister));
 
         assertThat(exception.getMessage()).startsWith("Request Timeout");
     }

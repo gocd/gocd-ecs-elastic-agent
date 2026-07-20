@@ -16,11 +16,11 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws.matcher;
 
-import com.amazonaws.services.ecs.model.ContainerDefinition;
-import com.amazonaws.services.ecs.model.ContainerInstance;
-import com.amazonaws.services.ecs.model.Resource;
+import com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerDefinitionBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import software.amazon.awssdk.services.ecs.model.ContainerInstance;
+import software.amazon.awssdk.services.ecs.model.Resource;
 
 import java.util.Arrays;
 
@@ -32,49 +32,49 @@ class ContainerInstanceMatcherTest {
 
     private ContainerInstanceMatcher containerInstanceMatcher;
     private ContainerInstance containerInstance;
-    private ContainerDefinition containerDefinition;
+    private ContainerDefinitionBuilder.PlacementRequirement placementRequirement;
 
     @BeforeEach
     void setUp() {
         containerInstanceMatcher = new ContainerInstanceMatcher();
         containerInstance = mock(ContainerInstance.class);
-        containerDefinition = mock(ContainerDefinition.class);
+        placementRequirement = mock(ContainerDefinitionBuilder.PlacementRequirement.class);
     }
 
     @Test
     void shouldReturnTrueIfContainerInstanceMatchesContainerDefinition() {
-        when(containerInstance.getStatus()).thenReturn("ACTIVE");
-        when(containerInstance.isAgentConnected()).thenReturn(true);
+        when(containerInstance.status()).thenReturn("ACTIVE");
+        when(containerInstance.agentConnected()).thenReturn(true);
 
-        when(containerInstance.getRemainingResources()).thenReturn(Arrays.asList(
-                new Resource().withType("INTEGER").withIntegerValue(1024).withName("CPU"),
-                new Resource().withType("INTEGER").withIntegerValue(2048).withName("MEMORY")
+        when(containerInstance.remainingResources()).thenReturn(Arrays.asList(
+                Resource.builder().type("INTEGER").integerValue(1024).name("CPU").build(),
+                Resource.builder().type("INTEGER").integerValue(2048).name("MEMORY").build()
         ));
 
-        when(containerDefinition.getCpu()).thenReturn(500);
-        when(containerDefinition.getMemory()).thenReturn(200);
+        when(placementRequirement.cpu()).thenReturn(500);
+        when(placementRequirement.memory()).thenReturn(200);
 
-        final boolean matches = containerInstanceMatcher.matches(containerInstance, containerDefinition);
+        final boolean matches = containerInstanceMatcher.matches(containerInstance, placementRequirement);
         assertThat(matches).isTrue();
     }
 
     @Test
     void shouldReturnFalseIfContainerInstanceIsNotConnected() {
-        when(containerInstance.isAgentConnected()).thenReturn(false);
+        when(containerInstance.agentConnected()).thenReturn(false);
 
-        containerInstanceMatcher.matches(containerInstance, containerDefinition);
+        containerInstanceMatcher.matches(containerInstance, placementRequirement);
 
-        final boolean matches = containerInstanceMatcher.matches(containerInstance, containerDefinition);
+        final boolean matches = containerInstanceMatcher.matches(containerInstance, placementRequirement);
         assertThat(matches).isFalse();
     }
 
     @Test
     void shouldReturnFalseIfContainerInstanceIsINACTIVE() {
-        when(containerInstance.getStatus()).thenReturn("INACTIVE");
+        when(containerInstance.status()).thenReturn("INACTIVE");
 
-        containerInstanceMatcher.matches(containerInstance, containerDefinition);
+        containerInstanceMatcher.matches(containerInstance, placementRequirement);
 
-        final boolean matches = containerInstanceMatcher.matches(containerInstance, containerDefinition);
+        final boolean matches = containerInstanceMatcher.matches(containerInstance, placementRequirement);
         assertThat(matches).isFalse();
     }
 }

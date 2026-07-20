@@ -16,11 +16,11 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws.strategy;
 
-import com.amazonaws.services.ec2.model.TerminateInstancesRequest;
-import com.amazonaws.services.ecs.model.ContainerInstance;
-import com.amazonaws.services.ecs.model.DeregisterContainerInstanceRequest;
 import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
+import software.amazon.awssdk.services.ec2.model.TerminateInstancesRequest;
+import software.amazon.awssdk.services.ecs.model.ContainerInstance;
+import software.amazon.awssdk.services.ecs.model.DeregisterContainerInstanceRequest;
 
 import java.util.Collection;
 import java.util.Set;
@@ -39,22 +39,23 @@ public class TerminateOperation implements Operation<ContainerInstance> {
         }
 
         final Set<String> instancesToTerminate = containerInstanceToTerminate.stream()
-                .map(ContainerInstance::getEc2InstanceId)
+                .map(ContainerInstance::ec2InstanceId)
                 .collect(Collectors.toSet());
 
         LOG.info(format("Terminating idle container instances {0}.", instancesToTerminate));
 
         containerInstanceToTerminate.forEach(containerInstance -> deregisterContainerInstance(pluginSettings, containerInstance));
 
-        pluginSettings.ec2Client().terminateInstances(new TerminateInstancesRequest().withInstanceIds(instancesToTerminate));
+        pluginSettings.ec2Client().terminateInstances(TerminateInstancesRequest.builder().instanceIds(instancesToTerminate).build());
         LOG.info(format("Container instances {0} terminated.", instancesToTerminate));
     }
 
     private void deregisterContainerInstance(PluginSettings pluginSettings, ContainerInstance containerInstanceToDeregister) {
-        pluginSettings.ecsClient().deregisterContainerInstance(new DeregisterContainerInstanceRequest()
-                .withContainerInstance(containerInstanceToDeregister.getContainerInstanceArn())
-                .withCluster(pluginSettings.getClusterName())
-                .withForce(true)
+        pluginSettings.ecsClient().deregisterContainerInstance(DeregisterContainerInstanceRequest.builder()
+                .containerInstance(containerInstanceToDeregister.containerInstanceArn())
+                .cluster(pluginSettings.getClusterName())
+                .force(true)
+                .build()
         );
     }
 

@@ -16,11 +16,11 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws.matcher;
 
-import com.amazonaws.services.ec2.model.GroupIdentifier;
-import com.amazonaws.services.ec2.model.Instance;
 import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.EC2Config;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.Platform;
+import software.amazon.awssdk.services.ec2.model.GroupIdentifier;
+import software.amazon.awssdk.services.ec2.model.Instance;
 
 import java.util.Collection;
 import java.util.Objects;
@@ -40,29 +40,29 @@ public class InstanceMatcher {
             return false;
         }
 
-        final Platform platform = Platform.from(instance.getPlatform());
+        final Platform platform = Platform.from(instance.platformAsString());
         if (platform != ec2Config.getPlatform()) {
-            LOG.debug(ERROR_MESSAGE_FOR_OBJECT, "platform", platform, instance.getInstanceId(), ec2Config.getPlatform());
+            LOG.debug(ERROR_MESSAGE_FOR_OBJECT, "platform", platform, instance.instanceId(), ec2Config.getPlatform());
             return false;
         }
 
-        if (!Objects.equals(instance.getImageId(), ec2Config.getAmi())) {
-            LOG.debug(ERROR_MESSAGE_FOR_OBJECT, "AMI", instance.getImageId(), instance.getInstanceId(), ec2Config.getAmi());
+        if (!Objects.equals(instance.imageId(), ec2Config.getAmi())) {
+            LOG.debug(ERROR_MESSAGE_FOR_OBJECT, "AMI", instance.imageId(), instance.instanceId(), ec2Config.getAmi());
             return false;
         }
 
-        if (!Objects.equals(ec2Config.getInstanceType(), instance.getInstanceType())) {
-            LOG.debug(ERROR_MESSAGE_FOR_OBJECT, "InstanceType", instance.getInstanceType(), instance.getInstanceId(), ec2Config.getInstanceType());
+        if (!Objects.equals(ec2Config.getInstanceType(), instance.instanceTypeAsString())) {
+            LOG.debug(ERROR_MESSAGE_FOR_OBJECT, "InstanceType", instance.instanceTypeAsString(), instance.instanceId(), ec2Config.getInstanceType());
             return false;
         }
 
-        if (notMatching(ec2Config.getSubnetIds(), instance.getSubnetId())) {
-            LOG.debug(ERROR_MESSAGE_FOR_OBJECT, "SubnetId", instance.getSubnetId(), instance.getInstanceId(), ec2Config.getSubnetIds());
+        if (notMatching(ec2Config.getSubnetIds(), instance.subnetId())) {
+            LOG.debug(ERROR_MESSAGE_FOR_OBJECT, "SubnetId", instance.subnetId(), instance.instanceId(), ec2Config.getSubnetIds());
             return false;
         }
 
         if (notMatching(ec2Config.getSecurityGroups(), getInstanceSecurityGroups(instance))) {
-            LOG.debug(ERROR_MESSAGE_FOR_LIST, "SecurityGroups", instance.getSecurityGroups(), instance.getInstanceId(), ec2Config.getSecurityGroups());
+            LOG.debug(ERROR_MESSAGE_FOR_LIST, "SecurityGroups", instance.securityGroups(), instance.instanceId(), ec2Config.getSecurityGroups());
             return false;
         }
 
@@ -70,11 +70,11 @@ public class InstanceMatcher {
     }
 
     private boolean isSpotInstance(Instance instance) {
-        return isNotEmpty(instance.getSpotInstanceRequestId());
+        return isNotEmpty(instance.spotInstanceRequestId());
     }
 
     private Set<String> getInstanceSecurityGroups(Instance instance) {
-        return instance.getSecurityGroups().stream().map(GroupIdentifier::getGroupId).collect(Collectors.toSet());
+        return instance.securityGroups().stream().map(GroupIdentifier::groupId).collect(Collectors.toSet());
     }
 
     private boolean notMatching(Collection<String> valueFromConfig, String valueFromInstance) {

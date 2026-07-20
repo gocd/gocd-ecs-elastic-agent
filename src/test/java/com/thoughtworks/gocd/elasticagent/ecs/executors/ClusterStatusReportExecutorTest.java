@@ -16,9 +16,6 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.executors;
 
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ecs.model.Cluster;
-import com.amazonaws.services.ecs.model.ContainerInstance;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import com.thoughtworks.gocd.elasticagent.ecs.ECSTasks;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerInstanceHelper;
@@ -34,6 +31,9 @@ import freemarker.template.Template;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.skyscreamer.jsonassert.JSONAssert;
+import software.amazon.awssdk.services.ec2.model.Instance;
+import software.amazon.awssdk.services.ecs.model.Cluster;
+import software.amazon.awssdk.services.ecs.model.ContainerInstance;
 
 import java.util.Collections;
 import java.util.List;
@@ -73,7 +73,7 @@ class ClusterStatusReportExecutorTest {
         final List<ECSContainer> ecsContainers = Collections.emptyList();
         final Cluster cluster = mock(Cluster.class);
 
-        when(cluster.getRegisteredContainerInstancesCount()).thenReturn(2);
+        when(cluster.registeredContainerInstancesCount()).thenReturn(2);
         when(request.clusterProfileProperties()).thenReturn(clusterProfileProperties);
         when(containerInstanceHelper.getCluster(clusterProfileProperties)).thenReturn(cluster);
         when(containerInstanceHelper.getContainerInstances(clusterProfileProperties)).thenReturn(containerInstances);
@@ -94,7 +94,7 @@ class ClusterStatusReportExecutorTest {
     void shouldNotFetchClusterInfoIfClusterHasNoContainerInstances() throws Exception {
         final Cluster cluster = mock(Cluster.class);
 
-        when(cluster.getRegisteredContainerInstancesCount()).thenReturn(0);
+        when(cluster.registeredContainerInstancesCount()).thenReturn(0);
         when(request.clusterProfileProperties()).thenReturn(clusterProfileProperties);
         when(containerInstanceHelper.getCluster(clusterProfileProperties)).thenReturn(cluster);
         when(pluginStatusReportViewBuilder.build(any(Template.class), anyMap())).thenReturn("plugin_health_html");

@@ -16,16 +16,16 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws.strategy;
 
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ecs.model.ContainerInstance;
 import com.thoughtworks.gocd.elasticagent.ecs.Clock;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerInstanceHelper;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.comparator.MostIdleInstanceComparator;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.Platform;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
-import org.joda.time.DateTime;
-import org.joda.time.Period;
+import software.amazon.awssdk.services.ec2.model.Instance;
+import software.amazon.awssdk.services.ecs.model.ContainerInstance;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -53,21 +53,21 @@ public class StopIdleInstanceSelectionStrategy extends InstanceSelectionStrategy
 
     @Override
     protected List<ContainerInstance> findInstancesToStop(PluginSettings pluginSettings, Platform platform, Map<String, ContainerInstance> instanceIdToContainerInstance, List<Instance> idleInstances) {
-        final Period timeInstanceCanStayIdle = platform == Platform.LINUX ? pluginSettings.stopLinuxInstanceAfter() : pluginSettings.stopWindowsInstanceAfter();
+        final Duration timeInstanceCanStayIdle = platform == Platform.LINUX ? pluginSettings.stopLinuxInstanceAfter() : pluginSettings.stopWindowsInstanceAfter();
 
         idleInstances.sort(new MostIdleInstanceComparator(clock.now()));
 
         return idleInstances.stream()
                 .filter(isIdlePeriodIsMoreThan(timeInstanceCanStayIdle))
-                .map(instance -> instanceIdToContainerInstance.get(instance.getInstanceId()))
+                .map(instance -> instanceIdToContainerInstance.get(instance.instanceId()))
                 .collect(Collectors.toList());
     }
 
-    private Predicate<Instance> isIdlePeriodIsMoreThan(Period timeInstanceCanStayIdle) {
-        return instance -> instance.getTags().stream()
-                .filter(tag -> tag.getKey().equals(LAST_SEEN_IDLE))
+    private Predicate<Instance> isIdlePeriodIsMoreThan(Duration timeInstanceCanStayIdle) {
+        return instance -> instance.tags().stream()
+                .filter(tag -> tag.key().equals(LAST_SEEN_IDLE))
                 .findFirst()
-                .map(tag -> new DateTime(Long.parseLong(tag.getValue())))
+                .map(tag -> Instant.ofEpochMilli(Long.parseLong(tag.value())))
                 .map(lastSeenIdle -> clock.now().isAfter(lastSeenIdle.plus(timeInstanceCanStayIdle)))
                 .orElse(false);
     }

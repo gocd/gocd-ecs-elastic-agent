@@ -28,6 +28,7 @@ import static com.thoughtworks.gocd.elasticagent.ecs.executors.GetPluginConfigur
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static software.amazon.awssdk.services.ec2.model.InstanceType.T2_SMALL;
 
 class AmiAndInstanceTypeValidatorTest {
     private AmiAndInstanceTypeValidator validator;
@@ -51,7 +52,7 @@ class AmiAndInstanceTypeValidatorTest {
         @Test
         void shouldReturnErrorWhenMinimumInstanceCountIsSpecifiedAndAmiIsNot() {
             when(request.get(MIN_LINUX_INSTANCE_COUNT)).thenReturn("1");
-            when(request.get(LINUX_INSTANCE_TYPE)).thenReturn("t2.small");
+            when(request.get(LINUX_INSTANCE_TYPE)).thenReturn(T2_SMALL.toString());
 
             final List<Map<String, String>> validationResult = validator.validate(request);
 
@@ -87,7 +88,7 @@ class AmiAndInstanceTypeValidatorTest {
         @Test
         void shouldReturnErrorWhenMinimumInstanceCountIsSpecifiedAndAmiIsNot() {
             when(request.get(MIN_WINDOWS_INSTANCE_COUNT)).thenReturn("1");
-            when(request.get(WINDOWS_INSTANCE_TYPE)).thenReturn("t2.small");
+            when(request.get(WINDOWS_INSTANCE_TYPE)).thenReturn(T2_SMALL.toString());
 
             final List<Map<String, String>> validationResult = validator.validate(request);
 

@@ -16,51 +16,56 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws.wait;
 
-import org.joda.time.Period;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.time.Duration;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-
 public class Poller<T> {
+    private static final AtomicLong POLLER_THREAD_COUNTER = new AtomicLong();
+
     private Predicate<T> stopWhen;
     private Supplier<T> poller;
-    private Period timeout;
-    private int retryIntervalInMillis = 5000;
+    private Duration timeout;
+    private Duration retryInterval = Duration.ofSeconds(5);
 
-    public Result<T> start() {
+    public Result<T> await() {
         validateConfiguration();
         final Result<T> result = new Result<>();
-        final ExecutorService service = Executors.newFixedThreadPool(1);
 
-        Future<?> futureResult = service.submit(() -> {
-            do {
-                result.set(poller.get());
+        final Thread worker = Thread.ofVirtual()
+                .name("ecs-plugin-poller-" + POLLER_THREAD_COUNTER.incrementAndGet())
+                .start(() -> {
+                    try {
+                        do {
+                            result.set(poller.get());
 
-                if (stopWhen.test(result.get())) {
-                    break;
-                }
+                            if (stopWhen.test(result.get())) {
+                                break;
+                            }
 
-                try {
-                    Thread.sleep(retryIntervalInMillis);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-
-            } while (stopWhen.negate().test(result.get()));
-        });
+                            Thread.sleep(retryInterval);
+                        } while (stopWhen.negate().test(result.get()));
+                    } catch (InterruptedException e) {
+                        // Only await() interrupts this thread, and it records the failure itself;
+                        // exit without overwriting the caller's timeout with our interrupt.
+                        Thread.currentThread().interrupt();
+                    } catch (RuntimeException e) {
+                        result.failed(e);
+                    }
+                });
 
         try {
-            futureResult.get(timeout.toStandardSeconds().getSeconds(), SECONDS);
-        } catch (Exception e) {
+            if (!worker.join(timeout)) {
+                result.failed(new TimeoutException("Polling did not complete within " + timeout));
+                worker.interrupt();
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            worker.interrupt();
             result.failed(e);
-            futureResult.cancel(true);
-        } finally {
-            service.shutdown();
         }
 
         return result;
@@ -76,7 +81,7 @@ public class Poller<T> {
         if (condition) throw new InvalidPollerConfiguration(errorMessage);
     }
 
-    public Poller<T> timeout(Period timeout) {
+    public Poller<T> timeout(Duration timeout) {
         this.timeout = timeout;
         return this;
     }
@@ -91,10 +96,9 @@ public class Poller<T> {
         return this;
     }
 
-    public Poller<T> retryAfter(int retryIntervalInMillis) {
-        this.retryIntervalInMillis = retryIntervalInMillis;
+    public Poller<T> retryAfter(Duration retryInterval) {
+        this.retryInterval = retryInterval;
         return this;
     }
 
 }
-

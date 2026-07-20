@@ -29,6 +29,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.text.ParseException;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
@@ -158,7 +159,7 @@ class AgentStatusReportViewTest {
         return format("/go/tab/pipeline/history/{0}", jid.getPipelineName());
     }
 
-    private String toDateTimeString(Date date) {
-        return date == null ? "" : String.format("{{ %s | date:\"MMM dd, yyyy hh:mm:ss a\"}}", date.getTime());
+    private String toDateTimeString(Instant date) {
+        return date == null ? "" : String.format("{{ %s | date:\"MMM dd, yyyy hh:mm:ss a\"}}", date.toEpochMilli());
     }
 }

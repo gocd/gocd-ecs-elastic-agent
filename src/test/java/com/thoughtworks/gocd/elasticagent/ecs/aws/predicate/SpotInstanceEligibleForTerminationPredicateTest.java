@@ -16,23 +16,24 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws.predicate;
 
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.Tag;
 import com.thoughtworks.gocd.elasticagent.ecs.Clock;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.Platform;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.PluginSettings;
-import org.joda.time.Period;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
+import software.amazon.awssdk.services.ec2.model.Instance;
+import software.amazon.awssdk.services.ec2.model.InstanceStateName;
+import software.amazon.awssdk.services.ec2.model.Tag;
+
+import java.time.Duration;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.Constants.LAST_SEEN_IDLE;
-import static com.thoughtworks.gocd.elasticagent.ecs.aws.InstanceMother.linuxInstanceWithTag;
-import static com.thoughtworks.gocd.elasticagent.ecs.aws.InstanceMother.spotInstance;
-import static com.thoughtworks.gocd.elasticagent.ecs.domain.EC2InstanceState.RUNNING;
-import static com.thoughtworks.gocd.elasticagent.ecs.domain.EC2InstanceState.STOPPED;
+
+
+import static com.thoughtworks.gocd.elasticagent.ecs.aws.InstanceMother.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
@@ -48,7 +49,7 @@ class SpotInstanceEligibleForTerminationPredicateTest {
 
     @Test
     void shouldReturnFalseIfInstanceDoesNotHaveLastSeenIdleLabel() {
-        final Instance instance = linuxInstanceWithTag("i-abcd123", STOPPED, new Tag("Foo", "Bar"));
+        final Instance instance = linuxInstanceWithTag("i-abcd123", InstanceStateName.STOPPED, Tag.builder().key("Foo").value("Bar").build());
 
         final boolean testResult = new SpotInstanceEligibleForTerminationPredicate(null).test(instance);
 
@@ -59,13 +60,14 @@ class SpotInstanceEligibleForTerminationPredicateTest {
     @EnumSource(Platform.class)
     void shouldReturnTrueWhenInstanceIsIdleForLongerThanTheTimeConfiguredInPluginSettings(Platform platform) {
         final Clock.TestClock testClock = new Clock.TestClock();
-        final Instance instance = spotInstance("i-abcd123", RUNNING, platform.name())
-                .withTags(new Tag(LAST_SEEN_IDLE, String.valueOf(testClock.now().getMillis())));
+        final Instance instance = spotInstanceBuilder("i-abcd123", InstanceStateName.RUNNING, platform.name())
+                .tags(Tag.builder().key(LAST_SEEN_IDLE).value(String.valueOf(testClock.now().toEpochMilli())).build())
+                .build();
 
-        when(pluginSettings.terminateIdleLinuxSpotInstanceAfter()).thenReturn(Period.seconds(20));
-        when(pluginSettings.terminateIdleWindowsSpotInstanceAfter()).thenReturn(Period.seconds(20));
+        when(pluginSettings.terminateIdleLinuxSpotInstanceAfter()).thenReturn(Duration.ofSeconds(20));
+        when(pluginSettings.terminateIdleWindowsSpotInstanceAfter()).thenReturn(Duration.ofSeconds(20));
 
-        testClock.forward(Period.seconds(21));
+        testClock.forward(Duration.ofSeconds(21));
 
         final boolean testResult = new SpotInstanceEligibleForTerminationPredicate(pluginSettings, testClock).test(instance);
 
@@ -76,13 +78,14 @@ class SpotInstanceEligibleForTerminationPredicateTest {
     @EnumSource(Platform.class)
     void shouldReturnFalseWhenTerminationTimeIsNotReached(Platform platform) {
         final Clock.TestClock testClock = new Clock.TestClock();
-        final Instance instance = spotInstance("i-abcd123", RUNNING, platform.name())
-                .withTags(new Tag(LAST_SEEN_IDLE, String.valueOf(testClock.now().getMillis())));
+        final Instance instance = spotInstanceBuilder("i-abcd123", InstanceStateName.RUNNING, platform.name())
+                .tags(Tag.builder().key(LAST_SEEN_IDLE).value(String.valueOf(testClock.now().toEpochMilli())).build())
+                .build();
 
-        when(pluginSettings.terminateIdleLinuxSpotInstanceAfter()).thenReturn(Period.seconds(20));
-        when(pluginSettings.terminateIdleWindowsSpotInstanceAfter()).thenReturn(Period.seconds(20));
+        when(pluginSettings.terminateIdleLinuxSpotInstanceAfter()).thenReturn(Duration.ofSeconds(20));
+        when(pluginSettings.terminateIdleWindowsSpotInstanceAfter()).thenReturn(Duration.ofSeconds(20));
 
-        testClock.forward(Period.seconds(19));
+        testClock.forward(Duration.ofSeconds(19));
 
         final boolean testResult = new SpotInstanceEligibleForTerminationPredicate(pluginSettings, testClock).test(instance);
 

@@ -16,19 +16,19 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws.comparator;
 
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.Tag;
-import org.joda.time.DateTime;
+import software.amazon.awssdk.services.ec2.model.Instance;
+import software.amazon.awssdk.services.ec2.model.Tag;
 
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.Optional;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.Constants.LAST_SEEN_IDLE;
 
 public class MostIdleInstanceComparator implements Comparator<Instance> {
-    private final DateTime now;
+    private final Instant now;
 
-    public MostIdleInstanceComparator(DateTime now) {
+    public MostIdleInstanceComparator(Instant now) {
         this.now = now;
     }
 
@@ -41,11 +41,11 @@ public class MostIdleInstanceComparator implements Comparator<Instance> {
     }
 
     private Long getLastSeenTime(Instance instance1) {
-        final Optional<String> lastSeenIdle = instance1.getTags().stream()
-                .filter(tag -> tag.getKey().equals(LAST_SEEN_IDLE))
+        final Optional<String> lastSeenIdle = instance1.tags().stream()
+                .filter(tag -> tag.key().equals(LAST_SEEN_IDLE))
                 .findFirst()
-                .map(Tag::getValue);
+                .map(Tag::value);
 
-        return lastSeenIdle.map(s -> now.getMillis() - Long.parseLong(s)).orElse(0L);
+        return lastSeenIdle.map(s -> now.toEpochMilli() - Long.parseLong(s)).orElse(0L);
     }
 }

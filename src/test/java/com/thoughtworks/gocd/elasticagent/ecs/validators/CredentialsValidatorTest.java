@@ -16,14 +16,16 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.validators;
 
-import com.amazonaws.auth.EnvironmentVariableCredentialsProvider;
-import com.amazonaws.auth.SystemPropertiesCredentialsProvider;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.AWSCredentialsProviderChain;
+import com.thoughtworks.gocd.elasticagent.ecs.executors.GetPluginConfigurationExecutor;
 import com.thoughtworks.gocd.elasticagent.ecs.requests.ValidateClusterProfileRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.SystemPropertyCredentialsProvider;
+import software.amazon.awssdk.core.SdkSystemSetting;
 import uk.org.webcompere.systemstubs.environment.EnvironmentVariables;
 import uk.org.webcompere.systemstubs.jupiter.SystemStub;
 import uk.org.webcompere.systemstubs.jupiter.SystemStubsExtension;
@@ -33,21 +35,21 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import static com.amazonaws.SDKGlobalConfiguration.*;
-import static com.thoughtworks.gocd.elasticagent.ecs.executors.GetPluginConfigurationExecutor.*;
+import static com.thoughtworks.gocd.elasticagent.ecs.executors.GetPluginConfigurationExecutor.AWS_ASSUME_ROLE_ARN;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
+import static software.amazon.awssdk.core.SdkSystemSetting.AWS_ACCESS_KEY_ID;
+import static software.amazon.awssdk.core.SdkSystemSetting.AWS_SECRET_ACCESS_KEY;
 
 @ExtendWith(SystemStubsExtension.class)
 class CredentialsValidatorTest {
 
     @SystemStub
     EnvironmentVariables environmentVariables = new EnvironmentVariables()
-            .set(ACCESS_KEY_ENV_VAR, "")
-            .set(ALTERNATE_ACCESS_KEY_ENV_VAR, "")
-            .set(SECRET_KEY_ENV_VAR, "")
-            .set(ALTERNATE_SECRET_KEY_ENV_VAR, "");
+            .set(AWS_ACCESS_KEY_ID.environmentVariable(), "")
+            .set(AWS_SECRET_ACCESS_KEY.environmentVariable(), "");
+
     @SystemStub
     SystemProperties systemProperties;
 
@@ -58,13 +60,13 @@ class CredentialsValidatorTest {
     @BeforeEach
     void setUp() {
         openMocks(this);
-        credentialsValidator = new CredentialsValidator(new AWSCredentialsProviderChain(() -> "my-server-id", new EnvironmentVariableCredentialsProvider(), new SystemPropertiesCredentialsProvider()));
+        credentialsValidator = new CredentialsValidator(new AWSCredentialsProviderChain(() -> "my-server-id", EnvironmentVariableCredentialsProvider.create(), SystemPropertyCredentialsProvider.create()));
     }
 
     @Test
     void shouldReturnEmptyErrorIfAccessKeyAndSecretKeyIsProvided() {
-        when(request.get(AWS_ACCESS_KEY_ID)).thenReturn("access-key");
-        when(request.get(AWS_SECRET_ACCESS_KEY)).thenReturn("secret-key");
+        when(request.get(GetPluginConfigurationExecutor.AWS_ACCESS_KEY_ID)).thenReturn("access-key");
+        when(request.get(GetPluginConfigurationExecutor.AWS_SECRET_ACCESS_KEY)).thenReturn("secret-key");
 
         final Collection<? extends Map<String, String>> validationResult = credentialsValidator.validate(request);
 
@@ -73,10 +75,10 @@ class CredentialsValidatorTest {
 
     @Test
     void shouldReturnEmptyErrorIfAssumeRoleArnIsProvidedAlongWithAccessKeyAndSecretKey() throws Exception {
-        when(request.get(AWS_ACCESS_KEY_ID)).thenReturn("access-key");
-        when(request.get(AWS_SECRET_ACCESS_KEY)).thenReturn("secret-key");
-        when(request.get(AWS_ASSUME_ROLE_ARN)).thenReturn("arn:aws:iam::111111111111:role/gocd-ecs-plugin-role");
-        when(request.get(CLUSTER_NAME)).thenReturn("GoCD");
+        when(request.get(GetPluginConfigurationExecutor.AWS_ACCESS_KEY_ID)).thenReturn("access-key");
+        when(request.get(GetPluginConfigurationExecutor.AWS_SECRET_ACCESS_KEY)).thenReturn("secret-key");
+        when(request.get(GetPluginConfigurationExecutor.AWS_ASSUME_ROLE_ARN)).thenReturn("arn:aws:iam::111111111111:role/gocd-ecs-plugin-role");
+        when(request.get(GetPluginConfigurationExecutor.CLUSTER_NAME)).thenReturn("GoCD");
 
         environmentVariables
                 .set("AWS_REGION", "us-east-1")
@@ -90,8 +92,8 @@ class CredentialsValidatorTest {
     @Test
     void shouldReturnEmptyErrorIfCredentialsAutoDetectTheCredentialsUsingProviders() throws Exception {
         systemProperties
-                .set(ACCESS_KEY_SYSTEM_PROPERTY, "access-key-from-system-prop")
-                .set(SECRET_KEY_SYSTEM_PROPERTY, "secret-key-from-system-prop")
+                .set(SdkSystemSetting.AWS_ACCESS_KEY_ID.property(), "access-key-from-system-prop")
+                .set(SdkSystemSetting.AWS_SECRET_ACCESS_KEY.property(), "secret-key-from-system-prop")
                 .execute(() -> {
                     final Collection<? extends Map<String, String>> validationResult = credentialsValidator.validate(request);
 
@@ -111,15 +113,15 @@ class CredentialsValidatorTest {
 
     @Test
     void shouldReturnErrorIfOnlyAccessKeyProvidedNotASecretKey() {
-        when(request.get(AWS_ACCESS_KEY_ID)).thenReturn("access-key");
+        when(request.get(GetPluginConfigurationExecutor.AWS_ACCESS_KEY_ID)).thenReturn("access-key");
 
         final List<Map<String, String>> validationResult = credentialsValidator.validate(request);
 
         assertThat(validationResult).hasSize(2);
-        assertThat(validationResult.get(0)).containsEntry("key", AWS_ACCESS_KEY_ID);
+        assertThat(validationResult.get(0)).containsEntry("key", GetPluginConfigurationExecutor.AWS_ACCESS_KEY_ID);
         assertThat(validationResult.get(0)).containsEntry("message", "Secret key is mandatory if access key is provided");
 
-        assertThat(validationResult.get(1)).containsEntry("key", AWS_SECRET_ACCESS_KEY);
+        assertThat(validationResult.get(1)).containsEntry("key", GetPluginConfigurationExecutor.AWS_SECRET_ACCESS_KEY);
         assertThat(validationResult.get(1)).containsEntry("message", "Secret key is mandatory if access key is provided");
 
     }

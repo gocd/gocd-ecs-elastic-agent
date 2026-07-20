@@ -23,7 +23,8 @@ import com.thoughtworks.go.plugin.api.response.DefaultGoPluginApiResponse;
 import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import com.thoughtworks.gocd.elasticagent.ecs.RequestExecutor;
 import com.thoughtworks.gocd.elasticagent.ecs.utils.Util;
-import org.apache.commons.codec.binary.Base64;
+
+import java.util.Base64;
 
 public class GetPluginSettingsIconExecutor implements RequestExecutor {
     private static final Gson GSON = new Gson();
@@ -32,7 +33,7 @@ public class GetPluginSettingsIconExecutor implements RequestExecutor {
     public GoPluginApiResponse execute() {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty("content_type", "image/svg+xml");
-        jsonObject.addProperty("data", Base64.encodeBase64String(Util.readResourceBytes("/ecs-plain.svg")));
+        jsonObject.addProperty("data", Base64.getEncoder().encodeToString(Util.readResourceBytes("/ecs-plain.svg")));
         DefaultGoPluginApiResponse defaultGoPluginApiResponse = new DefaultGoPluginApiResponse(200, GSON.toJson(jsonObject));
         return defaultGoPluginApiResponse;
 

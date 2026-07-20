@@ -16,10 +16,10 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws.comparator;
 
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ec2.model.Tag;
 import com.thoughtworks.gocd.elasticagent.ecs.Clock;
 import org.junit.jupiter.api.Test;
+import software.amazon.awssdk.services.ec2.model.Instance;
+import software.amazon.awssdk.services.ec2.model.Tag;
 
 import java.util.Arrays;
 import java.util.List;
@@ -30,9 +30,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MostIdleInstanceComparatorTest {
     @Test
     void shouldSortInstanceOnLastSeenIdleTime() {
-        final Instance instance1 = new Instance().withInstanceId("1").withTags(new Tag().withKey(LAST_SEEN_IDLE).withValue("1234"));
-        final Instance instance2 = new Instance().withInstanceId("2").withTags(new Tag().withKey(LAST_SEEN_IDLE).withValue("4321"));
-        final Instance instance3 = new Instance().withInstanceId("3").withTags(new Tag().withKey(LAST_SEEN_IDLE).withValue("1000"));
+        final Instance instance1 = Instance.builder().instanceId("1").tags(Tag.builder().key(LAST_SEEN_IDLE).value("1234").build()).build();
+        final Instance instance2 = Instance.builder().instanceId("2").tags(Tag.builder().key(LAST_SEEN_IDLE).value("4321").build()).build();
+        final Instance instance3 = Instance.builder().instanceId("3").tags(Tag.builder().key(LAST_SEEN_IDLE).value("1000").build()).build();
 
         final List<Instance> unsortedInstances = Arrays.asList(instance1, instance2, instance3);
         unsortedInstances.sort(new MostIdleInstanceComparator(Clock.DEFAULT.now()));
@@ -42,9 +42,9 @@ class MostIdleInstanceComparatorTest {
 
     @Test
     void shouldConsiderLastSeenTimeToCurrentTimeIfNotPresentInEC2() {
-        final Instance instance1 = new Instance().withInstanceId("1");
-        final Instance instance2 = new Instance().withInstanceId("2").withTags(new Tag().withKey(LAST_SEEN_IDLE).withValue("4321"));
-        final Instance instance3 = new Instance().withInstanceId("3").withTags(new Tag().withKey(LAST_SEEN_IDLE).withValue("1000"));
+        final Instance instance1 = Instance.builder().instanceId("1").build();
+        final Instance instance2 = Instance.builder().instanceId("2").tags(Tag.builder().key(LAST_SEEN_IDLE).value("4321").build()).build();
+        final Instance instance3 = Instance.builder().instanceId("3").tags(Tag.builder().key(LAST_SEEN_IDLE).value("1000").build()).build();
 
         final List<Instance> unsortedInstances = Arrays.asList(instance1, instance2, instance3);
         unsortedInstances.sort(new MostIdleInstanceComparator(Clock.DEFAULT.now()));
@@ -53,10 +53,10 @@ class MostIdleInstanceComparatorTest {
     }
 
     @Test
-    void shouldReversTheOrder() {
-        final Instance instance1 = new Instance().withInstanceId("1");
-        final Instance instance2 = new Instance().withInstanceId("2").withTags(new Tag().withKey(LAST_SEEN_IDLE).withValue("4321"));
-        final Instance instance3 = new Instance().withInstanceId("3").withTags(new Tag().withKey(LAST_SEEN_IDLE).withValue("1000"));
+    void shouldReverseTheOrder() {
+        final Instance instance1 = Instance.builder().instanceId("1").build();
+        final Instance instance2 = Instance.builder().instanceId("2").tags(Tag.builder().key(LAST_SEEN_IDLE).value("4321").build()).build();
+        final Instance instance3 = Instance.builder().instanceId("3").tags(Tag.builder().key(LAST_SEEN_IDLE).value("1000").build()).build();
 
         final List<Instance> unsortedInstances = Arrays.asList(instance1, instance2, instance3);
         unsortedInstances.sort(new MostIdleInstanceComparator(Clock.DEFAULT.now()));

@@ -16,15 +16,15 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.domain;
 
-import com.amazonaws.services.ec2.model.Instance;
-import com.amazonaws.services.ecs.model.ContainerInstance;
-import com.amazonaws.services.ecs.model.VersionInfo;
 import com.thoughtworks.gocd.elasticagent.ecs.utils.Util;
 import lombok.EqualsAndHashCode;
-import org.joda.time.DateTime;
-import org.joda.time.Period;
+import software.amazon.awssdk.services.ec2.model.Instance;
+import software.amazon.awssdk.services.ecs.model.ContainerInstance;
+import software.amazon.awssdk.services.ecs.model.VersionInfo;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 
 @EqualsAndHashCode
 public class ECSContainerInstance {
@@ -35,29 +35,38 @@ public class ECSContainerInstance {
     private final String status;
     private final boolean agentConnected;
     private final String agentUpdateStatus;
-    private final VersionInfo dockerInfo;
+    private final String dockerVersion;
+    private final String agentVersion;
     private final ContainerResources remainingResources;
     private final ContainerResources registeredResources;
-    private final Instance instance;
+    private final String imageId;
+    private final String instanceType;
+    private final String instanceState;
+    private final Long launchTimeMillis;
     private final List<ECSContainer> containers;
     private final String runningSince;
     private final String platform;
 
     public ECSContainerInstance(ContainerInstance containerInstance, Instance instance, List<ECSContainer> containers) {
-        agentConnected = containerInstance.getAgentConnected();
-        agentUpdateStatus = containerInstance.getAgentUpdateStatus();
-        containerInstanceArn = containerInstance.getContainerInstanceArn();
-        ec2InstanceId = containerInstance.getEc2InstanceId();
-        status = containerInstance.getStatus();
-        dockerInfo = containerInstance.getVersionInfo();
-        remainingResources = new ContainerResources(containerInstance.getRemainingResources());
-        registeredResources = new ContainerResources(containerInstance.getRegisteredResources());
-        this.platform = Platform.from(instance.getPlatform()).name();
-        this.instance = instance;
+        agentConnected = containerInstance.agentConnected();
+        agentUpdateStatus = containerInstance.agentUpdateStatusAsString();
+        containerInstanceArn = containerInstance.containerInstanceArn();
+        ec2InstanceId = containerInstance.ec2InstanceId();
+        status = containerInstance.status();
+        final VersionInfo versionInfo = containerInstance.versionInfo();
+        dockerVersion = versionInfo == null ? null : versionInfo.dockerVersion();
+        agentVersion = versionInfo == null ? null : versionInfo.agentVersion();
+        remainingResources = new ContainerResources(containerInstance.remainingResources());
+        registeredResources = new ContainerResources(containerInstance.registeredResources());
+        this.platform = Platform.from(instance.platformAsString()).name();
+        this.imageId = instance.imageId();
+        this.instanceType = instance.instanceTypeAsString();
+        this.instanceState = instance.state() == null ? null : instance.state().nameAsString();
+        this.launchTimeMillis = instance.launchTime() == null ? null : instance.launchTime().toEpochMilli();
         this.containers = containers;
-        final String[] arnParts = containerInstance.getContainerInstanceArn().split("/");
+        final String[] arnParts = containerInstance.containerInstanceArn().split("/");
         this.id = arnParts[arnParts.length - 1];
-        this.runningSince = Util.PERIOD_FORMATTER.print(new Period(new DateTime(instance.getLaunchTime()), DateTime.now()));
+        this.runningSince = Util.formatDurationWordsFromNow(Objects.requireNonNullElseGet(instance.launchTime(), Instant::now));
     }
 
     public boolean getAgentConnected() {
@@ -80,8 +89,12 @@ public class ECSContainerInstance {
         return status;
     }
 
-    public VersionInfo getDockerInfo() {
-        return dockerInfo;
+    public String getDockerVersion() {
+        return dockerVersion;
+    }
+
+    public String getAgentVersion() {
+        return agentVersion;
     }
 
     public ContainerResources getRemainingResources() {
@@ -92,8 +105,20 @@ public class ECSContainerInstance {
         return registeredResources;
     }
 
-    public Instance getInstance() {
-        return instance;
+    public String getImageId() {
+        return imageId;
+    }
+
+    public String getInstanceType() {
+        return instanceType;
+    }
+
+    public String getInstanceState() {
+        return instanceState;
+    }
+
+    public Long getLaunchTimeMillis() {
+        return launchTimeMillis;
     }
 
     public List<ECSContainer> getContainers() {

@@ -16,7 +16,7 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.fields;
 
-import com.amazonaws.services.ecs.model.LogDriver;
+import software.amazon.awssdk.services.ecs.model.LogDriver;
 
 import java.util.Arrays;
 
@@ -35,11 +35,11 @@ public class LogDriverNameField extends Field {
             return null;
         }
 
-        try {
-            LogDriver.fromValue(logDriverName);
+        if (LogDriver.fromValue(logDriverName) != LogDriver.UNKNOWN_TO_SDK_VERSION) {
             return null;
-        } catch (Exception e) {
-            return format("Log driver {0} is not supported. Supported log drivers are {1} ", logDriverName, Arrays.asList(LogDriver.values()));
         }
+
+        final var supportedDrivers = Arrays.stream(LogDriver.values()).filter(driver -> driver != LogDriver.UNKNOWN_TO_SDK_VERSION).toList();
+        return format("Log driver {0} is not supported. Supported log drivers are {1} ", logDriverName, supportedDrivers);
     }
 }

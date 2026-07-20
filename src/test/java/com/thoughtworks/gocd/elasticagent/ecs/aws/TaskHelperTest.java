@@ -16,8 +16,6 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws;
 
-import com.amazonaws.services.ecs.AmazonECSClient;
-import com.amazonaws.services.ecs.model.*;
 import com.thoughtworks.gocd.elasticagent.ecs.ECSTask;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.strategy.InstanceSelectionStrategy;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.strategy.InstanceSelectionStrategyFactory;
@@ -30,6 +28,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mock;
+import software.amazon.awssdk.services.ecs.EcsClient;
+import software.amazon.awssdk.services.ecs.model.*;
 
 import java.util.*;
 
@@ -43,7 +43,7 @@ class TaskHelperTest {
     @Mock
     private PluginSettings pluginSettings;
     @Mock
-    private AmazonECSClient ecsClient;
+    private EcsClient ecsClient;
     @Mock
     private ContainerInstanceHelper containerInstanceHelper;
     @Mock
@@ -79,36 +79,37 @@ class TaskHelperTest {
     @Test
     void shouldCreateTaskForCreateAgentRequest() throws Exception {
         final InstanceSelectionStrategy instanceSelectionStrategy = mock(InstanceSelectionStrategy.class);
-        final TaskDefinition taskDefinition = new TaskDefinition().withTaskDefinitionArn("task-definition-arn");
-        final Task task = new Task().withTaskArn("task-arn").withTaskDefinitionArn(taskDefinition.getTaskDefinitionArn());
-        final ContainerInstance containerInstance = new ContainerInstance().withContainerInstanceArn("container-instance-arn");
+        final TaskDefinition taskDefinition = TaskDefinition.builder().taskDefinitionArn("task-definition-arn").build();
+        final Task task = Task.builder().taskArn("task-arn").taskDefinitionArn(taskDefinition.taskDefinitionArn()).build();
+        final ContainerInstance containerInstance = ContainerInstance.builder().containerInstanceArn("container-instance-arn").build();
         final ArgumentCaptor<StartTaskRequest> startTaskRequestArgumentCaptor = ArgumentCaptor.forClass(StartTaskRequest.class);
-        RegisterTaskDefinitionRequest registerTaskDefinitionRequest = new RegisterTaskDefinitionRequest();
+        final ArgumentCaptor<String> taskNameArgumentCaptor = ArgumentCaptor.forClass(String.class);
+        RegisterTaskDefinitionRequest registerTaskDefinitionRequest = RegisterTaskDefinitionRequest.builder().build();
 
         when(pluginSettings.efsDnsOrIP()).thenReturn("efs-dns-name");
         when(elasticAgentProfileProperties.isMountDockerSocket()).thenReturn(true);
         when(elasticAgentProfileProperties.getImage()).thenReturn("alpine");
-        when(registerTaskDefinitionRequestBuilder.build(eq(pluginSettings), eq(elasticAgentProfileProperties), any(ContainerDefinition.class))).thenReturn(registerTaskDefinitionRequest);
-        when(ecsClient.registerTaskDefinition(any())).thenReturn(
-                new RegisterTaskDefinitionResult().withTaskDefinition(taskDefinition)
+        when(registerTaskDefinitionRequestBuilder.build(eq(pluginSettings), eq(elasticAgentProfileProperties), any(ContainerDefinition.Builder.class), taskNameArgumentCaptor.capture())).thenReturn(registerTaskDefinitionRequest);
+        when(ecsClient.registerTaskDefinition(any(RegisterTaskDefinitionRequest.class))).thenReturn(
+                RegisterTaskDefinitionResponse.builder().taskDefinition(taskDefinition).build()
         );
-        when(ecsClient.startTask(startTaskRequestArgumentCaptor.capture())).thenReturn(new StartTaskResult().withTasks(task));
+        when(ecsClient.startTask(startTaskRequestArgumentCaptor.capture())).thenReturn(StartTaskResponse.builder().tasks(task).build());
         when(instanceSelectionStrategyFactory.strategyFor(any()))
                 .thenReturn(instanceSelectionStrategy);
-        when(instanceSelectionStrategy.instanceForScheduling(eq(pluginSettings), eq(elasticAgentProfileProperties), any(ContainerDefinition.class)))
+        when(instanceSelectionStrategy.instanceForScheduling(eq(pluginSettings), eq(elasticAgentProfileProperties), any(ContainerDefinitionBuilder.PlacementRequirement.class)))
                 .thenReturn(Optional.of(containerInstance));
         when(elasticAgentProfileProperties.runAsSpotInstance()).thenReturn(false);
 
         final Optional<ECSTask> ecsTask = taskHelper.create(createAgentRequest, pluginSettings, consoleLogAppender);
 
         assertThat(ecsTask.isPresent()).isTrue();
-        assertThat(ecsTask.get().taskArn()).isEqualTo(task.getTaskArn());
+        assertThat(ecsTask.get().taskArn()).isEqualTo(task.taskArn());
         assertThat(ecsTask.get().taskDefinition()).isEqualTo(taskDefinition);
 
         final StartTaskRequest startTaskRequest = startTaskRequestArgumentCaptor.getValue();
-        assertThat(startTaskRequest.getCluster()).isEqualTo(pluginSettings.getClusterName());
-        assertThat(startTaskRequest.getTaskDefinition()).isEqualTo(taskDefinition.getTaskDefinitionArn());
-        assertThat(startTaskRequest.getContainerInstances()).contains(containerInstance.getContainerInstanceArn());
+        assertThat(startTaskRequest.cluster()).isEqualTo(pluginSettings.getClusterName());
+        assertThat(startTaskRequest.taskDefinition()).isEqualTo(taskDefinition.taskDefinitionArn());
+        assertThat(startTaskRequest.containerInstances()).contains(containerInstance.containerInstanceArn());
 
         InOrder inOrder = inOrder(consoleLogAppender);
 
@@ -116,7 +117,7 @@ class TaskHelperTest {
         inOrder.verify(consoleLogAppender, times(1)).accept("Registering ECS Task definition with cluster...");
         inOrder.verify(consoleLogAppender, times(1)).accept("Done registering ECS Task definition with cluster.");
         inOrder.verify(consoleLogAppender, times(1)).accept("Starting ECS Task to perform current job...");
-        inOrder.verify(consoleLogAppender, times(1)).accept(String.format("ECS Task %s scheduled on container instance %s.", registerTaskDefinitionRequest.getFamily(), containerInstance.getEc2InstanceId()));
+        inOrder.verify(consoleLogAppender, times(1)).accept(String.format("ECS Task %s scheduled on container instance %s.", taskNameArgumentCaptor.getValue(), containerInstance.ec2InstanceId()));
 
         verifyNoMoreInteractions(consoleLogAppender);
     }
@@ -124,27 +125,28 @@ class TaskHelperTest {
     @Test
     void shouldCreateTaskAndScaleUpIfNoMatchingContainerInstanceFound() throws Exception {
         final InstanceSelectionStrategy instanceSelectionStrategy = mock(InstanceSelectionStrategy.class);
-        final TaskDefinition taskDefinition = new TaskDefinition().withTaskDefinitionArn("task-definition-arn");
-        final Task task = new Task().withTaskArn("task-arn").withTaskDefinitionArn(taskDefinition.getTaskDefinitionArn());
-        final ContainerInstance containerInstance = new ContainerInstance().withContainerInstanceArn("container-instance-arn");
-        RegisterTaskDefinitionRequest registerTaskDefinitionRequest = new RegisterTaskDefinitionRequest();
+        final TaskDefinition taskDefinition = TaskDefinition.builder().taskDefinitionArn("task-definition-arn").build();
+        final Task task = Task.builder().taskArn("task-arn").taskDefinitionArn(taskDefinition.taskDefinitionArn()).build();
+        final ContainerInstance containerInstance = ContainerInstance.builder().containerInstanceArn("container-instance-arn").build();
+        final ArgumentCaptor<String> taskNameArgumentCaptor = ArgumentCaptor.forClass(String.class);
+        RegisterTaskDefinitionRequest registerTaskDefinitionRequest = RegisterTaskDefinitionRequest.builder().build();
 
         when(pluginSettings.efsDnsOrIP()).thenReturn("efs-dns-name");
         when(elasticAgentProfileProperties.getImage()).thenReturn("alpine");
         when(ecsClient.registerTaskDefinition(any(RegisterTaskDefinitionRequest.class))).thenReturn(
-                new RegisterTaskDefinitionResult().withTaskDefinition(taskDefinition)
+                RegisterTaskDefinitionResponse.builder().taskDefinition(taskDefinition).build()
         );
-        when(registerTaskDefinitionRequestBuilder.build(eq(pluginSettings), eq(elasticAgentProfileProperties), any(ContainerDefinition.class))).thenReturn(registerTaskDefinitionRequest);
+        when(registerTaskDefinitionRequestBuilder.build(eq(pluginSettings), eq(elasticAgentProfileProperties), any(ContainerDefinition.Builder.class), taskNameArgumentCaptor.capture())).thenReturn(registerTaskDefinitionRequest);
         when(containerInstanceHelper.startOrCreateOneInstance(pluginSettings, elasticAgentProfileProperties, consoleLogAppender)).thenReturn(containerInstance);
-        when(ecsClient.startTask(any(StartTaskRequest.class))).thenReturn(new StartTaskResult().withTasks(task));
+        when(ecsClient.startTask(any(StartTaskRequest.class))).thenReturn(StartTaskResponse.builder().tasks(task).build());
         when(instanceSelectionStrategyFactory.strategyFor(any()))
                 .thenReturn(instanceSelectionStrategy);
-        when(instanceSelectionStrategy.instanceForScheduling(eq(pluginSettings), eq(elasticAgentProfileProperties), any(ContainerDefinition.class))).thenReturn(Optional.empty());
+        when(instanceSelectionStrategy.instanceForScheduling(eq(pluginSettings), eq(elasticAgentProfileProperties), any())).thenReturn(Optional.empty());
 
         final Optional<ECSTask> ecsTask = taskHelper.create(createAgentRequest, pluginSettings, consoleLogAppender);
 
         assertThat(ecsTask.isPresent()).isTrue();
-        assertThat(ecsTask.get().taskArn()).isEqualTo(task.getTaskArn());
+        assertThat(ecsTask.get().taskArn()).isEqualTo(task.taskArn());
         assertThat(ecsTask.get().taskDefinition()).isEqualTo(taskDefinition);
 
         verify(containerInstanceHelper).startOrCreateOneInstance(pluginSettings, elasticAgentProfileProperties, consoleLogAppender);
@@ -156,7 +158,7 @@ class TaskHelperTest {
         inOrder.verify(consoleLogAppender, times(1)).accept("Registering ECS Task definition with cluster...");
         inOrder.verify(consoleLogAppender, times(1)).accept("Done registering ECS Task definition with cluster.");
         inOrder.verify(consoleLogAppender, times(1)).accept("Starting ECS Task to perform current job...");
-        inOrder.verify(consoleLogAppender, times(1)).accept(String.format("ECS Task %s scheduled on container instance %s.", registerTaskDefinitionRequest.getFamily(), containerInstance.getEc2InstanceId()));
+        inOrder.verify(consoleLogAppender, times(1)).accept(String.format("ECS Task %s scheduled on container instance %s.", taskNameArgumentCaptor.getValue(), containerInstance.ec2InstanceId()));
 
         verifyNoMoreInteractions(consoleLogAppender);
     }
@@ -164,23 +166,23 @@ class TaskHelperTest {
     @Test
     void shouldScaleUpASpotInstance_IfNotMatchingContainerInstanceFound_And_IfProfileRequiresASpotInstance() throws LimitExceededException, ContainerFailedToRegisterException {
         final InstanceSelectionStrategy instanceSelectionStrategy = mock(InstanceSelectionStrategy.class);
-        final TaskDefinition taskDefinition = new TaskDefinition().withTaskDefinitionArn("task-definition-arn");
-        final Task task = new Task().withTaskArn("task-arn").withTaskDefinitionArn(taskDefinition.getTaskDefinitionArn());
-        final ContainerInstance containerInstance = new ContainerInstance().withContainerInstanceArn("container-instance-arn");
-        RegisterTaskDefinitionRequest registerTaskDefinitionRequest = new RegisterTaskDefinitionRequest();
+        final TaskDefinition taskDefinition = TaskDefinition.builder().taskDefinitionArn("task-definition-arn").build();
+        final Task task = Task.builder().taskArn("task-arn").taskDefinitionArn(taskDefinition.taskDefinitionArn()).build();
+        final ContainerInstance containerInstance = ContainerInstance.builder().containerInstanceArn("container-instance-arn").build()  ;
+        RegisterTaskDefinitionRequest registerTaskDefinitionRequest = RegisterTaskDefinitionRequest.builder().build();
 
         when(pluginSettings.efsDnsOrIP()).thenReturn("efs-dns-name");
         when(elasticAgentProfileProperties.getImage()).thenReturn("alpine");
         when(elasticAgentProfileProperties.runAsSpotInstance()).thenReturn(true);
         when(ecsClient.registerTaskDefinition(any(RegisterTaskDefinitionRequest.class))).thenReturn(
-                new RegisterTaskDefinitionResult().withTaskDefinition(taskDefinition)
+                RegisterTaskDefinitionResponse.builder().taskDefinition(taskDefinition).build()
         );
-        when(registerTaskDefinitionRequestBuilder.build(eq(pluginSettings), eq(elasticAgentProfileProperties), any(ContainerDefinition.class))).thenReturn(registerTaskDefinitionRequest);
+        when(registerTaskDefinitionRequestBuilder.build(eq(pluginSettings), eq(elasticAgentProfileProperties), any(ContainerDefinition.Builder.class), any())).thenReturn(registerTaskDefinitionRequest);
         when(containerInstanceHelper.startOrCreateOneInstance(pluginSettings, elasticAgentProfileProperties, consoleLogAppender)).thenReturn(containerInstance);
-        when(ecsClient.startTask(any(StartTaskRequest.class))).thenReturn(new StartTaskResult().withTasks(task));
+        when(ecsClient.startTask(any(StartTaskRequest.class))).thenReturn(StartTaskResponse.builder().tasks(task).build());
         when(instanceSelectionStrategyFactory.strategyFor(any()))
                 .thenReturn(instanceSelectionStrategy);
-        when(instanceSelectionStrategy.instanceForScheduling(eq(pluginSettings), eq(elasticAgentProfileProperties), any(ContainerDefinition.class))).thenReturn(Optional.empty());
+        when(instanceSelectionStrategy.instanceForScheduling(eq(pluginSettings), eq(elasticAgentProfileProperties), any())).thenReturn(Optional.empty());
 
         final Optional<ECSTask> ecsTask = taskHelper.create(createAgentRequest, pluginSettings, consoleLogAppender);
 
@@ -202,16 +204,17 @@ class TaskHelperTest {
 
         when(elasticAgentProfileProperties.getImage()).thenReturn("alpine");
         when(ecsClient.registerTaskDefinition(any(RegisterTaskDefinitionRequest.class))).thenReturn(
-                new RegisterTaskDefinitionResult().withTaskDefinition(new TaskDefinition().withTaskDefinitionArn("task-definition-arn"))
+                RegisterTaskDefinitionResponse.builder().taskDefinition(TaskDefinition.builder().taskDefinitionArn("task-definition-arn").build()).build()
         );
 
-        when(registerTaskDefinitionRequestBuilder.build(eq(pluginSettings), eq(elasticAgentProfileProperties), any(ContainerDefinition.class))).thenReturn(new RegisterTaskDefinitionRequest());
+        when(registerTaskDefinitionRequestBuilder.build(eq(pluginSettings), eq(elasticAgentProfileProperties), any(ContainerDefinition.Builder.class), any())).thenReturn(RegisterTaskDefinitionRequest.builder().build());
         when(instanceSelectionStrategyFactory.strategyFor(any())).thenReturn(instanceSelectionStrategy);
-        when(instanceSelectionStrategy.instanceForScheduling(eq(pluginSettings), eq(elasticAgentProfileProperties), any(ContainerDefinition.class)))
-                .thenReturn(Optional.of(new ContainerInstance().withContainerInstanceArn("container-instance-arn")));
+        when(instanceSelectionStrategy.instanceForScheduling(eq(pluginSettings), eq(elasticAgentProfileProperties), any()))
+                .thenReturn(Optional.of(ContainerInstance.builder().containerInstanceArn("container-instance-arn").build()));
 
-        when(ecsClient.startTask(any(StartTaskRequest.class))).thenReturn(new StartTaskResult()
-                .withFailures(new Failure().withReason("Failed to start task.").withArn("task-arn"))
+        when(ecsClient.startTask(any(StartTaskRequest.class))).thenReturn(StartTaskResponse.builder()
+                .failures(Failure.builder().reason("Failed to start task.").arn("task-arn").build())
+                .build()
         );
 
         try {
@@ -239,23 +242,23 @@ class TaskHelperTest {
 
         final StopTaskRequest stopTaskRequest = stopTaskRequestArgumentCaptor.getValue();
         assertThat(stopTaskRequest).isNotNull();
-        assertThat(stopTaskRequest.getCluster()).isEqualTo(pluginSettings.getClusterName());
-        assertThat(stopTaskRequest.getReason()).isEqualTo("Stopped by GoCD server.");
-        assertThat(stopTaskRequest.getTask()).isEqualTo("task-arn");
+        assertThat(stopTaskRequest.cluster()).isEqualTo(pluginSettings.getClusterName());
+        assertThat(stopTaskRequest.reason()).isEqualTo("Stopped by GoCD server.");
+        assertThat(stopTaskRequest.task()).isEqualTo("task-arn");
 
         final ArgumentCaptor<DeregisterTaskDefinitionRequest> deregisterTaskDefinitionRequestArgumentCaptor = ArgumentCaptor.forClass(DeregisterTaskDefinitionRequest.class);
         verify(ecsClient).deregisterTaskDefinition(deregisterTaskDefinitionRequestArgumentCaptor.capture());
 
         final DeregisterTaskDefinitionRequest deregisterTaskDefinitionRequest = deregisterTaskDefinitionRequestArgumentCaptor.getValue();
         assertThat(deregisterTaskDefinitionRequest).isNotNull();
-        assertThat(deregisterTaskDefinitionRequest.getTaskDefinition()).isEqualTo("task-definition-arn");
+        assertThat(deregisterTaskDefinitionRequest.taskDefinition()).isEqualTo("task-definition-arn");
 
         final ArgumentCaptor<DeleteTaskDefinitionsRequest> deleteTaskDefinitionsCaptor = ArgumentCaptor.forClass(DeleteTaskDefinitionsRequest.class);
         verify(ecsClient).deleteTaskDefinitions(deleteTaskDefinitionsCaptor.capture());
 
         final DeleteTaskDefinitionsRequest deleteTaskDefinitionRequest = deleteTaskDefinitionsCaptor.getValue();
         assertThat(deleteTaskDefinitionRequest).isNotNull();
-        assertThat(deleteTaskDefinitionRequest.getTaskDefinitions()).containsExactly("task-definition-arn");
+        assertThat(deleteTaskDefinitionRequest.taskDefinitions()).containsExactly("task-definition-arn");
     }
 
     @Test
@@ -267,66 +270,66 @@ class TaskHelperTest {
 
         final DeregisterTaskDefinitionRequest deregisterTaskDefinitionRequest = deregisterTaskDefinitionRequestArgumentCaptor.getValue();
         assertThat(deregisterTaskDefinitionRequest).isNotNull();
-        assertThat(deregisterTaskDefinitionRequest.getTaskDefinition()).isEqualTo("task-definition-arn");
+        assertThat(deregisterTaskDefinitionRequest.taskDefinition()).isEqualTo("task-definition-arn");
 
         final ArgumentCaptor<DeleteTaskDefinitionsRequest> deleteTaskDefinitionsCaptor = ArgumentCaptor.forClass(DeleteTaskDefinitionsRequest.class);
         verify(ecsClient).deleteTaskDefinitions(deleteTaskDefinitionsCaptor.capture());
 
         final DeleteTaskDefinitionsRequest deleteTaskDefinitionRequest = deleteTaskDefinitionsCaptor.getValue();
         assertThat(deleteTaskDefinitionRequest).isNotNull();
-        assertThat(deleteTaskDefinitionRequest.getTaskDefinitions()).containsExactly("task-definition-arn");
+        assertThat(deleteTaskDefinitionRequest.taskDefinitions()).containsExactly("task-definition-arn");
     }
 
     @Test
     void shouldListAllTasks() {
-        final Task task = new Task().withTaskArn("task-arn").withTaskDefinitionArn("task-definition-arn");
-        final TaskDefinition taskDefinition = new TaskDefinition().withFamily("foo").withTaskDefinitionArn("task-definition-arn");
+        final Task task = Task.builder().taskArn("task-arn").taskDefinitionArn("task-definition-arn").build();
+        final TaskDefinition taskDefinition = TaskDefinition.builder().family("foo").taskDefinitionArn("task-definition-arn").build();
 
         final ArgumentCaptor<ListTasksRequest> listTasksRequestArgumentCaptor = ArgumentCaptor.forClass(ListTasksRequest.class);
-        when(ecsClient.listTasks(listTasksRequestArgumentCaptor.capture())).thenReturn(new ListTasksResult().withTaskArns(task.getTaskArn()));
+        when(ecsClient.listTasks(listTasksRequestArgumentCaptor.capture())).thenReturn(ListTasksResponse.builder().taskArns(task.taskArn()).build());
 
         final ArgumentCaptor<DescribeTasksRequest> describeTasksRequestArgumentCaptor = ArgumentCaptor.forClass(DescribeTasksRequest.class);
-        when(ecsClient.describeTasks(describeTasksRequestArgumentCaptor.capture())).thenReturn(new DescribeTasksResult().withTasks(task));
+        when(ecsClient.describeTasks(describeTasksRequestArgumentCaptor.capture())).thenReturn(DescribeTasksResponse.builder().tasks(task).build());
 
         final ArgumentCaptor<DescribeTaskDefinitionRequest> describeTaskDefinitionRequestArgumentCaptor = ArgumentCaptor.forClass(DescribeTaskDefinitionRequest.class);
         when(ecsClient.describeTaskDefinition(describeTaskDefinitionRequestArgumentCaptor.capture())).thenReturn(
-                new DescribeTaskDefinitionResult().withTaskDefinition(taskDefinition)
+                DescribeTaskDefinitionResponse.builder().taskDefinition(taskDefinition).build()
         );
 
         final Map<Task, TaskDefinition> taskTaskDefinitionMap = taskHelper.listAllTasks(pluginSettings);
 
         assertThat(taskTaskDefinitionMap).containsEntry(task, taskDefinition);
-        assertThat(listTasksRequestArgumentCaptor.getValue().getCluster()).isEqualTo(pluginSettings.getClusterName());
-        assertThat(describeTasksRequestArgumentCaptor.getValue().getCluster()).isEqualTo(pluginSettings.getClusterName());
-        assertThat(describeTasksRequestArgumentCaptor.getValue().getTasks()).contains(task.getTaskArn());
-        assertThat(describeTaskDefinitionRequestArgumentCaptor.getValue().getTaskDefinition()).contains(taskDefinition.getTaskDefinitionArn());
+        assertThat(listTasksRequestArgumentCaptor.getValue().cluster()).isEqualTo(pluginSettings.getClusterName());
+        assertThat(describeTasksRequestArgumentCaptor.getValue().cluster()).isEqualTo(pluginSettings.getClusterName());
+        assertThat(describeTasksRequestArgumentCaptor.getValue().tasks()).contains(task.taskArn());
+        assertThat(describeTaskDefinitionRequestArgumentCaptor.getValue().taskDefinition()).contains(taskDefinition.taskDefinitionArn());
     }
 
     @Test
     void shouldListAllActiveTasks() {
-        final Task task = new Task().withTaskArn("arn/task-arn").withTaskDefinitionArn("arn/task-definition-arn");
-        final TaskDefinition taskDefinition = new TaskDefinition().withFamily("foo").withTaskDefinitionArn("arn/task-definition-arn");
+        final Task task = Task.builder().taskArn("arn/task-arn").taskDefinitionArn("arn/task-definition-arn").build();
+        final TaskDefinition taskDefinition = TaskDefinition.builder().family("foo").taskDefinitionArn("arn/task-definition-arn").build();
 
         final ArgumentCaptor<ListTasksRequest> listTasksRequestArgumentCaptor = ArgumentCaptor.forClass(ListTasksRequest.class);
-        when(ecsClient.listTasks(listTasksRequestArgumentCaptor.capture())).thenReturn(new ListTasksResult().withTaskArns(task.getTaskArn()));
+        when(ecsClient.listTasks(listTasksRequestArgumentCaptor.capture())).thenReturn(ListTasksResponse.builder().taskArns(task.taskArn()).build());
 
         final ArgumentCaptor<DescribeTasksRequest> describeTasksRequestArgumentCaptor = ArgumentCaptor.forClass(DescribeTasksRequest.class);
-        when(ecsClient.describeTasks(describeTasksRequestArgumentCaptor.capture())).thenReturn(new DescribeTasksResult().withTasks(task));
+        when(ecsClient.describeTasks(describeTasksRequestArgumentCaptor.capture())).thenReturn(DescribeTasksResponse.builder().tasks(task).build());
 
         final ArgumentCaptor<DescribeTaskDefinitionRequest> describeTaskDefinitionRequestArgumentCaptor = ArgumentCaptor.forClass(DescribeTaskDefinitionRequest.class);
         when(ecsClient.describeTaskDefinition(describeTaskDefinitionRequestArgumentCaptor.capture())).thenReturn(
-                new DescribeTaskDefinitionResult().withTaskDefinition(taskDefinition)
+                DescribeTaskDefinitionResponse.builder().taskDefinition(taskDefinition).build()
         );
 
         final List<ECSContainer> ecsContainers = taskHelper.allRunningContainers(pluginSettings);
 
         assertThat(ecsContainers).hasSize(1).contains(new ECSContainer(task, taskDefinition));
 
-        assertThat(listTasksRequestArgumentCaptor.getValue().getCluster()).isEqualTo(pluginSettings.getClusterName());
-        assertThat(listTasksRequestArgumentCaptor.getValue().getDesiredStatus()).isEqualTo(DesiredStatus.RUNNING.toString());
-        assertThat(describeTasksRequestArgumentCaptor.getValue().getCluster()).isEqualTo(pluginSettings.getClusterName());
-        assertThat(describeTasksRequestArgumentCaptor.getValue().getTasks()).contains(task.getTaskArn());
-        assertThat(describeTaskDefinitionRequestArgumentCaptor.getValue().getTaskDefinition()).contains(taskDefinition.getTaskDefinitionArn());
+        assertThat(listTasksRequestArgumentCaptor.getValue().cluster()).isEqualTo(pluginSettings.getClusterName());
+        assertThat(listTasksRequestArgumentCaptor.getValue().desiredStatus()).isEqualTo(DesiredStatus.RUNNING);
+        assertThat(describeTasksRequestArgumentCaptor.getValue().cluster()).isEqualTo(pluginSettings.getClusterName());
+        assertThat(describeTasksRequestArgumentCaptor.getValue().tasks()).contains(task.taskArn());
+        assertThat(describeTaskDefinitionRequestArgumentCaptor.getValue().taskDefinition()).contains(taskDefinition.taskDefinitionArn());
     }
 
     @Test
@@ -341,10 +344,10 @@ class TaskHelperTest {
             put(LABEL_SERVER_ID, "gocd-server-id");
         }};
 
-        when(task.getTaskArn()).thenReturn("task-arn");
-        when(task.getContainerInstanceArn()).thenReturn("container-instance-arn");
-        when(taskDefinition.getContainerDefinitions()).thenReturn(Collections.singletonList(containerDefinition));
-        when(containerDefinition.getDockerLabels()).thenReturn(dockerLabels);
+        when(task.taskArn()).thenReturn("task-arn");
+        when(task.containerInstanceArn()).thenReturn("container-instance-arn");
+        when(taskDefinition.containerDefinitions()).thenReturn(Collections.singletonList(containerDefinition));
+        when(containerDefinition.dockerLabels()).thenReturn(dockerLabels);
 
         final Optional<ECSTask> ecsTask = taskHelper.fromTaskInfo(task, taskDefinition, Collections.singletonMap("container-instance-arn", "i-12345ab"), "gocd-server-id");
 
@@ -357,7 +360,7 @@ class TaskHelperTest {
     }
 
     @Test
-    void shouldCreateECSTaskFromTaskAndTaskDefinitionWhenContainerDefinitionIsNotTaggedWithServerId() {
+    void shouldIgnoreTaskWhenContainerDefinitionIsNotTaggedWithServerId() {
         final Task task = mock(Task.class);
         final TaskDefinition taskDefinition = mock(TaskDefinition.class);
         final ContainerDefinition containerDefinition = mock(ContainerDefinition.class);
@@ -367,19 +370,47 @@ class TaskHelperTest {
             put(ENVIRONMENT_LABEL_KEY, "environment");
         }};
 
-        when(task.getTaskArn()).thenReturn("task-arn");
-        when(task.getContainerInstanceArn()).thenReturn("container-instance-arn");
-        when(taskDefinition.getContainerDefinitions()).thenReturn(Collections.singletonList(containerDefinition));
-        when(containerDefinition.getDockerLabels()).thenReturn(dockerLabels);
+        when(task.taskArn()).thenReturn("task-arn");
+        when(taskDefinition.containerDefinitions()).thenReturn(Collections.singletonList(containerDefinition));
+        when(containerDefinition.dockerLabels()).thenReturn(dockerLabels);
 
         final Optional<ECSTask> ecsTask = taskHelper.fromTaskInfo(task, taskDefinition, Collections.singletonMap("container-instance-arn", "i-12345ab"), "gocd-server-id");
 
-        assertThat(ecsTask.isPresent()).isTrue();
-        assertThat(ecsTask.get().elasticProfile().getImage()).isEqualTo("alpine");
-        assertThat(ecsTask.get().environment()).isEqualTo("environment");
-        assertThat(ecsTask.get().getEC2InstanceId()).isEqualTo("i-12345ab");
-        assertThat(ecsTask.get().taskDefinition()).isEqualTo(taskDefinition);
-        assertThat(ecsTask.get().taskArn()).isEqualTo("task-arn");
+        assertThat(ecsTask.isPresent()).isFalse();
+    }
+
+    @Test
+    void shouldIgnoreTaskWhenContainerDefinitionIsNotTaggedAsCreatedByThisPlugin() {
+        final Task task = mock(Task.class);
+        final TaskDefinition taskDefinition = mock(TaskDefinition.class);
+        final ContainerDefinition containerDefinition = mock(ContainerDefinition.class);
+        final Map<String, String> dockerLabels = new HashMap<>() {{
+            put(CONFIGURATION_LABEL_KEY, "{\"Image\":\"alpine\"}");
+            put(ENVIRONMENT_LABEL_KEY, "environment");
+            put(LABEL_SERVER_ID, "gocd-server-id");
+        }};
+
+        when(task.taskArn()).thenReturn("task-arn");
+        when(taskDefinition.containerDefinitions()).thenReturn(Collections.singletonList(containerDefinition));
+        when(containerDefinition.dockerLabels()).thenReturn(dockerLabels);
+
+        final Optional<ECSTask> ecsTask = taskHelper.fromTaskInfo(task, taskDefinition, Collections.singletonMap("container-instance-arn", "i-12345ab"), "gocd-server-id");
+
+        assertThat(ecsTask.isPresent()).isFalse();
+    }
+
+    @Test
+    void shouldIgnoreForeignTaskWithoutAnyDockerLabels() {
+        final Task task = mock(Task.class);
+        final TaskDefinition taskDefinition = mock(TaskDefinition.class);
+        final ContainerDefinition containerDefinition = ContainerDefinition.builder().build();
+
+        when(task.taskArn()).thenReturn("task-arn");
+        when(taskDefinition.containerDefinitions()).thenReturn(Collections.singletonList(containerDefinition));
+
+        final Optional<ECSTask> ecsTask = taskHelper.fromTaskInfo(task, taskDefinition, Collections.singletonMap("container-instance-arn", "i-12345ab"), "gocd-server-id");
+
+        assertThat(ecsTask.isPresent()).isFalse();
     }
 
     @Test
@@ -394,10 +425,10 @@ class TaskHelperTest {
             put(LABEL_SERVER_ID, "unknown-server-id");
         }};
 
-        when(task.getTaskArn()).thenReturn("task-arn");
-        when(task.getContainerInstanceArn()).thenReturn("container-instance-arn");
-        when(taskDefinition.getContainerDefinitions()).thenReturn(Collections.singletonList(containerDefinition));
-        when(containerDefinition.getDockerLabels()).thenReturn(dockerLabels);
+        when(task.taskArn()).thenReturn("task-arn");
+        when(task.containerInstanceArn()).thenReturn("container-instance-arn");
+        when(taskDefinition.containerDefinitions()).thenReturn(Collections.singletonList(containerDefinition));
+        when(containerDefinition.dockerLabels()).thenReturn(dockerLabels);
 
         final Optional<ECSTask> ecsTask = taskHelper.fromTaskInfo(task, taskDefinition, Collections.singletonMap("container-instance-arn", "i-12345ab"), "gocd-server-id");
 
@@ -410,7 +441,7 @@ class TaskHelperTest {
         final Task taskFromAWS = mock(Task.class);
 
         when(pluginSettings.getClusterName()).thenReturn("GoCD");
-        when(ecsClient.describeTasks(captor.capture())).thenReturn(new DescribeTasksResult().withTasks(taskFromAWS));
+        when(ecsClient.describeTasks(captor.capture())).thenReturn(DescribeTasksResponse.builder().tasks(taskFromAWS).build());
 
         final Optional<Task> optionalTask = taskHelper.refreshTask(pluginSettings, "foo");
 
@@ -418,8 +449,8 @@ class TaskHelperTest {
         assertThat(optionalTask.get()).isEqualTo(taskFromAWS);
 
         final DescribeTasksRequest describeTasksRequest = captor.getValue();
-        assertThat(describeTasksRequest.getCluster()).isEqualTo("GoCD");
-        assertThat(describeTasksRequest.getTasks())
+        assertThat(describeTasksRequest.cluster()).isEqualTo("GoCD");
+        assertThat(describeTasksRequest.tasks())
                 .hasSize(1)
                 .contains("foo");
     }

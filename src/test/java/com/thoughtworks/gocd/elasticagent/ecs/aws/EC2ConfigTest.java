@@ -16,18 +16,21 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.aws;
 
-import com.amazonaws.services.ec2.model.IamInstanceProfileSpecification;
-import com.amazonaws.services.ec2.model.Tag;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.*;
 import com.thoughtworks.gocd.extensions.FileSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import software.amazon.awssdk.services.ec2.model.IamInstanceProfileSpecification;
+import software.amazon.awssdk.services.ec2.model.Tag;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.aws.EC2Config.Builder.PLATFORM;
 import static com.thoughtworks.gocd.elasticagent.ecs.aws.Userdata.decodeBase64;
 import static org.assertj.core.api.Assertions.assertThat;
+import static software.amazon.awssdk.services.ec2.model.InstanceType.M5_2_XLARGE;
+import static software.amazon.awssdk.services.ec2.model.InstanceType.T2_MEDIUM;
+import static software.amazon.awssdk.services.ec2.model.InstanceType.T2_SMALL;
 
 class EC2ConfigTest {
 
@@ -51,8 +54,8 @@ class EC2ConfigTest {
                 .build();
 
         final EC2Config ec2Config = new EC2Config.Builder()
-                .withSettings(pluginSettings)
-                .withProfile(elasticAgentProfileProperties)
+                .settings(pluginSettings)
+                .profile(elasticAgentProfileProperties)
                 .build();
 
         assertThat(ec2Config.getSecurityGroups())
@@ -69,8 +72,8 @@ class EC2ConfigTest {
         final ElasticAgentProfileProperties elasticAgentProfileProperties = profileBuilder.build();
 
         final EC2Config ec2Config = new EC2Config.Builder()
-                .withSettings(pluginSettings)
-                .withProfile(elasticAgentProfileProperties)
+                .settings(pluginSettings)
+                .profile(elasticAgentProfileProperties)
                 .build();
 
         assertThat(ec2Config.getSecurityGroups())
@@ -89,12 +92,12 @@ class EC2ConfigTest {
                 .build();
 
         final EC2Config ec2Config = new EC2Config.Builder()
-                .withSettings(pluginSettings)
-                .withProfile(elasticAgentProfileProperties)
+                .settings(pluginSettings)
+                .profile(elasticAgentProfileProperties)
                 .build();
 
         assertThat(ec2Config.getIamInstanceProfile())
-                .isEqualTo(new IamInstanceProfileSpecification().withName("iam-foobar"));
+                .isEqualTo(IamInstanceProfileSpecification.builder().name("iam-foobar").build());
     }
 
     @Test
@@ -106,12 +109,12 @@ class EC2ConfigTest {
         final ElasticAgentProfileProperties elasticAgentProfileProperties = profileBuilder.build();
 
         final EC2Config ec2Config = new EC2Config.Builder()
-                .withSettings(pluginSettings)
-                .withProfile(elasticAgentProfileProperties)
+                .settings(pluginSettings)
+                .profile(elasticAgentProfileProperties)
                 .build();
 
         assertThat(ec2Config.getIamInstanceProfile())
-                .isEqualTo(new IamInstanceProfileSpecification().withName("iam-foobar"));
+                .isEqualTo(IamInstanceProfileSpecification.builder().name("iam-foobar").build());
     }
 
     @Test
@@ -124,8 +127,8 @@ class EC2ConfigTest {
                 .build();
 
         final EC2Config ec2Config = new EC2Config.Builder()
-                .withSettings(pluginSettings)
-                .withProfile(elasticAgentProfileProperties)
+                .settings(pluginSettings)
+                .profile(elasticAgentProfileProperties)
                 .build();
 
         assertThat(ec2Config.getSSHKeyName())
@@ -143,8 +146,8 @@ class EC2ConfigTest {
                 .build();
 
         final EC2Config ec2Config = new EC2Config.Builder()
-                .withSettings(pluginSettings)
-                .withProfile(elasticAgentProfileProperties)
+                .settings(pluginSettings)
+                .profile(elasticAgentProfileProperties)
                 .build();
 
         assertThat(ec2Config.getSubnetIds())
@@ -161,8 +164,8 @@ class EC2ConfigTest {
         final ElasticAgentProfileProperties elasticAgentProfileProperties = profileBuilder.build();
 
         final EC2Config ec2Config = new EC2Config.Builder()
-                .withSettings(pluginSettings)
-                .withProfile(elasticAgentProfileProperties)
+                .settings(pluginSettings)
+                .profile(elasticAgentProfileProperties)
                 .build();
 
         assertThat(ec2Config.getSubnetIds())
@@ -189,8 +192,8 @@ class EC2ConfigTest {
                     .build();
 
             final EC2Config ec2Config = new EC2Config.Builder()
-                    .withSettings(pluginSettings)
-                    .withProfile(elasticAgentProfileProperties)
+                    .settings(pluginSettings)
+                    .profile(elasticAgentProfileProperties)
                     .build();
 
             assertThat(ec2Config.getPlatform()).isEqualTo(Platform.LINUX);
@@ -207,8 +210,8 @@ class EC2ConfigTest {
             final ElasticAgentProfileProperties elasticAgentProfileProperties = profileBuilder.build();
 
             final EC2Config ec2Config = new EC2Config.Builder()
-                    .withSettings(pluginSettings)
-                    .withProfile(elasticAgentProfileProperties)
+                    .settings(pluginSettings)
+                    .profile(elasticAgentProfileProperties)
                     .build();
 
             assertThat(ec2Config.getPlatform()).isEqualTo(Platform.LINUX);
@@ -218,7 +221,7 @@ class EC2ConfigTest {
         @Test
         void shouldUseInstanceTypeFromElasticProfileWhenSpecified() {
             final PluginSettings pluginSettings = pluginSettingsBuilder
-                    .addSetting("EC2InstanceType", "t2.small")
+                    .addSetting("EC2InstanceType", T2_SMALL.toString())
                     .addSetting("WindowsInstanceType", "m5.2xlarge")
                     .build();
 
@@ -227,28 +230,28 @@ class EC2ConfigTest {
                     .build();
 
             final EC2Config ec2Config = new EC2Config.Builder()
-                    .withSettings(pluginSettings)
-                    .withProfile(elasticAgentProfileProperties)
+                    .settings(pluginSettings)
+                    .profile(elasticAgentProfileProperties)
                     .build();
 
-            assertThat(ec2Config.getInstanceType()).isEqualTo("t2.medium");
+            assertThat(ec2Config.getInstanceType()).isEqualTo(T2_MEDIUM.toString());
         }
 
         @Test
         void shouldUsePickInstanceTypeFromPluginSettingsWhenNotSpecifiedInProfile() {
             final PluginSettings pluginSettings = pluginSettingsBuilder
-                    .addSetting("LinuxInstanceType", "t2.small")
+                    .addSetting("LinuxInstanceType", T2_SMALL.toString())
                     .addSetting("WindowsInstanceType", "m5.2xlarge")
                     .build();
 
             final ElasticAgentProfileProperties elasticAgentProfileProperties = profileBuilder.build();
 
             final EC2Config ec2Config = new EC2Config.Builder()
-                    .withSettings(pluginSettings)
-                    .withProfile(elasticAgentProfileProperties)
+                    .settings(pluginSettings)
+                    .profile(elasticAgentProfileProperties)
                     .build();
 
-            assertThat(ec2Config.getInstanceType()).isEqualTo("t2.small");
+            assertThat(ec2Config.getInstanceType()).isEqualTo(T2_SMALL.toString());
         }
 
         @Test
@@ -265,8 +268,8 @@ class EC2ConfigTest {
             final ElasticAgentProfileProperties elasticAgentProfileProperties = profileBuilder.build();
 
             final EC2Config ec2Config = new EC2Config.Builder()
-                    .withSettings(pluginSettings)
-                    .withProfile(elasticAgentProfileProperties)
+                    .settings(pluginSettings)
+                    .profile(elasticAgentProfileProperties)
                     .build();
 
             assertThat(ec2Config.getOperatingSystemVolumeType()).isEqualTo("io1");
@@ -287,8 +290,8 @@ class EC2ConfigTest {
             final ElasticAgentProfileProperties elasticAgentProfileProperties = profileBuilder.build();
 
             final EC2Config ec2Config = new EC2Config.Builder()
-                    .withSettings(pluginSettings)
-                    .withProfile(elasticAgentProfileProperties)
+                    .settings(pluginSettings)
+                    .profile(elasticAgentProfileProperties)
                     .build();
 
             assertThat(ec2Config.getDockerVolumeType()).isEqualTo("gp2");
@@ -306,8 +309,8 @@ class EC2ConfigTest {
             final ElasticAgentProfileProperties elasticAgentProfileProperties = profileBuilder.build();
 
             final EC2Config ec2Config = new EC2Config.Builder()
-                    .withSettings(pluginSettings)
-                    .withProfile(elasticAgentProfileProperties)
+                    .settings(pluginSettings)
+                    .profile(elasticAgentProfileProperties)
                     .build();
 
             assertThat(ec2Config.getOperatingSystemVolumeType()).isEqualTo(null);
@@ -322,14 +325,14 @@ class EC2ConfigTest {
             final ElasticAgentProfileProperties elasticAgentProfileProperties = profileBuilder.build();
 
             final EC2Config ec2Config = new EC2Config.Builder()
-                    .withSettings(pluginSettings)
-                    .withProfile(elasticAgentProfileProperties)
+                    .settings(pluginSettings)
+                    .profile(elasticAgentProfileProperties)
                     .build();
 
             assertThat(ec2Config.getTagSpecification()).isNotNull();
-            assertThat(ec2Config.getTagSpecification().getTags())
+            assertThat(ec2Config.getTagSpecification().build().tags())
                     .hasSize(3)
-                    .contains(new Tag(PLATFORM, Platform.LINUX.name()));
+                    .contains(Tag.builder().key(PLATFORM).value(Platform.LINUX.name()).build());
         }
 
         @ParameterizedTest
@@ -344,8 +347,8 @@ class EC2ConfigTest {
             final ElasticAgentProfileProperties elasticAgentProfileProperties = profileBuilder.build();
 
             final EC2Config ec2Config = new EC2Config.Builder()
-                    .withSettings(pluginSettings)
-                    .withProfile(elasticAgentProfileProperties)
+                    .settings(pluginSettings)
+                    .profile(elasticAgentProfileProperties)
                     .build();
 
             assertThat(decodeBase64(ec2Config.getUserdata())).isEqualTo(expectedUserdataScript);
@@ -362,8 +365,8 @@ class EC2ConfigTest {
             final ElasticAgentProfileProperties elasticAgentProfileProperties = profileBuilder.build();
 
             final EC2Config ec2Config = new EC2Config.Builder()
-                    .withSettings(pluginSettings)
-                    .withProfile(elasticAgentProfileProperties)
+                    .settings(pluginSettings)
+                    .profile(elasticAgentProfileProperties)
                     .build();
 
             assertThat(ec2Config.getMaxInstancesAllowed()).isEqualTo(5);
@@ -379,11 +382,11 @@ class EC2ConfigTest {
             final ElasticAgentProfileProperties elasticAgentProfileProperties = profileBuilder.build();
 
             final EC2Config ec2Config = new EC2Config.Builder()
-                    .withSettings(pluginSettings)
-                    .withProfile(elasticAgentProfileProperties)
+                    .settings(pluginSettings)
+                    .profile(elasticAgentProfileProperties)
                     .build();
 
-            assertThat(ec2Config.getRegisterTimeOut().getMinutes()).isEqualTo(2);
+            assertThat(ec2Config.getRegisterTimeOut().toMinutes()).isEqualTo(2);
         }
 
         @Test
@@ -396,8 +399,8 @@ class EC2ConfigTest {
             final ElasticAgentProfileProperties elasticAgentProfileProperties = profileBuilder.build();
 
             final EC2Config ec2Config = new EC2Config.Builder()
-                    .withSettings(pluginSettings)
-                    .withProfile(elasticAgentProfileProperties)
+                    .settings(pluginSettings)
+                    .profile(elasticAgentProfileProperties)
                     .build();
 
             assertThat(ec2Config.getMinInstanceCount()).isEqualTo(2);
@@ -414,8 +417,8 @@ class EC2ConfigTest {
                     .build();
 
             final EC2Config ec2Config = new EC2Config.Builder()
-                    .withSettings(pluginSettings)
-                    .withProfile(elasticAgentProfileProperties)
+                    .settings(pluginSettings)
+                    .profile(elasticAgentProfileProperties)
                     .build();
 
             assertThat(ec2Config.runAsSpotInstance()).isTrue();
@@ -442,8 +445,8 @@ class EC2ConfigTest {
                     .build();
 
             final EC2Config ec2Config = new EC2Config.Builder()
-                    .withSettings(pluginSettings)
-                    .withProfile(elasticAgentProfileProperties)
+                    .settings(pluginSettings)
+                    .profile(elasticAgentProfileProperties)
                     .build();
 
             assertThat(ec2Config.getPlatform()).isEqualTo(Platform.WINDOWS);
@@ -460,8 +463,8 @@ class EC2ConfigTest {
             final ElasticAgentProfileProperties elasticAgentProfileProperties = profileBuilder.build();
 
             final EC2Config ec2Config = new EC2Config.Builder()
-                    .withSettings(pluginSettings)
-                    .withProfile(elasticAgentProfileProperties)
+                    .settings(pluginSettings)
+                    .profile(elasticAgentProfileProperties)
                     .build();
 
             assertThat(ec2Config.getPlatform()).isEqualTo(Platform.WINDOWS);
@@ -471,7 +474,7 @@ class EC2ConfigTest {
         @Test
         void shouldUseInstanceTypeFromElasticProfileWhenSpecified() {
             final PluginSettings pluginSettings = pluginSettingsBuilder
-                    .addSetting("EC2InstanceType", "t2.small")
+                    .addSetting("EC2InstanceType", T2_SMALL.toString())
                     .addSetting("WindowsInstanceType", "m5.2xlarge")
                     .build();
 
@@ -480,28 +483,28 @@ class EC2ConfigTest {
                     .build();
 
             final EC2Config ec2Config = new EC2Config.Builder()
-                    .withSettings(pluginSettings)
-                    .withProfile(elasticAgentProfileProperties)
+                    .settings(pluginSettings)
+                    .profile(elasticAgentProfileProperties)
                     .build();
 
-            assertThat(ec2Config.getInstanceType()).isEqualTo("t2.medium");
+            assertThat(ec2Config.getInstanceType()).isEqualTo(T2_MEDIUM.toString());
         }
 
         @Test
         void shouldUsePickInstanceTypeFromPluginSettingsWhenNotSpecifiedInProfile() {
             final PluginSettings pluginSettings = pluginSettingsBuilder
-                    .addSetting("EC2InstanceType", "t2.small")
+                    .addSetting("EC2InstanceType", T2_SMALL.toString())
                     .addSetting("WindowsInstanceType", "m5.2xlarge")
                     .build();
 
             final ElasticAgentProfileProperties elasticAgentProfileProperties = profileBuilder.build();
 
             final EC2Config ec2Config = new EC2Config.Builder()
-                    .withSettings(pluginSettings)
-                    .withProfile(elasticAgentProfileProperties)
+                    .settings(pluginSettings)
+                    .profile(elasticAgentProfileProperties)
                     .build();
 
-            assertThat(ec2Config.getInstanceType()).isEqualTo("m5.2xlarge");
+            assertThat(ec2Config.getInstanceType()).isEqualTo(M5_2_XLARGE.toString());
         }
 
         @Test
@@ -517,8 +520,8 @@ class EC2ConfigTest {
             final ElasticAgentProfileProperties elasticAgentProfileProperties = profileBuilder.build();
 
             final EC2Config ec2Config = new EC2Config.Builder()
-                    .withSettings(pluginSettings)
-                    .withProfile(elasticAgentProfileProperties)
+                    .settings(pluginSettings)
+                    .profile(elasticAgentProfileProperties)
                     .build();
 
             assertThat(ec2Config.getOperatingSystemVolumeType()).isEqualTo("io1");
@@ -536,8 +539,8 @@ class EC2ConfigTest {
             final ElasticAgentProfileProperties elasticAgentProfileProperties = profileBuilder.build();
 
             final EC2Config ec2Config = new EC2Config.Builder()
-                    .withSettings(pluginSettings)
-                    .withProfile(elasticAgentProfileProperties)
+                    .settings(pluginSettings)
+                    .profile(elasticAgentProfileProperties)
                     .build();
 
             assertThat(ec2Config.getOperatingSystemVolumeType()).isEqualTo(null);
@@ -554,8 +557,8 @@ class EC2ConfigTest {
             final ElasticAgentProfileProperties elasticAgentProfileProperties = profileBuilder.build();
 
             final EC2Config ec2Config = new EC2Config.Builder()
-                    .withSettings(pluginSettings)
-                    .withProfile(elasticAgentProfileProperties)
+                    .settings(pluginSettings)
+                    .profile(elasticAgentProfileProperties)
                     .build();
 
             assertThat(ec2Config.getMaxInstancesAllowed()).isEqualTo(2);
@@ -571,11 +574,11 @@ class EC2ConfigTest {
             final ElasticAgentProfileProperties elasticAgentProfileProperties = profileBuilder.build();
 
             final EC2Config ec2Config = new EC2Config.Builder()
-                    .withSettings(pluginSettings)
-                    .withProfile(elasticAgentProfileProperties)
+                    .settings(pluginSettings)
+                    .profile(elasticAgentProfileProperties)
                     .build();
 
-            assertThat(ec2Config.getRegisterTimeOut().getMinutes()).isEqualTo(10);
+            assertThat(ec2Config.getRegisterTimeOut().toMinutes()).isEqualTo(10);
         }
 
 
@@ -589,8 +592,8 @@ class EC2ConfigTest {
             final ElasticAgentProfileProperties elasticAgentProfileProperties = profileBuilder.build();
 
             final EC2Config ec2Config = new EC2Config.Builder()
-                    .withSettings(pluginSettings)
-                    .withProfile(elasticAgentProfileProperties)
+                    .settings(pluginSettings)
+                    .profile(elasticAgentProfileProperties)
                     .build();
 
             assertThat(ec2Config.getMinInstanceCount()).isEqualTo(10);
@@ -604,14 +607,14 @@ class EC2ConfigTest {
             final ElasticAgentProfileProperties elasticAgentProfileProperties = profileBuilder.build();
 
             final EC2Config ec2Config = new EC2Config.Builder()
-                    .withSettings(pluginSettings)
-                    .withProfile(elasticAgentProfileProperties)
+                    .settings(pluginSettings)
+                    .profile(elasticAgentProfileProperties)
                     .build();
 
             assertThat(ec2Config.getTagSpecification()).isNotNull();
-            assertThat(ec2Config.getTagSpecification().getTags())
+            assertThat(ec2Config.getTagSpecification().build().tags())
                     .hasSize(3)
-                    .contains(new Tag(PLATFORM, Platform.WINDOWS.name()));
+                    .contains(Tag.builder().key(PLATFORM).value(Platform.WINDOWS.name()).build());
         }
 
         @Test
@@ -625,8 +628,8 @@ class EC2ConfigTest {
             final ElasticAgentProfileProperties elasticAgentProfileProperties = profileBuilder.build();
 
             final EC2Config ec2Config = new EC2Config.Builder()
-                    .withSettings(pluginSettings)
-                    .withProfile(elasticAgentProfileProperties)
+                    .settings(pluginSettings)
+                    .profile(elasticAgentProfileProperties)
                     .build();
 
             final String expectedUserdataScript = """
@@ -655,8 +658,8 @@ class EC2ConfigTest {
                     .build();
 
             final EC2Config ec2Config = new EC2Config.Builder()
-                    .withSettings(pluginSettings)
-                    .withProfile(elasticAgentProfileProperties)
+                    .settings(pluginSettings)
+                    .profile(elasticAgentProfileProperties)
                     .build();
 
             assertThat(ec2Config.runAsSpotInstance()).isTrue();

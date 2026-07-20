@@ -16,7 +16,6 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.requests;
 
-import com.amazonaws.services.ecs.model.KeyValuePair;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -28,6 +27,7 @@ import com.thoughtworks.gocd.elasticagent.ecs.domain.ElasticAgentProfileProperti
 import com.thoughtworks.gocd.elasticagent.ecs.domain.JobIdentifier;
 import com.thoughtworks.gocd.elasticagent.ecs.events.EventStream;
 import com.thoughtworks.gocd.elasticagent.ecs.executors.CreateAgentRequestExecutor;
+import software.amazon.awssdk.services.ecs.model.KeyValuePair;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -97,14 +97,14 @@ public class CreateAgentRequest {
     public Set<KeyValuePair> autoRegisterPropertiesAsEnvironmentVars(String elasticAgentId) {
         Set<KeyValuePair> properties = new HashSet<>();
         if (isNotBlank(autoRegisterKey())) {
-            properties.add(new KeyValuePair().withName("GO_EA_AUTO_REGISTER_KEY").withValue(autoRegisterKey()));
+            properties.add(KeyValuePair.builder().name("GO_EA_AUTO_REGISTER_KEY").value(autoRegisterKey()).build());
         }
         if (isNotBlank(environment())) {
-            properties.add(new KeyValuePair().withName("GO_EA_AUTO_REGISTER_ENVIRONMENT").withValue(environment()));
+            properties.add(KeyValuePair.builder().name("GO_EA_AUTO_REGISTER_ENVIRONMENT").value(environment()).build());
         }
 
-        properties.add(new KeyValuePair().withName("GO_EA_AUTO_REGISTER_ELASTIC_AGENT_ID").withValue(elasticAgentId));
-        properties.add(new KeyValuePair().withName("GO_EA_AUTO_REGISTER_ELASTIC_PLUGIN_ID").withValue(Constants.PLUGIN_ID));
+        properties.add(KeyValuePair.builder().name("GO_EA_AUTO_REGISTER_ELASTIC_AGENT_ID").value(elasticAgentId).build());
+        properties.add(KeyValuePair.builder().name("GO_EA_AUTO_REGISTER_ELASTIC_PLUGIN_ID").value(Constants.PLUGIN_ID).build());
 
         return properties;
     }

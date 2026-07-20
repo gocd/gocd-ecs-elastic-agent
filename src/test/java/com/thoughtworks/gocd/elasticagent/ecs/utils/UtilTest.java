@@ -16,15 +16,13 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs.utils;
 
-import org.joda.time.DateTime;
-import org.joda.time.Period;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static com.thoughtworks.gocd.elasticagent.ecs.utils.Util.PERIOD_FORMATTER;
 import static com.thoughtworks.gocd.elasticagent.ecs.utils.Util.getOrDefault;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -93,62 +91,6 @@ class UtilTest {
     }
 
     @Test
-    void periodFormatter_shouldProduceStringWithZeroMinutes() {
-        final DateTime now = DateTime.parse("2017-12-21T07:50:40.514+05:30");
-        final DateTime start = now.minusSeconds(30);
-
-        assertThat(PERIOD_FORMATTER.print(new Period(start, now))).isEqualTo("0 mins");
-    }
-
-    @Test
-    void periodFormatter_shouldProduceStringWithMinutes() {
-        final DateTime now = DateTime.parse("2017-12-21T07:50:40.514+05:30");
-        final DateTime start = now.minusMinutes(30);
-
-        assertThat(PERIOD_FORMATTER.print(new Period(start, now))).isEqualTo("30 mins");
-    }
-
-    @Test
-    void periodFormatter_shouldProduceStringWithHours() {
-        final DateTime now = DateTime.parse("2017-12-21T07:50:40.514+05:30");
-        final DateTime start = now.minusMinutes(30).minusHours(5);
-
-        assertThat(PERIOD_FORMATTER.print(new Period(start, now))).isEqualTo("5 hours 30 mins");
-    }
-
-    @Test
-    void periodFormatter_shouldProduceStringWithDays() {
-        final DateTime now = DateTime.parse("2017-12-21T07:50:40.514+05:30");
-        final DateTime start = now.minusMinutes(30).minusHours(5).minusDays(3);
-
-        assertThat(PERIOD_FORMATTER.print(new Period(start, now))).isEqualTo("3 days 5 hours 30 mins");
-    }
-
-    @Test
-    void periodFormatter_shouldProduceStringWithWeeks() {
-        final DateTime now = DateTime.parse("2017-12-21T07:50:40.514+05:30");
-        final DateTime start = now.minusMinutes(30).minusHours(5).minusDays(9);
-
-        assertThat(PERIOD_FORMATTER.print(new Period(start, now))).isEqualTo("1 week 2 days 5 hours 30 mins");
-    }
-
-    @Test
-    void periodFormatter_shouldProduceStringWithMonths() {
-        final DateTime now = DateTime.parse("2017-12-21T07:50:40.514+05:30");
-        final DateTime start = now.minusMinutes(30).minusHours(5).minusDays(45);
-
-        assertThat(PERIOD_FORMATTER.print(new Period(start, now))).isEqualTo("1 month 2 weeks 1 day 5 hours 30 mins");
-    }
-
-    @Test
-    void periodFormatter_shouldProduceStringWithYears() {
-        final DateTime now = DateTime.parse("2017-12-21T07:50:40.514+05:30");
-        final DateTime start = now.minusMinutes(30).minusHours(5).minusDays(390);
-
-        assertThat(PERIOD_FORMATTER.print(new Period(start, now))).isEqualTo("1 year 3 weeks 4 days 5 hours 30 mins");
-    }
-
-    @Test
     void getIntOrDefault_shouldParseStringIfNotBlank() {
         assertThat(Util.getIntOrDefault("20", 0)).isEqualTo(20);
     }
@@ -156,5 +98,30 @@ class UtilTest {
     @Test
     void getIntOrDefault_shouldReturnDefaultValueIfGivenValueIsNull() {
         assertThat(Util.getIntOrDefault(null, 0)).isEqualTo(0);
+    }
+
+    @Test
+    void formatDurationWords_shouldFormatPositiveDurations() {
+        assertThat(Util.formatDurationWords(0)).isEqualTo("0 seconds");
+        assertThat(Util.formatDurationWords(5_000)).isEqualTo("5 seconds");
+        assertThat(Util.formatDurationWords(90_000)).isEqualTo("1 minute 30 seconds");
+    }
+
+    @Test
+    void formatDurationWords_shouldClampNegativeDurationsToZeroRatherThanThrow() {
+        // AWS-side timestamps (task createdAt, instance launchTime) can be slightly ahead of the local
+        // clock; DurationFormatUtils.formatDurationWords throws for negative input, so Util must clamp.
+        assertThat(Util.formatDurationWords(-1)).isEqualTo("0 seconds");
+        assertThat(Util.formatDurationWords(Long.MIN_VALUE)).isEqualTo("0 seconds");
+    }
+
+    @Test
+    void formatDurationWordsFromNow_shouldClampDatesInTheFutureToZeroRatherThanThrow() {
+        assertThat(Util.formatDurationWordsFromNow(Instant.now().plusSeconds(60))).isEqualTo("0 seconds");
+    }
+
+    @Test
+    void formatDurationWordsFromNow_shouldFormatDatesInThePast() {
+        assertThat(Util.formatDurationWordsFromNow(Instant.now().minusSeconds(3_600))).startsWith("1 hour");
     }
 }

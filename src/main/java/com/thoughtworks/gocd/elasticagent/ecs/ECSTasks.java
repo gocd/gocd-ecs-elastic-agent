@@ -16,7 +16,6 @@
 
 package com.thoughtworks.gocd.elasticagent.ecs;
 
-import com.amazonaws.services.ecs.model.*;
 import com.thoughtworks.go.plugin.api.logging.Logger;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerInstanceHelper;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.TaskHelper;
@@ -30,7 +29,7 @@ import com.thoughtworks.gocd.elasticagent.ecs.events.EventStream;
 import com.thoughtworks.gocd.elasticagent.ecs.exceptions.ServerRequestFailedException;
 import com.thoughtworks.gocd.elasticagent.ecs.requests.CreateAgentRequest;
 import com.thoughtworks.gocd.elasticagent.ecs.utils.Util;
-import org.joda.time.DateTime;
+import software.amazon.awssdk.services.ecs.model.*;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -91,7 +90,7 @@ public class ECSTasks implements AgentInstances<ECSTask> {
         } catch (ClientException | ServerException e) {
             EventFingerprint eventFingerprint = EventFingerprint.forTerminateAgent(agentId);
             eventStream.update(Event.errorEvent(eventFingerprint, format("Error terminating container with id: {0}", agentId), e.getMessage()));
-            LOG.warn(format("Cannot terminate a task that does not exist {0}", task.taskDefinitionArn()));
+            LOG.warn(format("Cannot terminate a task that does not exist {0}", task == null ? null : task.taskDefinitionArn()));
         }
         tasks.remove(agentId);
     }
@@ -121,9 +120,7 @@ public class ECSTasks implements AgentInstances<ECSTask> {
                 continue;
             }
 
-            DateTime dateTimeCreated = new DateTime(task.createdAt());
-
-            if (clock.now().isAfter(dateTimeCreated.plus(settings.getContainerAutoregisterTimeout()))) {
+            if (clock.now().isAfter(task.createdAt().plus(settings.getContainerAutoregisterTimeout()))) {
                 unregisteredContainers.register(task);
             }
         }
@@ -152,7 +149,7 @@ public class ECSTasks implements AgentInstances<ECSTask> {
         try {
             if (!refreshed) {
                 final List<ContainerInstance> containerInstances = containerInstanceHelper.getContainerInstances(clusterProfileProperties);
-                final Map<String, String> arnToInstanceId = Util.toMap(containerInstances, ContainerInstance::getContainerInstanceArn, ContainerInstance::getEc2InstanceId);
+                final Map<String, String> arnToInstanceId = Util.toMap(containerInstances, ContainerInstance::containerInstanceArn, ContainerInstance::ec2InstanceId);
 
                 Map<Task, TaskDefinition> allTasks = taskHelper.listAllTasks(clusterProfileProperties);
                 allTasks.forEach((task, taskDefinition) -> register(taskHelper.fromTaskInfo(task, taskDefinition, arnToInstanceId, getServerId())));

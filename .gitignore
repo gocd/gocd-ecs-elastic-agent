@@ -20,5 +20,6 @@ contrib/cloudformation-template/.bundle/ruby
 
 .DS_Store
 
+.claude/
 .ruby-version
 .ruby-gemset
