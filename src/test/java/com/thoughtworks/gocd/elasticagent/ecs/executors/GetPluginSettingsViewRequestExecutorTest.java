@@ -36,7 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class GetPluginSettingsViewRequestExecutorTest {
 
     @Test
-    void shouldRenderTheTemplateInJSON() throws Exception {
+    void shouldRenderTheTemplateInJSON() {
         GoPluginApiResponse response = new GetClusterProfileViewRequestExecutor(() -> "some-server-id").execute();
         assertThat(response.responseCode()).isEqualTo(200);
         Map<String, String> hashSet = new Gson().fromJson(response.responseBody(), new TypeToken<HashMap<String, String>>() {

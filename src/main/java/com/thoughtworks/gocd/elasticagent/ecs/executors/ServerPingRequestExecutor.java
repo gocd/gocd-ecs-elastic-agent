@@ -85,7 +85,7 @@ public class ServerPingRequestExecutor implements RequestExecutor {
     }
 
     @Override
-    public GoPluginApiResponse execute() throws Exception {
+    public GoPluginApiResponse execute() {
         ConsoleLogAppender doNothingConsoleLogAppender = text -> {
             //do nothing console log appender in case of ping request..
         };
@@ -115,7 +115,7 @@ public class ServerPingRequestExecutor implements RequestExecutor {
         }
     }
 
-    private void performCleanupForCluster(ClusterProfileProperties clusterProfileProperties, ECSTasks agentInstances, ConsoleLogAppender doNothingConsoleLogAppender) throws Exception {
+    private void performCleanupForCluster(ClusterProfileProperties clusterProfileProperties, ECSTasks agentInstances, ConsoleLogAppender doNothingConsoleLogAppender) {
         Agents allAgents = pluginRequest.listAgents();
 
         Agents agentsToDisable = agentInstances.instancesCreatedAfterTimeout(clusterProfileProperties, allAgents);

@@ -53,7 +53,7 @@ public class JobCompletionRequestExecutorTest {
     }
 
     @Test
-    public void shouldTerminateElasticAgentOnJobCompletion() throws Exception {
+    public void shouldTerminateElasticAgentOnJobCompletion() {
         JobIdentifier jobIdentifier = new JobIdentifier("test", 1L, "test", "test_stage", "1", "test_job", 100L);
         String elasticAgentId = "agent-1";
         ClusterProfileProperties clusterProfileProperties = new ClusterProfileProperties();
@@ -81,7 +81,7 @@ public class JobCompletionRequestExecutorTest {
     }
 
     @Test
-    void shouldSkipTerminatingANonExistingAgent() throws Exception {
+    void shouldSkipTerminatingANonExistingAgent() {
         JobIdentifier jobIdentifier = new JobIdentifier("test", 1L, "test", "test_stage", "1", "test_job", 100L);
         String elasticAgentId = "agent-1";
         JobCompletionRequest request = new JobCompletionRequest(elasticAgentId, jobIdentifier, new ElasticAgentProfileProperties(), new ClusterProfileProperties());

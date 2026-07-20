@@ -31,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class GetClusterProfileMetadataExecutorTest {
     @Test
-    void shouldSerializeAllFields() throws Exception {
+    void shouldSerializeAllFields() {
         GoPluginApiResponse response = new GetClusterProfileMetadataExecutor().execute();
         List<Map<String, Object>> list = new Gson().fromJson(response.responseBody(), new TypeToken<List<Map<String, Object>>>() {
         }.getType());

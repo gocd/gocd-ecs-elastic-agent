@@ -30,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class GetPluginSettingsIconExecutorTest {
 
     @Test
-    void rendersIconInBase64() throws Exception {
+    void rendersIconInBase64() {
         GoPluginApiResponse response = new GetPluginSettingsIconExecutor().execute();
         HashMap<String, String> hashMap = new Gson().fromJson(response.responseBody(), new TypeToken<HashMap<String, String>>() {
         }.getType());

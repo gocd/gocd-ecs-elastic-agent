@@ -55,7 +55,7 @@ class GetProfileViewExecutorTest {
     }
 
     @Test
-    void shouldRenderTheTemplateInJSON() throws Exception {
+    void shouldRenderTheTemplateInJSON() {
         GoPluginApiResponse response = new GetProfileViewExecutor().execute();
         assertThat(response.responseCode()).isEqualTo(200);
         Map<String, String> hashSet = new Gson().fromJson(response.responseBody(), new TypeToken<HashMap<String, String>>() {

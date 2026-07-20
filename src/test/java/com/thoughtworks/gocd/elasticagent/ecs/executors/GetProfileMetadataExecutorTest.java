@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class GetProfileMetadataExecutorTest {
 
     @Test
-    void shouldSerializeAllFields() throws Exception {
+    void shouldSerializeAllFields() {
         GoPluginApiResponse response = new GetProfileMetadataExecutor().execute();
         List<Map<String, Object>> list = new Gson().fromJson(response.responseBody(), new TypeToken<List<Map<String, Object>>>() {
         }.getType());
