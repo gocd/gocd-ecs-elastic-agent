@@ -35,9 +35,6 @@ public class Poller<T> {
         validateConfiguration();
         final Result<T> result = new Result<>();
 
-        // A virtual thread rather than an executor: virtual threads are always daemon, and blocking
-        // java.net socket I/O on a virtual thread is interruptible (JEP 444), so on timeout the
-        // interrupt genuinely cancels an in-flight AWS call instead of abandoning the thread.
         final Thread worker = Thread.ofVirtual()
                 .name("ecs-plugin-poller-" + POLLER_THREAD_COUNTER.incrementAndGet())
                 .start(() -> {
@@ -67,8 +64,8 @@ public class Poller<T> {
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            result.failed(e);
             worker.interrupt();
+            result.failed(e);
         }
 
         return result;

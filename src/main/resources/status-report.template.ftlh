@@ -547,9 +547,9 @@
                         </a>
                       </td>
                       <td>
-                        <a rel="nofollow noreferrer" title="${container.jobIdentifier.representation!}"
+                        <a rel="nofollow noreferrer" title="${(container.jobIdentifier.representation)!}"
                            target="_blank"
-                           href="/go/admin/status_reports/com.thoughtworks.gocd.elastic-agent.ecs/agent/${container.name!}?job_id=<#if container.jobIdentifier.jobId??>${container.jobIdentifier.jobId?c}</#if>">${container.jobIdentifier.representation!}</a>
+                           href="/go/admin/status_reports/com.thoughtworks.gocd.elastic-agent.ecs/agent/${container.name!}?job_id=<#if (container.jobIdentifier.jobId)??>${container.jobIdentifier.jobId?c}</#if>">${(container.jobIdentifier.representation)!}</a>
                       </td>
                       <td><span title="${container.image!}">${container.image!}</span></td>
                       <td>${container.lastStatus!}</td>

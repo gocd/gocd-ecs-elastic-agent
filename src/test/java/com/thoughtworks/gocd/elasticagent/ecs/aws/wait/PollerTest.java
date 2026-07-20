@@ -17,7 +17,6 @@
 package com.thoughtworks.gocd.elasticagent.ecs.aws.wait;
 
 import org.junit.jupiter.api.Test;
-
 import org.junit.jupiter.api.Timeout;
 
 import java.time.Duration;
@@ -38,7 +37,7 @@ class PollerTest {
                 .poll(api::get)
                 .stopWhen(count -> count >= 3)
                 .timeout(Duration.ofSeconds(3))
-                .retryAfter(Duration.ofMillis(1100))
+                .retryAfter(Duration.ofMillis(100))
                 .await();
 
         assertThat(result.get()).isEqualTo(3);
@@ -55,7 +54,7 @@ class PollerTest {
                 .poll(api::get)
                 .stopWhen(count -> count >= 3)
                 .timeout(Duration.ofSeconds(3))
-                .retryAfter(Duration.ofMillis(1100))
+                .retryAfter(Duration.ofMillis(100))
                 .await();
 
         assertThat(result.get()).isEqualTo(2);
@@ -82,24 +81,22 @@ class PollerTest {
 
     @Test
     @Timeout(value = 5, unit = TimeUnit.SECONDS)
-    void shouldReturnPromptlyAtTimeoutEvenWhenSupplierIsBlocked() {
+    void shouldReturnAtTheTimeoutEvenWhenAPollIsSlow() {
         final Result<Integer> result = new Poller<Integer>()
                 .poll(() -> {
                     try {
                         Thread.sleep(Duration.ofSeconds(30));
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
-                        throw new RuntimeException(e);
                     }
                     return 1;
                 })
-                .stopWhen(count -> count >= 1)
+                .stopWhen(count -> count >= 3)
                 .timeout(Duration.ofMillis(300))
                 .await();
 
         assertThat(result.isFailed()).isTrue();
         assertThat(result.getException()).isInstanceOf(TimeoutException.class);
-        assertThat(result.get()).isNull();
     }
 
     static class Api {

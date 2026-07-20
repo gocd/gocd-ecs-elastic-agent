@@ -58,7 +58,7 @@ public class AWSModelMother {
                 .privileged(false)
                 .hostname("hostname")
                 .environment(KeyValuePair.builder().name("ENV_FOO").value("ENV_FOO_VALUE").build())
-                .dockerLabels(Collections.singletonMap(LABEL_JOB_IDENTIFIER, jobIdentifier.toJson()))
+                .dockerLabels(jobIdentifier == null ? Collections.emptyMap() : Collections.singletonMap(LABEL_JOB_IDENTIFIER, jobIdentifier.toJson()))
                 .logConfiguration(LogConfiguration.builder().logDriver("awslogs").options(Collections.singletonMap("log-group", "build-logs")).build())
                 .name(name)
                 .build();

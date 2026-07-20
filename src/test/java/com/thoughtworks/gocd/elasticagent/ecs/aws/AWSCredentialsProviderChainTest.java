@@ -21,7 +21,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import software.amazon.awssdk.auth.credentials.*;
-import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider;
 import uk.org.webcompere.systemstubs.environment.EnvironmentVariables;
 import uk.org.webcompere.systemstubs.jupiter.SystemStub;
 import uk.org.webcompere.systemstubs.jupiter.SystemStubsExtension;
@@ -99,7 +98,7 @@ class AWSCredentialsProviderChainTest {
                 .execute(() -> {
                     final AwsCredentialsProvider credentialsProvider = awsCredentialsProviderChain.getAwsCredentialsProvider("access-key", "secret-key", "arn:aws:iam::111111111111:role/gocd-ecs-plugin-role", "GoCD");
 
-                    assertThat(credentialsProvider).isInstanceOf(StsAssumeRoleCredentialsProvider.class);
+                    assertThat(credentialsProvider).isInstanceOf(AWSCredentialsProviderChain.AssumeRoleProviderOwningStsClient.class);
                 });
     }
 
@@ -111,7 +110,7 @@ class AWSCredentialsProviderChainTest {
                     final AWSCredentialsProviderChain chain = new AWSCredentialsProviderChain(() -> "some-server-id", EnvironmentVariableCredentialsProvider.create(), SystemPropertyCredentialsProvider.create());
                     final AwsCredentialsProvider credentialsProvider = chain.getAwsCredentialsProvider("access-key", "secret-key", "arn:aws:iam::111111111111:role/gocd-ecs-plugin-role", "GoCD");
 
-                    assertThat(credentialsProvider).isInstanceOf(StsAssumeRoleCredentialsProvider.class);
+                    assertThat(credentialsProvider).isInstanceOf(AWSCredentialsProviderChain.AssumeRoleProviderOwningStsClient.class);
                 });
     }
 

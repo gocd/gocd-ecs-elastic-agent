@@ -23,11 +23,11 @@ import software.amazon.awssdk.auth.credentials.*;
 import software.amazon.awssdk.services.sts.StsClient;
 import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider;
 import software.amazon.awssdk.services.sts.model.AssumeRoleRequest;
+import software.amazon.awssdk.utils.SdkAutoCloseable;
 
-import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static org.apache.commons.lang3.StringUtils.*;
 
@@ -38,7 +38,7 @@ public class AWSCredentialsProviderChain {
     // Documented for use within sts:ExternalId trust policy conditions; changing the format breaks existing policies.
     public static final String EXTERNAL_ID_PREFIX = "gocd:server-id:";
 
-    private final List<AwsCredentialsProvider> credentialsProviders = new LinkedList<>();
+    private final List<AwsCredentialsProvider> credentialsProviders;
     private final Supplier<String> serverIdSupplier;
 
     public AWSCredentialsProviderChain() {
@@ -53,7 +53,7 @@ public class AWSCredentialsProviderChain {
     //used in test
     public AWSCredentialsProviderChain(Supplier<String> serverIdSupplier, AwsCredentialsProvider... awsCredentialsProviders) {
         this.serverIdSupplier = serverIdSupplier;
-        credentialsProviders.addAll(Arrays.asList(awsCredentialsProviders));
+        credentialsProviders = List.of(awsCredentialsProviders);
     }
 
     private StaticCredentialsProvider staticCredentialProvider(String accessKey, String secretKey) {
@@ -77,11 +77,7 @@ public class AWSCredentialsProviderChain {
 
     public AwsCredentialsProvider getAwsCredentialsProvider(String accessKey, String secretKey, String assumeRoleArn, String clusterName) {
         final StaticCredentialsProvider staticCredentialProvider = staticCredentialProvider(accessKey, secretKey);
-        if (staticCredentialProvider != null) {
-            credentialsProviders.addFirst(staticCredentialProvider);
-        }
-
-        for (AwsCredentialsProvider provider : credentialsProviders) {
+        for (AwsCredentialsProvider provider : Stream.concat(Stream.ofNullable(staticCredentialProvider), credentialsProviders.stream()).toList()) {
             try {
                 AwsCredentials credentials = provider.resolveCredentials();
 
@@ -103,14 +99,34 @@ public class AWSCredentialsProviderChain {
         }
 
         LOG.debug("Assuming role " + assumeRoleArn + " using credentials from " + provider.toString());
-        return StsAssumeRoleCredentialsProvider.builder().asyncCredentialUpdateEnabled(false)
-                .stsClient(StsClient.builder().credentialsProvider(provider).build())
+        final StsClient stsClient = StsClient.builder().credentialsProvider(provider).build();
+        final StsAssumeRoleCredentialsProvider assumeRoleProvider = StsAssumeRoleCredentialsProvider.builder().asyncCredentialUpdateEnabled(false)
+                .stsClient(stsClient)
                 .refreshRequest(() -> AssumeRoleRequest.builder()
                         .roleArn(assumeRoleArn)
                         .roleSessionName(roleSessionName(clusterName))
                         .externalId(externalId())
                         .build())
                 .build();
+        return new AssumeRoleProviderOwningStsClient(assumeRoleProvider, stsClient);
+    }
+
+    /**
+     * StsAssumeRoleCredentialsProvider.close() does not close a caller-supplied StsClient, so this wrapper
+     * takes ownership of both; AwsClientCache relies on close() releasing every underlying resource.
+     */
+    record AssumeRoleProviderOwningStsClient(StsAssumeRoleCredentialsProvider delegate,
+                                                     StsClient stsClient) implements AwsCredentialsProvider, SdkAutoCloseable {
+        @Override
+        public AwsCredentials resolveCredentials() {
+            return delegate.resolveCredentials();
+        }
+
+        @Override
+        public void close() {
+            delegate.close();
+            stsClient.close();
+        }
     }
 
     String externalId() {

@@ -22,14 +22,12 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import com.thoughtworks.go.plugin.api.logging.Logger;
-import com.thoughtworks.gocd.elasticagent.ecs.aws.AWSCredentialsProviderChain;
+import com.thoughtworks.gocd.elasticagent.ecs.aws.AwsClientCache;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.StopPolicy;
 import com.thoughtworks.gocd.elasticagent.ecs.domain.annotation.Metadata;
 import com.thoughtworks.gocd.elasticagent.ecs.utils.Util;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ec2.Ec2Client;
 import software.amazon.awssdk.services.ecs.EcsClient;
 import software.amazon.awssdk.services.ecs.model.LogConfiguration;
@@ -320,10 +318,6 @@ public class PluginSettings {
         return secretAccessKey;
     }
 
-    public String getAssumeRoleArn() {
-        return assumeRoleArn;
-    }
-
     public String getGoServerUrl() {
         return goServerUrl;
     }
@@ -517,27 +511,26 @@ public class PluginSettings {
     }
 
     public EcsClient ecsClient() {
-        return EcsClient.builder()
-                .credentialsProvider(credentials())
-                .region(Region.of(getRegion()))
-                .build();
+        //noinspection resource
+        return awsClients().ecs();
     }
 
     public Ec2Client ec2Client() {
-        return Ec2Client.builder()
-                .credentialsProvider(credentials())
-                .region(Region.of(getRegion()))
-                .build();
+        //noinspection resource
+        return awsClients().ec2();
+    }
+
+    private AwsClientCache.CachedClients awsClients() {
+        // PluginSettings is deserialized fresh per request, so clients are cached process-wide, keyed
+        // by exactly the settings that determine client identity. Reusing the clients also reuses the
+        // credential providers, whose session/IMDS caching only works across calls when reused.
+        return AwsClientCache.instance().get(new AwsClientCache.ClientKey(getRegion(), accessKeyId, secretAccessKey, assumeRoleArn, clusterName));
     }
 
     public static PluginSettings fromJSON(String json) {
         return GSON.fromJson(json, PluginSettings.class);
     }
 
-
-    private AwsCredentialsProvider credentials() {
-        return new AWSCredentialsProviderChain().getAwsCredentialsProvider(accessKeyId, secretAccessKey, assumeRoleArn, clusterName);
-    }
 
     private Map<String, String> getLogOptions() {
         Map<String, String> logOptionMap = new HashMap<>();

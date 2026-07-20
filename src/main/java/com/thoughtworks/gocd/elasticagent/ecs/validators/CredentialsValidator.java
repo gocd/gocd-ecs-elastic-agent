@@ -19,6 +19,8 @@ package com.thoughtworks.gocd.elasticagent.ecs.validators;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.AWSCredentialsProviderChain;
 import com.thoughtworks.gocd.elasticagent.ecs.exceptions.AWSCredentialsException;
 import com.thoughtworks.gocd.elasticagent.ecs.requests.ValidateClusterProfileRequest;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.utils.SdkAutoCloseable;
 
 import static com.thoughtworks.gocd.elasticagent.ecs.executors.GetPluginConfigurationExecutor.*;
 
@@ -35,8 +37,9 @@ public class CredentialsValidator extends AbstractValidator {
 
     void validatePluginSettings(ValidateClusterProfileRequest request) {
 
+        AwsCredentialsProvider credentialsProvider = null;
         try {
-            credentialsProviderChain.getAwsCredentialsProvider(
+            credentialsProvider = credentialsProviderChain.getAwsCredentialsProvider(
                     request.get(AWS_ACCESS_KEY_ID),
                     request.get(AWS_SECRET_ACCESS_KEY),
                     request.get(AWS_ASSUME_ROLE_ARN),
@@ -47,6 +50,12 @@ public class CredentialsValidator extends AbstractValidator {
         } catch (Exception e) {
             // Put other types of errors against all three fields; so effectively against the ARN.
             addError(AWS_ASSUME_ROLE_ARN, e.getMessage());
+        } finally {
+            // With an assume-role ARN the returned provider owns a live StsClient; validation only needs
+            // to confirm credentials resolve, so release it rather than leaking a client per validation.
+            if (credentialsProvider instanceof SdkAutoCloseable closeable) {
+                closeable.close();
+            }
         }
     }
 }
