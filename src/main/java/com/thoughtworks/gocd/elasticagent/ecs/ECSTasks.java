@@ -82,7 +82,10 @@ public class ECSTasks implements AgentInstances<ECSTask> {
         try {
             if (task != null) {
                 taskHelper.stopAndCleanupTask(pluginSettings, task);
-                containerInstanceHelper.checkAndMarkEC2InstanceIdle(pluginSettings, task.getEC2InstanceId());
+                String ec2Id = task.getEC2InstanceId();
+                if (ec2Id != null && !ec2Id.toUpperCase().startsWith("FARGATE")) {
+                    containerInstanceHelper.checkAndMarkEC2InstanceIdle(pluginSettings, ec2Id);
+                }
                 LOG.info(format("Task {0} is terminated.", task.name()));
             } else {
                 LOG.warn(format("Requested to deregister task that does not exist {0}", agentId));

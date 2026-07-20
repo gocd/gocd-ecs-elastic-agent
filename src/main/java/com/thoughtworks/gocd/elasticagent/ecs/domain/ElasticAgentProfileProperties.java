@@ -44,6 +44,7 @@ public class ElasticAgentProfileProperties {
     public static final String AMI = "AMI";
     public static final String INSTANCE_TYPE = "InstanceType";
     public static final String IAM_INSTANCE_PROFILE = "IAMInstanceProfile";
+    public static final String EXECUTION_ROLE_ARN = "ExecutionRoleArn";
     public static final String TASK_ROLE_ARN = "TaskRoleArn";
     public static final String SECURITY_GROUP_IDS = "SecurityGroupIds";
     public static final String SUBNET_IDS = "SubnetIds";
@@ -92,6 +93,16 @@ public class ElasticAgentProfileProperties {
     @SerializedName("Privileged")
     @Metadata(key = "Privileged", required = false, secure = false)
     public String privileged;
+
+    @Expose
+    @SerializedName("Fargate")
+    @Metadata(key = "Fargate", required = false, secure = false)
+    public String fargate;
+
+    @Expose
+    @SerializedName(EXECUTION_ROLE_ARN)
+    @Metadata(key = EXECUTION_ROLE_ARN, required = false, secure = false)
+    public String executionRoleArn;
 
     @Expose
     @SerializedName(TASK_ROLE_ARN)
@@ -211,6 +222,14 @@ public class ElasticAgentProfileProperties {
 
     public String getTaskRoleArn() {
         return taskRoleArn;
+    }
+
+    public String getExecutionRoleArn() {
+        return executionRoleArn;
+    }
+
+    public boolean isFargate() {
+        return parseBoolean(fargate);
     }
 
     public Integer getCpu() {

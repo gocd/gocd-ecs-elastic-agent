@@ -35,44 +35,55 @@ public class RegisterTaskDefinitionRequestBuilder {
                 .withContainerDefinitions(containerDefinition)
                 .withTaskRoleArn(StringUtils.defaultIfBlank(elasticAgentProfileProperties.getTaskRoleArn(), null));
 
+        if (elasticAgentProfileProperties.isFargate()) {
+            request.withRequiresCompatibilities(Compatibility.FARGATE);
+            request.setNetworkMode(NetworkMode.Awsvpc);
+            request.setExecutionRoleArn(elasticAgentProfileProperties.getExecutionRoleArn());
+            request.setCpu(String.valueOf(elasticAgentProfileProperties.getCpu()));
+            request.setMemory(String.valueOf(elasticAgentProfileProperties.getMaxMemory()));
+        }
+
         if (elasticAgentProfileProperties.platform() == Platform.WINDOWS) {
             return request;
         }
 
-        if (isNotBlank(pluginSettings.efsDnsOrIP())) {
-            LOG.info(format("[create-agent] Adding EFS volume {0} to task configuration.", pluginSettings.efsDnsOrIP()));
-            request.withVolumes(new Volume()
-                    .withName("efs")
-                    .withHost(new HostVolumeProperties().withSourcePath(pluginSettings.efsMountLocation())));
-
-            request.getContainerDefinitions().getFirst().withMountPoints(new MountPoint()
-                    .withSourceVolume("efs")
-                    .withContainerPath(pluginSettings.efsMountLocation()));
-        }
-
-        if (elasticAgentProfileProperties.isMountDockerSocket()) {
-            LOG.info("[create-agent] Adding /var/run/docker.sock to task configuration.");
-            request.withVolumes(new Volume()
-                    .withName("DockerSocket")
-                    .withHost(new HostVolumeProperties().withSourcePath("/var/run/docker.sock")));
-
-            request.getContainerDefinitions().getFirst()
-                    .withMountPoints(new MountPoint()
-                            .withSourceVolume("DockerSocket")
-                            .withContainerPath("/var/run/docker.sock")
-                    );
-        }
-
-        if (!elasticAgentProfileProperties.bindMounts().isEmpty()) {
-            elasticAgentProfileProperties.bindMounts().forEach(bindMount -> {
+        // Fargate cannot use host-based mount points (EFS host volume, docker socket, bind mounts).
+        if (!elasticAgentProfileProperties.isFargate()) {
+            if (isNotBlank(pluginSettings.efsDnsOrIP())) {
+                LOG.info(format("[create-agent] Adding EFS volume {0} to task configuration.", pluginSettings.efsDnsOrIP()));
                 request.withVolumes(new Volume()
-                        .withName(bindMount.getName())
-                        .withHost(new HostVolumeProperties().withSourcePath(bindMount.getSourcePath()))
-                );
+                        .withName("efs")
+                        .withHost(new HostVolumeProperties().withSourcePath(pluginSettings.efsMountLocation())));
+
                 request.getContainerDefinitions().getFirst().withMountPoints(new MountPoint()
-                        .withSourceVolume(bindMount.getName())
-                        .withContainerPath(bindMount.getContainerPath()));
-            });
+                        .withSourceVolume("efs")
+                        .withContainerPath(pluginSettings.efsMountLocation()));
+            }
+
+            if (elasticAgentProfileProperties.isMountDockerSocket()) {
+                LOG.info("[create-agent] Adding /var/run/docker.sock to task configuration.");
+                request.withVolumes(new Volume()
+                        .withName("DockerSocket")
+                        .withHost(new HostVolumeProperties().withSourcePath("/var/run/docker.sock")));
+
+                request.getContainerDefinitions().getFirst()
+                        .withMountPoints(new MountPoint()
+                                .withSourceVolume("DockerSocket")
+                                .withContainerPath("/var/run/docker.sock")
+                        );
+            }
+
+            if (!elasticAgentProfileProperties.bindMounts().isEmpty()) {
+                elasticAgentProfileProperties.bindMounts().forEach(bindMount -> {
+                    request.withVolumes(new Volume()
+                            .withName(bindMount.getName())
+                            .withHost(new HostVolumeProperties().withSourcePath(bindMount.getSourcePath()))
+                    );
+                    request.getContainerDefinitions().getFirst().withMountPoints(new MountPoint()
+                            .withSourceVolume(bindMount.getName())
+                            .withContainerPath(bindMount.getContainerPath()));
+                });
+            }
         }
 
         return request;
