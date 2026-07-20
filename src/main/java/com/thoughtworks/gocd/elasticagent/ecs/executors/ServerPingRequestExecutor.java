@@ -191,8 +191,8 @@ public class ServerPingRequestExecutor implements RequestExecutor {
             instanceToStop.ifPresent(instancesToStop -> stopOperation.execute(pluginSettings, instancesToStop));
 
         } catch (Exception e) {
-            LOG.error(format("[server-ping] Error while stopping idle {1} instance.", platform.name()), e);
-            eventStream.update(Event.errorEvent(EventFingerprint.forTerminatingIdleEC2Instances(), format("Error while stopping idle {1} instance.", platform.name()), e.getMessage()));
+            LOG.error(format("[server-ping] Error while stopping idle {0} instance.", platform.name()), e);
+            eventStream.update(Event.errorEvent(EventFingerprint.forTerminatingIdleEC2Instances(), format("Error while stopping idle {0} instance.", platform.name()), e.getMessage()));
         }
     }
 
