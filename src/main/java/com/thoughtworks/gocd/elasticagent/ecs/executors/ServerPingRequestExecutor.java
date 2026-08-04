@@ -192,6 +192,11 @@ public class ServerPingRequestExecutor implements RequestExecutor {
     private void stopInstances(PluginSettings pluginSettings, Platform platform, EventStream eventStream) {
         try {
             final StopPolicy stopPolicy = platform == LINUX ? pluginSettings.getLinuxStopPolicy() : pluginSettings.getWindowsStopPolicy();
+            // No StopPolicy configured (e.g. a Fargate-only cluster) — nothing to stop; return
+            // cleanly instead of NPE-ing in strategyFor(null).
+            if (stopPolicy == null) {
+                return;
+            }
             final Optional<List<ContainerInstance>> instanceToStop = instanceSelectionStrategyFactory
                     .strategyFor(stopPolicy)
                     .instancesToStop(pluginSettings, platform);
