@@ -20,6 +20,7 @@ import com.thoughtworks.go.plugin.api.response.GoPluginApiResponse;
 import com.thoughtworks.gocd.elasticagent.ecs.*;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.ContainerInstanceHelper;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.SpotInstanceService;
+import com.thoughtworks.gocd.elasticagent.ecs.aws.StopPolicy;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.TaskHelper;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.strategy.InstanceSelectionStrategy;
 import com.thoughtworks.gocd.elasticagent.ecs.aws.strategy.InstanceSelectionStrategyFactory;
@@ -303,6 +304,7 @@ class ServerPingRequestExecutorTest {
             final List<Instance> runningInstances = singletonList(runningLinuxInstance("i-abcded1"));
             final List<ContainerInstance> containerInstances = singletonList(containerInstance("i-abcded1"));
 
+            when(clusterProfileProperties.getLinuxStopPolicy()).thenReturn(StopPolicy.StopIdleInstance);
             when(containerInstanceHelper.getAllInstances(clusterProfileProperties)).thenReturn(runningInstances);
             when(containerInstanceHelper.getContainerInstances(clusterProfileProperties)).thenReturn(containerInstances);
             when(instanceSelectionStrategy.instancesToStop(clusterProfileProperties, LINUX)).thenReturn(Optional.of(containerInstances));
@@ -341,6 +343,7 @@ class ServerPingRequestExecutorTest {
             final List<Instance> runningInstances = singletonList(runningWindowsInstance("i-abcded1"));
             final List<ContainerInstance> containerInstances = singletonList(containerInstance("i-abcded1"));
 
+            when(clusterProfileProperties.getWindowsStopPolicy()).thenReturn(StopPolicy.StopIdleInstance);
             when(containerInstanceHelper.getAllInstances(clusterProfileProperties)).thenReturn(runningInstances);
             when(containerInstanceHelper.getContainerInstances(clusterProfileProperties)).thenReturn(containerInstances);
             when(instanceSelectionStrategy.instancesToStop(clusterProfileProperties, WINDOWS)).thenReturn(Optional.of(containerInstances));

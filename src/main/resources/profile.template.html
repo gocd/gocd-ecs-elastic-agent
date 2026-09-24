@@ -112,6 +112,32 @@
         </div>
       </div>
 
+      <div class="col">
+        <input ng-class="{'is-invalid-input': GOINPUTNAME[Fargate].$error.server}" type="checkbox"
+               ng-model="Fargate"
+               ng-required="true" ng-true-value="true" ng-false-value="false" id="Fargate"/>
+        <label ng-class="{'is-invalid-label': GOINPUTNAME[Fargate].$error.server}"
+               for="Fargate">Fargate</label>
+        <span class="form_error form-error" ng-class="{'is-visible': GOINPUTNAME[Fargate].$error.server}"
+              ng-show="GOINPUTNAME[Fargate].$error.server">{{GOINPUTNAME[Fargate].$error.server}}</span>
+        <div class="form-help-content-one-line">
+          Run this task on AWS Fargate (no EC2 instance is launched). Requires an Execution role arn and awsvpc networking.
+        </div>
+      </div>
+
+      <div>
+        <label ng-class="{'is-invalid-label': GOINPUTNAME[ExecutionRoleArn].$error.server}">Execution role arn</label>
+        <input ng-class="{'is-invalid-input': GOINPUTNAME[ExecutionRoleArn].$error.server}" type="text"
+               ng-model="ExecutionRoleArn"
+               ng-required="true" placeholder="e.g. arn:aws:iam::369170619674:role/ecsTaskExecutionRole"/>
+        <span class="form_error form-error"
+              ng-class="{'is-visible': GOINPUTNAME[ExecutionRoleArn].$error.server}"
+              ng-show="GOINPUTNAME[ExecutionRoleArn].$error.server">{{GOINPUTNAME[ExecutionRoleArn].$error.server}}</span>
+        <div class="form-help-content-one-line">
+          IAM role that the ECS Fargate agent uses to pull the image and write logs. Only used when Fargate is enabled.
+        </div>
+      </div>
+
       <div class="col-2" ng-show="Platform == 'linux'">
         <div class="col">
           <input ng-class="{'is-invalid-input': GOINPUTNAME[MountDockerSocket].$error.server}" type="checkbox"

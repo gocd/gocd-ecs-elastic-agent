@@ -38,6 +38,14 @@ public class RegisterTaskDefinitionRequestBuilder {
                 .family(taskName)
                 .taskRoleArn(StringUtils.defaultIfBlank(elasticAgentProfileProperties.getTaskRoleArn(), null));
 
+        if (elasticAgentProfileProperties.isFargate()) {
+            request.requiresCompatibilities(Compatibility.FARGATE)
+                    .networkMode(NetworkMode.AWSVPC)
+                    .executionRoleArn(elasticAgentProfileProperties.getExecutionRoleArn())
+                    .cpu(String.valueOf(elasticAgentProfileProperties.getCpu()))
+                    .memory(String.valueOf(elasticAgentProfileProperties.getMaxMemory()));
+        }
+
         if (elasticAgentProfileProperties.platform() == Platform.WINDOWS) {
             return request.containerDefinitions(containerDefinitionBuilder.build()).build();
         }
@@ -45,7 +53,8 @@ public class RegisterTaskDefinitionRequestBuilder {
         List<Volume> volumes = new ArrayList<>();
         List<MountPoint> mountPoints = new ArrayList<>();
 
-        if (isNotBlank(pluginSettings.efsDnsOrIP())) {
+        // Fargate rejects host-based mount points (EFS host volume, docker socket, bind mounts), so skip them entirely.
+        if (!elasticAgentProfileProperties.isFargate() && isNotBlank(pluginSettings.efsDnsOrIP())) {
             LOG.info(format("[create-agent] Adding EFS volume {0} to task configuration.", pluginSettings.efsDnsOrIP()));
             volumes.add(Volume.builder()
                     .name("efs")
@@ -58,7 +67,7 @@ public class RegisterTaskDefinitionRequestBuilder {
                     .build());
         }
 
-        if (elasticAgentProfileProperties.isMountDockerSocket()) {
+        if (!elasticAgentProfileProperties.isFargate() && elasticAgentProfileProperties.isMountDockerSocket()) {
             LOG.info("[create-agent] Adding /var/run/docker.sock to task configuration.");
             volumes.add(Volume.builder()
                     .name("DockerSocket")
@@ -71,7 +80,7 @@ public class RegisterTaskDefinitionRequestBuilder {
                     .build());
         }
 
-        if (!elasticAgentProfileProperties.bindMounts().isEmpty()) {
+        if (!elasticAgentProfileProperties.isFargate() && !elasticAgentProfileProperties.bindMounts().isEmpty()) {
             elasticAgentProfileProperties.bindMounts().forEach(bindMount -> {
                 volumes.add(Volume.builder()
                         .name(bindMount.getName())
